@@ -314,6 +314,15 @@ export default function AgencyDashboardPage() {
                 <p className="text-sm text-gray-500">Showing 54 complaints</p>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => window.location.href = '/agency-dashboard/register-complaint'}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  New Complaint
+                </button>
                 <input
                   type="text"
                   placeholder="Search complaints by ID, title, location, officer..."
@@ -349,7 +358,11 @@ export default function AgencyDashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {complaints.map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={complaint.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => window.location.href = `/agency-dashboard/complaint-details?id=${complaint.id}`}
+                    >
                       <td className="px-4 py-4">
                         {complaint.photo ? (
                           <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>

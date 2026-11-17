@@ -3,14 +3,13 @@
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
 
-type ViewType = 'overview' | 'complaint-register' | 'itpo-officials' | 'all-complaints' | 'resolved' | 'pending' | 'zones' | 'areas' | 'categories'
+type ViewType = 'overview' | 'complaint-register' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
 
 export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
   const [language, setLanguage] = useState<Language>('en')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterZone, setFilterZone] = useState('All Zone Tagging Scopes')
-  const [filterStatus, setFilterStatus] = useState('Active Only')
 
   const t = translations[language]
 
@@ -199,8 +198,8 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.itpoOfficialsDirectory}</h1>
-              <p className="text-gray-600">{t.itpoOfficialsDescription}</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">ITPO Officials Performance</h1>
+              <p className="text-gray-600">Monitor and analyze ITPO officials' performance metrics and complaint resolution efficiency.</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
               <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -226,20 +225,80 @@ export default function DashboardPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <p className="text-sm font-medium text-gray-500 mb-1">TOTAL ITPO OFFICIALS</p>
                 <p className="text-3xl font-bold text-gray-900">124</p>
+                <p className="text-xs text-green-600 mt-2">↑ 12% from last month</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">CAMPUS-WIDE (ALL ZONES)</p>
-                <p className="text-3xl font-bold text-gray-900">72</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">AVG. RESPONSE TIME</p>
+                <p className="text-3xl font-bold text-gray-900">8.5 min</p>
+                <p className="text-xs text-green-600 mt-2">↓ 15% improvement</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">ZONE-SPECIFIC TAGGED</p>
-                <p className="text-3xl font-bold text-gray-900">52</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">RESOLUTION RATE</p>
+                <p className="text-3xl font-bold text-green-600">94.2%</p>
+                <p className="text-xs text-green-600 mt-2">↑ 3% from last month</p>
               </div>
               <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">ACTIVE ACCOUNTS</p>
-                <p className="text-3xl font-bold text-gray-900">122</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">COMPLAINTS ASSIGNED</p>
+                <p className="text-3xl font-bold text-gray-900">1,247</p>
+                <p className="text-xs text-gray-500 mt-2">This month</p>
               </div>
             </div>
+
+            {/* Performance Charts/Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Complaint Resolution by Official</h3>
+                <div className="space-y-4">
+                  {officials.map((official) => (
+                    <div key={official.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold text-sm">
+                            {official.name.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{official.name}</p>
+                          <p className="text-xs text-gray-500">{official.designation}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">87%</p>
+                        <p className="text-xs text-gray-500">Resolution Rate</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Ranking</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <span className="text-2xl font-bold text-yellow-600">1</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Mr. Premjit Lal</p>
+                      <p className="text-sm text-gray-500">98% Resolution Rate • 5.2min Avg Response</p>
+                    </div>
+                    <span className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs font-medium">Top Performer</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-2xl font-bold text-gray-600">2</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Mrs. Sunita Sharma</p>
+                      <p className="text-sm text-gray-500">95% Resolution Rate • 6.8min Avg Response</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-2xl font-bold text-gray-600">3</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">Mr. Rajesh Kumar</p>
+                      <p className="text-sm text-gray-500">92% Resolution Rate • 7.5min Avg Response</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
               <div className="flex items-center gap-4">
                 <div className="flex-1">
@@ -260,15 +319,6 @@ export default function DashboardPage() {
                   <option>All Zones (Entire Complex)</option>
                   <option>Zone-Specific</option>
                 </select>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option>Active Only</option>
-                  <option>All Status</option>
-                  <option>Inactive</option>
-                </select>
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -277,8 +327,10 @@ export default function DashboardPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">OFFICIAL NAME & LOGIN</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">DESIGNATION</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">CONTACT</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">TAGGED OPERATIONAL ZONES</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ASSIGNED COMPLAINTS</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RESOLVED</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RESOLUTION RATE</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AVG RESPONSE TIME</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
                   </tr>
@@ -301,15 +353,14 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{official.designation}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">142</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">128</td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900">{official.phone}</p>
-                        <p className="text-xs text-gray-500">{official.email}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {official.zones}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          90.1%
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">7.2 min</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           official.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -319,9 +370,9 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
+                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View Details</button>
                           <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit Zones</button>
-                          <button className="text-red-600 hover:text-red-700 text-sm font-medium">Disable</button>
+                          <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -641,6 +692,414 @@ export default function DashboardPage() {
           </div>
         )
 
+      case 'master-data-hub':
+        return (
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Master Data Hub</h1>
+              <p className="text-gray-600">Centralized management of all master data for Bharat Mandapam operations.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('zones-areas')}>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Zones and Areas</h3>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">Manage operational zones and specific areas within Bharat Mandapam.</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-blue-600">12</span>
+                  <span className="text-sm text-gray-500">Zones</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('agencies')}>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Agencies</h3>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">Manage housekeeping and facility management agencies.</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-green-600">8</span>
+                  <span className="text-sm text-gray-500">Agencies</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('itpo-officials')}>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">ITPO Officials</h3>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">Manage ITPO officials and their operational jurisdictions.</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-purple-600">124</span>
+                  <span className="text-sm text-gray-500">Officials</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('field-staff')}>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Field Staff</h3>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">Manage field staff and their assignments.</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-orange-600">256</span>
+                  <span className="text-sm text-gray-500">Staff</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('escalation-settings')}>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Escalation Settings</h3>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">Configure complaint escalation rules and timelines.</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-red-600">5</span>
+                  <span className="text-sm text-gray-500">Rules</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'zones-areas':
+        return (
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Zones and Areas</h1>
+              <p className="text-gray-600">Manage operational zones and specific areas within Bharat Mandapam.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Zones</h3>
+                  <button onClick={() => window.location.href = '/dashboard/zones/form'} className="text-blue-600 hover:text-blue-700 text-sm font-medium">+ Add Zone</button>
+                </div>
+                <div className="space-y-3">
+                  {zones.map((zone) => (
+                    <div key={zone.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{zone.name}</p>
+                        <p className="text-sm text-gray-500">{zone.area}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${zone.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {zone.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Areas</h3>
+                  <button onClick={() => window.location.href = '/dashboard/areas/form'} className="text-blue-600 hover:text-blue-700 text-sm font-medium">+ Add Area</button>
+                </div>
+                <div className="space-y-3">
+                  {areas.map((area) => (
+                    <div key={area.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{area.name}</p>
+                        <p className="text-sm text-gray-500">{area.zone} • {area.type}</p>
+                      </div>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                        {area.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'agencies':
+        return (
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Agencies</h1>
+              <p className="text-gray-600">Manage housekeeping and facility management agencies.</p>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Agency
+              </button>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AGENCY NAME</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">CONTACT PERSON</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">PHONE</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">EMAIL</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SERVICES</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold text-sm">SF</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Soni Facility Management</p>
+                          <p className="text-xs text-gray-500">ID: AG-001</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Laxman Lal</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">9876543210</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">contact@sonifacility.com</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Housekeeping
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 font-semibold text-sm">BL</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">BLUSPRING ENTERPRISES LTD.</p>
+                          <p className="text-xs text-gray-500">ID: AG-002</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Rajesh Kumar</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">9876543211</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">info@bluspring.com</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Housekeeping
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Active
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+
+      case 'field-staff':
+        return (
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Field Staff</h1>
+              <p className="text-gray-600">Manage field staff and their assignments across zones.</p>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Staff
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <p className="text-sm font-medium text-gray-500 mb-1">TOTAL STAFF</p>
+                <p className="text-3xl font-bold text-gray-900">256</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <p className="text-sm font-medium text-gray-500 mb-1">ACTIVE ON DUTY</p>
+                <p className="text-3xl font-bold text-green-600">198</p>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <p className="text-sm font-medium text-gray-500 mb-1">ON LEAVE</p>
+                <p className="text-3xl font-bold text-orange-600">58</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STAFF NAME</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AGENCY</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ASSIGNED ZONE</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SHIFT</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold text-sm">RS</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Ramesh Singh</p>
+                          <p className="text-xs text-gray-500">ID: ST-001</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Soni Facility Management</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Hall 1-5</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Morning (6AM - 2PM)</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        On Duty
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 font-semibold text-sm">SG</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Suresh Gupta</p>
+                          <p className="text-xs text-gray-500">ID: ST-002</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">BLUSPRING ENTERPRISES LTD.</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Hall 6-10</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">Evening (2PM - 10PM)</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        On Leave
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+
+      case 'escalation-settings':
+        return (
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Escalation Settings</h1>
+              <p className="text-gray-600">Configure complaint escalation rules and timelines for efficient resolution.</p>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Rule
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Level 1 Escalation</h3>
+                    <p className="text-sm text-gray-500">Auto-escalate after 30 minutes</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600"><strong>Escalate to:</strong> Zone Supervisor</p>
+                  <p className="text-sm text-gray-600"><strong>Priority:</strong> Medium</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Level 2 Escalation</h3>
+                    <p className="text-sm text-gray-500">Auto-escalate after 1 hour</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600"><strong>Escalate to:</strong> ITPO Manager</p>
+                  <p className="text-sm text-gray-600"><strong>Priority:</strong> High</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Level 3 Escalation</h3>
+                    <p className="text-sm text-gray-500">Auto-escalate after 2 hours</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600"><strong>Escalate to:</strong> ITPO Director</p>
+                  <p className="text-sm text-gray-600"><strong>Priority:</strong> Urgent</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
       default:
         return <div>Page not found</div>
     }
@@ -650,13 +1109,15 @@ export default function DashboardPage() {
     switch (currentView) {
       case 'overview': return t.overview
       case 'complaint-register': return t.complaintRegister
-      case 'itpo-officials': return t.itpoOfficials
+      case 'master-data-hub': return 'Master Data Hub'
+      case 'zones-areas': return 'Zones and Areas'
+      case 'agencies': return 'Agencies'
+      case 'itpo-officials': return 'ITPO Officials Performance'
+      case 'field-staff': return 'Field Staff'
+      case 'escalation-settings': return 'Escalation Settings'
       case 'all-complaints': return t.allComplaints
       case 'resolved': return t.resolved
       case 'pending': return t.pending
-      case 'zones': return t.zones
-      case 'areas': return t.areas
-      case 'categories': return t.categories
       default: return ''
     }
   }
@@ -715,7 +1176,7 @@ export default function DashboardPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                {t.itpoOfficials}
+                ITPO Officials Performance
               </button>
             </nav>
           </div>
@@ -765,38 +1226,72 @@ export default function DashboardPage() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t.masterDataEntry}</p>
             <nav className="space-y-1">
               <button
-                onClick={() => setCurrentView('zones')}
+                onClick={() => setCurrentView('master-data-hub')}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'zones' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                  currentView === 'master-data-hub' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                {t.zones}
+                Master Data Hub
               </button>
               <button
-                onClick={() => setCurrentView('areas')}
+                onClick={() => setCurrentView('zones-areas')}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'areas' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                  currentView === 'zones-areas' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                {t.areas}
+                Zones and Areas
               </button>
               <button
-                onClick={() => setCurrentView('categories')}
+                onClick={() => setCurrentView('agencies')}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'categories' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                  currentView === 'agencies' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                {t.categories}
+                Agencies
+              </button>
+              <button
+                onClick={() => setCurrentView('itpo-officials')}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+                  currentView === 'itpo-officials' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                ITPO Officials
+              </button>
+              <button
+                onClick={() => setCurrentView('field-staff')}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+                  currentView === 'field-staff' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Field Staff
+              </button>
+              <button
+                onClick={() => setCurrentView('escalation-settings')}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+                  currentView === 'escalation-settings' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Escalation Settings
               </button>
             </nav>
           </div>

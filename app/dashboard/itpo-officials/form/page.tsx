@@ -88,7 +88,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   placeholder={language === 'en' ? 'Enter full name' : 'पूरा नाम दर्ज करें'}
                 />
               </div>
@@ -103,7 +103,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   placeholder={language === 'en' ? '@username' : '@उपयोगकर्ता नाम'}
                 />
               </div>
@@ -118,7 +118,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.employeeId}
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   placeholder={language === 'en' ? 'Enter employee ID' : 'कर्मचारी आईडी दर्ज करें'}
                 />
               </div>
@@ -132,7 +132,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.designation}
                   onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                 >
                   <option value="">{language === 'en' ? 'Select designation' : 'पद चुनें'}</option>
                   <option value="ED">ED</option>
@@ -152,7 +152,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   placeholder={language === 'en' ? 'Enter phone number' : 'फोन नंबर दर्ज करें'}
                 />
               </div>
@@ -167,7 +167,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-400"
                   placeholder={language === 'en' ? 'Enter email address' : 'ईमेल पता दर्ज करें'}
                 />
               </div>
@@ -181,7 +181,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.zones}
                   onChange={(e) => setFormData({ ...formData, zones: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                 >
                   <option value="">{t.selectZone}</option>
                   <option value="All Zones (Entire Complex)">{t.allZonesEntireComplex}</option>
@@ -201,7 +201,7 @@ export default function ItpoOfficialFormPage() {
                   required
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                 >
                   <option value="Active">{t.active}</option>
                   <option value="Inactive">{t.inactive}</option>

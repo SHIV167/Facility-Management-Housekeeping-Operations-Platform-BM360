@@ -3,13 +3,68 @@
 import { useState } from 'react'
 
 export default function LoginPage() {
+  const [step, setStep] = useState(1)
   const [mobileNumber, setMobileNumber] = useState('')
+  const [otp, setOtp] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const STATIC_OTP = '123456'
+
+  const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Login attempt with:', mobileNumber)
-    // Navigate to dashboard
-    window.location.href = '/dashboard'
+    setError('')
+
+    if (mobileNumber.length < 10) {
+      setError('Please enter a valid mobile number')
+      return
+    }
+
+    setLoading(true)
+    // Simulate sending OTP
+    setTimeout(() => {
+      setLoading(false)
+      setStep(2)
+    }, 1000)
+  }
+
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP')
+      return
+    }
+
+    setLoading(true)
+    // Simulate OTP verification
+    setTimeout(() => {
+      setLoading(false)
+      if (otp === STATIC_OTP) {
+        // Store session (in real app, this would be a token)
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('mobileNumber', mobileNumber)
+        // Navigate to dashboard
+        window.location.href = '/dashboard'
+      } else {
+        setError('Invalid OTP. Please try again.')
+      }
+    }, 1000)
+  }
+
+  const handleResendOtp = () => {
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      alert('OTP resent successfully!')
+    }, 1000)
+  }
+
+  const handleBack = () => {
+    setStep(1)
+    setOtp('')
+    setError('')
   }
 
   return (
@@ -112,61 +167,160 @@ export default function LoginPage() {
             <div className="mb-8">
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                    1
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    step === 1 ? 'bg-blue-600 text-white' : step === 2 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {step === 2 ? '✓' : '1'}
                   </div>
-                  <span className="text-gray-900 font-medium">Account Credentials</span>
+                  <span className={`font-medium ${step === 1 ? 'text-gray-900' : 'text-gray-400'}`}>Account Credentials</span>
                 </div>
                 <div className="w-12 h-0.5 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    step === 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}>
                     2
                   </div>
-                  <span className="text-gray-400 font-medium">Verification Code</span>
+                  <span className={`font-medium ${step === 2 ? 'text-gray-900' : 'text-gray-400'}`}>Verification Code</span>
                 </div>
               </div>
             </div>
 
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign in to BM360</h1>
-              <p className="text-gray-600">Use your authorized Bharat Mandapam account to continue.</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {step === 1 ? 'Sign in to BM360' : 'Verify your number'}
+              </h1>
+              <p className="text-gray-600">
+                {step === 1
+                  ? 'Use your authorized Bharat Mandapam account to continue.'
+                  : `Enter the 6-digit code sent to +91 ${mobileNumber}`
+                }
+              </p>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Mobile Number Input */}
-              <div>
-                <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
-                  Mobile Number
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    id="mobile"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                    placeholder="Enter your mobile number"
-                    className="w-full pl-16 pr-4 py-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                    required
-                  />
-                </div>
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
               </div>
+            )}
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                Continue to workspace
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </form>
+            {/* Form */}
+            {step === 1 ? (
+              <form onSubmit={handleStep1Submit} className="space-y-6">
+                {/* Mobile Number Input */}
+                <div>
+                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                    Mobile Number
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      id="mobile"
+                      value={mobileNumber}
+                      onChange={(e) => setMobileNumber(e.target.value)}
+                      placeholder="Enter your mobile number"
+                      className="w-full pl-16 pr-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-gray-900 bg-white placeholder-gray-400"
+                      required
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending OTP...
+                    </>
+                  ) : (
+                    <>
+                      Continue to workspace
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleStep2Submit} className="space-y-6">
+                {/* OTP Input */}
+                <div>
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    id="otp"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter 6-digit OTP"
+                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-center tracking-widest text-gray-900 bg-white placeholder-gray-400"
+                    required
+                    maxLength={6}
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    Demo OTP: <span className="font-bold text-blue-600">{STATIC_OTP}</span>
+                  </p>
+                </div>
+
+                {/* Resend OTP Link */}
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Resending...' : "Didn't receive code? Resend"}
+                  </button>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify & Continue'
+                  )}
+                </button>
+
+                {/* Back Button */}
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-full py-4 px-6 border border-gray-300 rounded-lg font-semibold text-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+              </form>
+            )}
 
             {/* Help Link */}
             <div className="mt-8 text-center">
