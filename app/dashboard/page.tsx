@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
+import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 
 type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
 
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
   const [operationalZone, setOperationalZone] = useState('Unassigned (Set Zone)')
+  const [showItpoForm, setShowItpoForm] = useState(false)
 
   const t = translations[language]
 
@@ -244,7 +246,7 @@ export default function DashboardPage() {
                   </svg>
                   Export to Excel
                 </button>
-                <button onClick={() => window.location.href = '/dashboard/itpo-officials/form'} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm">
+                <button onClick={() => setShowItpoForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
@@ -1353,6 +1355,7 @@ export default function DashboardPage() {
           {renderContent()}
         </main>
       </div>
+      <ItpoOfficialFormModal open={showItpoForm} onClose={() => setShowItpoForm(false)} />
     </div>
   )
 }

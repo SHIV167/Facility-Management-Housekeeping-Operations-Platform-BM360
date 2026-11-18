@@ -2,12 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
+
+type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
 export default function ITPODashboardPage() {
   const router = useRouter()
+  const [currentView, setCurrentView] = useState<ViewType>('overview')
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
-  const [currentView, setCurrentView] = useState<'overview' | 'officials' | 'performance' | 'assignments' | 'reports'>('overview')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [headerSearch, setHeaderSearch] = useState('')
+  const [operationalZone, setOperationalZone] = useState('Hall 1-5')
+  const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
+  const [showItpoForm, setShowItpoForm] = useState(false)
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
@@ -18,227 +24,204 @@ export default function ITPODashboardPage() {
     {
       id: 1,
       name: 'Mr. Premjit Lal',
+      initials: 'MP',
       username: '@mrpremjitlal',
       employeeId: '9123',
       designation: 'ED',
-      phone: '9868217057',
-      email: 'editpo@itpo.gov.in',
       zones: 'All Zones (Entire Complex)',
       status: 'Active',
       assignedComplaints: 142,
       resolvedComplaints: 128,
-      resolutionRate: 90.1,
-      avgResponseTime: 7.2,
-      ranking: 1
+      resolutionRate: 98,
+      avgResponseTime: 5.2
     },
     {
       id: 2,
       name: 'Mrs. Sunita Sharma',
+      initials: 'SS',
       username: '@sunitasharma',
       employeeId: '9124',
       designation: 'Manager',
-      phone: '9868217058',
-      email: 'sunita@itpo.gov.in',
       zones: 'Hall 1-5',
       status: 'Active',
       assignedComplaints: 98,
-      resolvedComplaints: 89,
-      resolutionRate: 90.8,
-      avgResponseTime: 6.8,
-      ranking: 2
+      resolvedComplaints: 93,
+      resolutionRate: 95,
+      avgResponseTime: 6.8
     },
     {
       id: 3,
       name: 'Mr. Rajesh Kumar',
+      initials: 'RK',
       username: '@rajeshkumar',
       employeeId: '9125',
       designation: 'Supervisor',
-      phone: '9868217059',
-      email: 'rajesh@itpo.gov.in',
       zones: 'Hall 6-10',
-      status: 'Inactive',
+      status: 'Active',
       assignedComplaints: 76,
-      resolvedComplaints: 65,
-      resolutionRate: 85.5,
-      avgResponseTime: 9.5,
-      ranking: 3
+      resolvedComplaints: 70,
+      resolutionRate: 92,
+      avgResponseTime: 7.5
     },
     {
       id: 4,
       name: 'Ms. Priya Verma',
+      initials: 'PV',
       username: '@priyaverma',
       employeeId: '9126',
       designation: 'Officer',
-      phone: '9868217060',
-      email: 'priya@itpo.gov.in',
       zones: 'Hall 11-14',
       status: 'Active',
       assignedComplaints: 115,
       resolvedComplaints: 108,
-      resolutionRate: 93.9,
-      avgResponseTime: 5.5,
-      ranking: 4
+      resolutionRate: 94,
+      avgResponseTime: 5.5
     },
     {
       id: 5,
       name: 'Mr. Amit Singh',
+      initials: 'AS',
       username: '@amitsingh',
       employeeId: '9127',
       designation: 'Officer',
-      phone: '9868217061',
-      email: 'amit@itpo.gov.in',
       zones: 'Parking Area',
       status: 'Active',
       assignedComplaints: 89,
       resolvedComplaints: 82,
-      resolutionRate: 92.1,
-      avgResponseTime: 6.2,
-      ranking: 5
+      resolutionRate: 92,
+      avgResponseTime: 6.2
     }
   ]
 
   const recentActivities = [
-    {
-      id: 1,
-      action: 'Complaint Resolved',
-      official: 'Mr. Premjit Lal',
-      complaintId: '#156',
-      timestamp: '2 minutes ago',
-      type: 'success'
-    },
-    {
-      id: 2,
-      action: 'New Complaint Assigned',
-      official: 'Mrs. Sunita Sharma',
-      complaintId: '#157',
-      timestamp: '15 minutes ago',
-      type: 'info'
-    },
-    {
-      id: 3,
-      action: 'Zone Updated',
-      official: 'Mr. Rajesh Kumar',
-      complaintId: '-',
-      timestamp: '1 hour ago',
-      type: 'warning'
-    },
-    {
-      id: 4,
-      action: 'Complaint Escalated',
-      official: 'Ms. Priya Verma',
-      complaintId: '#155',
-      timestamp: '2 hours ago',
-      type: 'error'
-    }
+    { id: 1, action: 'Complaint Resolved', official: 'Mr. Premjit Lal', complaintId: '#156', timestamp: '2 minutes ago', type: 'success' },
+    { id: 2, action: 'New Complaint Assigned', official: 'Mrs. Sunita Sharma', complaintId: '#157', timestamp: '15 minutes ago', type: 'info' },
+    { id: 3, action: 'Zone Updated', official: 'Mr. Rajesh Kumar', complaintId: '-', timestamp: '1 hour ago', type: 'warning' },
+    { id: 4, action: 'Complaint Escalated', official: 'Ms. Priya Verma', complaintId: '#155', timestamp: '2 hours ago', type: 'error' }
   ]
+
+  const navItems: { id: ViewType; label: string; icon: string }[] = [
+    { id: 'overview', label: 'Overview', icon: 'grid' },
+    { id: 'officials', label: 'Officials Directory', icon: 'badge' },
+    { id: 'performance', label: 'Performance Analytics', icon: 'chart' },
+    { id: 'assignments', label: 'Zone Assignments', icon: 'pin' },
+    { id: 'reports', label: 'Reports', icon: 'clipboard' },
+  ]
+
+  const breadcrumbs: Record<ViewType, string> = {
+    overview: 'ITPO Overview',
+    officials: 'Officials Directory',
+    performance: 'Performance Analytics',
+    assignments: 'Zone Assignments',
+    reports: 'Reports',
+  }
+
+  const NavIcon = ({ name }: { name: string }) => {
+    const common = 'w-[18px] h-[18px] shrink-0'
+    if (name === 'grid') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
+    if (name === 'badge') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
+    if (name === 'chart') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    if (name === 'pin') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+  }
+
+  const navButton = (item: { id: ViewType; label: string; icon: string }) => {
+    const active = currentView === item.id
+    return (
+      <button
+        key={item.id}
+        onClick={() => setCurrentView(item.id)}
+        className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
+          active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
+        }`}
+      >
+        <NavIcon name={item.icon} />
+        <span className="flex-1 leading-tight">{item.label}</span>
+      </button>
+    )
+  }
 
   const renderContent = () => {
     switch (currentView) {
       case 'overview':
         return (
-          <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-500">TOTAL OFFICIALS</p>
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 </div>
-                <p className="text-3xl font-bold text-gray-900">124</p>
-                <p className="text-xs text-green-600 mt-1">↑ 12% from last month</p>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-500">ACTIVE ON DUTY</p>
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">ITPO Operations Overview</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Monitor officials, performance metrics, and complaint resolution across zones.</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900">122</p>
-                <p className="text-xs text-gray-500 mt-1">98.4% active rate</p>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-500">COMPLAINTS ASSIGNED</p>
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-gray-900">1,247</p>
-                <p className="text-xs text-gray-500 mt-1">This month</p>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-500">AVG. RESOLUTION</p>
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-3xl font-bold text-gray-900">94.2%</p>
-                <p className="text-xs text-green-600 mt-1">↑ 3% improvement</p>
               </div>
             </div>
 
-            {/* Top Performers */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers This Month</h3>
-              <div className="space-y-4">
-                {officials.slice(0, 3).map((official, index) => (
-                  <div key={official.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-400'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-sm">
-                        {official.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{official.name}</p>
-                      <p className="text-sm text-gray-500">{official.designation} • {official.zones}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">{official.resolutionRate}%</p>
-                      <p className="text-xs text-gray-500">Resolution Rate</p>
-                    </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: 'TOTAL OFFICIALS', value: '124', sub: '↑ 12% from last month', iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]', icon: 'users' },
+                { label: 'ACTIVE ON DUTY', value: '122', sub: '98.4% active rate', iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]', icon: 'check' },
+                { label: 'COMPLAINTS ASSIGNED', value: '1,247', sub: 'This month', iconBg: 'bg-[#fff7ed]', iconColor: 'text-[#ea580c]', icon: 'clipboard' },
+                { label: 'AVG. RESOLUTION', value: '94.2%', sub: '↑ 3% improvement', iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]', icon: 'chart' },
+              ].map((card) => (
+                <div key={card.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{card.label}</p>
+                    <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{card.value}</p>
+                    <p className="text-[11px] text-[#9ca3af] mt-1">{card.sub}</p>
                   </div>
-                ))}
-              </div>
+                  <div className={`w-10 h-10 rounded-full ${card.iconBg} ${card.iconColor} flex items-center justify-center`}>
+                    {card.icon === 'users' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                    {card.icon === 'check' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                    {card.icon === 'clipboard' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+                    {card.icon === 'chart' && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Recent Activities */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-              <div className="space-y-3">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-lg">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'success' ? 'bg-green-500' :
-                      activity.type === 'error' ? 'bg-red-500' :
-                      activity.type === 'warning' ? 'bg-orange-500' :
-                      'bg-blue-500'
-                    }`}></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">
-                        <span className="font-medium">{activity.action}</span>
-                        {activity.complaintId !== '-' && ` - ${activity.complaintId}`}
-                      </p>
-                      <p className="text-xs text-gray-500">{activity.official} • {activity.timestamp}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <h3 className="text-[15px] font-semibold text-[#111827] mb-4">Top Performers This Month</h3>
+                <div className="space-y-3">
+                  {officials.slice(0, 3).map((official, index) => (
+                    <div key={official.id} className="flex items-center gap-3 p-3 bg-[#fafbfc] rounded-lg border border-[#f0f2f5]">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold text-white ${index === 0 ? 'bg-[#f59e0b]' : index === 1 ? 'bg-[#9ca3af]' : 'bg-[#d97706]'}`}>
+                        {index + 1}
+                      </div>
+                      <div className="w-9 h-9 bg-[#0e4c5e] rounded-full flex items-center justify-center shrink-0">
+                        <span className="text-white text-[11px] font-semibold">{official.initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-[#111827] truncate">{official.name}</p>
+                        <p className="text-[11px] text-[#6b7280]">{official.designation} • {official.zones}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[15px] font-bold text-[#16a34a]">{official.resolutionRate}%</p>
+                        <p className="text-[10px] text-[#9ca3af]">Resolution</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <h3 className="text-[15px] font-semibold text-[#111827] mb-4">Recent Activities</h3>
+                <div className="space-y-2.5">
+                  {recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center gap-3 p-2.5 border border-[#f0f2f5] rounded-lg">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${activity.type === 'success' ? 'bg-[#22a35a]' : activity.type === 'error' ? 'bg-[#e11d48]' : activity.type === 'warning' ? 'bg-[#f59e0b]' : 'bg-[#2563eb]'}`}></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12.5px] text-[#374151]">
+                          <span className="font-semibold">{activity.action}</span>
+                          {activity.complaintId !== '-' && <span className="text-[#6b7280]"> — {activity.complaintId}</span>}
+                        </p>
+                        <p className="text-[11px] text-[#9ca3af]">{activity.official} • {activity.timestamp}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -246,70 +229,61 @@ export default function ITPODashboardPage() {
 
       case 'officials':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">ITPO Officials Directory</h2>
-              <button
-                onClick={() => window.location.href = '/dashboard/itpo-officials/form'}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
+                </div>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">ITPO Officials Directory</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Manage authorized ITPO officials and their zone assignments.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowItpoForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Add Official
               </button>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">OFFICIAL</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">DESIGNATION</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ZONES</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ASSIGNED</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RESOLVED</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RATE</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                <thead>
+                  <tr className="border-b border-[#eef1f4]">
+                    {['OFFICIAL', 'DESIGNATION', 'ZONES', 'ASSIGNED', 'RESOLVED', 'RATE', 'STATUS', 'ACTIONS'].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody>
                   {officials.map((official) => (
-                    <tr key={official.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                    <tr key={official.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-semibold text-sm">
-                              {official.name.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{official.name}</p>
-                            <p className="text-xs text-gray-500">{official.username}</p>
+                          <div className="w-9 h-9 rounded-full bg-[#12786f] text-white text-[12px] font-semibold flex items-center justify-center shrink-0">{official.initials}</div>
+                          <div className="min-w-0">
+                            <p className="text-[13.5px] font-semibold text-[#111827] leading-tight">{official.name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[12px] text-[#0f766e]">{official.username}</span>
+                              <span className="text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded px-1.5 py-[1px]">{official.employeeId}</span>
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{official.designation}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{official.zones}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{official.assignedComplaints}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{official.resolvedComplaints}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {official.resolutionRate}%
-                        </span>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.designation}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.zones}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.assignedComplaints}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.resolvedComplaints}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#e8f8ef] text-[#16a34a]">{official.resolutionRate}%</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          official.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {official.status}
-                        </span>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${official.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{official.status}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View</button>
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
+                          <button className="text-[12.5px] font-medium text-[#2563eb] hover:underline">View</button>
+                          <button className="text-[12.5px] font-medium text-[#374151] hover:underline">Edit</button>
                         </div>
                       </td>
                     </tr>
@@ -322,217 +296,174 @@ export default function ITPODashboardPage() {
 
       case 'performance':
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Performance Analytics</h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resolution Rate by Official</h3>
-                <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Performance Analytics</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Resolution rates, response times, and official rankings.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <h3 className="text-[15px] font-semibold text-[#111827] mb-4">Resolution Rate by Official</h3>
+                <div className="space-y-3.5">
                   {officials.map((official) => (
                     <div key={official.id}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">{official.name}</span>
-                        <span className="text-sm text-gray-600">{official.resolutionRate}%</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[12.5px] font-medium text-[#374151]">{official.name}</span>
+                        <span className="text-[12.5px] font-bold text-[#111827]">{official.resolutionRate}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${official.resolutionRate}%` }}
-                        ></div>
+                      <div className="w-full bg-[#f3f4f6] rounded-full h-2">
+                        <div className="bg-[#1b8f84] h-2 rounded-full" style={{ width: `${official.resolutionRate}%` }}></div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Time Analysis</h3>
-                <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                <h3 className="text-[15px] font-semibold text-[#111827] mb-4">Response Time Analysis</h3>
+                <div className="space-y-2.5">
                   {officials.map((official) => (
-                    <div key={official.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-xs">
-                            {official.name.split(' ').map(n => n[0]).join('')}
-                          </span>
+                    <div key={official.id} className="flex items-center justify-between p-3 bg-[#fafbfc] rounded-lg border border-[#f0f2f5]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 bg-[#e6f7f4] rounded-full flex items-center justify-center">
+                          <span className="text-[#0f766e] text-[11px] font-semibold">{official.initials}</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-900">{official.name}</span>
+                        <span className="text-[13px] font-medium text-[#374151]">{official.name}</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-900">{official.avgResponseTime} min</span>
+                      <span className="text-[13px] font-bold text-[#111827]">{official.avgResponseTime} min</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Ranking</h3>
-              <div className="space-y-3">
-                {officials.sort((a, b) => b.resolutionRate - a.resolutionRate).map((official, index) => (
-                  <div key={official.id} className={`flex items-center gap-4 p-4 rounded-lg ${
-                    index === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-400' : 'bg-gray-300'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{official.name}</p>
-                      <p className="text-sm text-gray-500">{official.designation} • {official.zones}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-gray-900">{official.resolutionRate}%</p>
-                      <p className="text-xs text-gray-500">{official.avgResponseTime}min avg response</p>
-                    </div>
-                    {index === 0 && (
-                      <span className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs font-medium">Top Performer</span>
-                    )}
-                  </div>
-                ))}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4]">
+                <h3 className="text-[15px] font-semibold text-[#111827]">Performance Ranking</h3>
               </div>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#eef1f4]">
+                    {['RANK', 'OFFICIAL', 'DESIGNATION', 'ZONE', 'RESOLUTION', 'AVG RESPONSE', 'STATUS'].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...officials].sort((a, b) => b.resolutionRate - a.resolutionRate).map((official, index) => (
+                    <tr key={official.id} className={`border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc] ${index === 0 ? 'bg-[#fffbeb]' : ''}`}>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[12px] font-bold text-white ${index === 0 ? 'bg-[#f59e0b]' : index === 1 ? 'bg-[#9ca3af]' : index === 2 ? 'bg-[#d97706]' : 'bg-[#e5e7eb] text-[#6b7280]'}`}>{index + 1}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 bg-[#12786f] rounded-full flex items-center justify-center shrink-0">
+                            <span className="text-white text-[11px] font-semibold">{official.initials}</span>
+                          </div>
+                          <span className="text-[13px] font-semibold text-[#111827]">{official.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.designation}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.zones}</td>
+                      <td className="px-4 py-3 text-[13px] font-bold text-[#16a34a]">{official.resolutionRate}%</td>
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.avgResponseTime} min</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${official.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{official.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )
 
       case 'assignments':
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Zone Assignments</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Hall 1-5</h3>
-                <p className="text-sm text-gray-500 mb-4">2 officials assigned</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-xs">SS</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Mrs. Sunita Sharma</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-semibold text-xs">PV</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Ms. Priya Verma</span>
-                  </div>
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Zone Assignments</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Officials mapped to operational zones across Bharat Mandapam.</p>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Hall 6-10</h3>
-                <p className="text-sm text-gray-500 mb-4">1 official assigned</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-semibold text-xs">RK</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Mr. Rajesh Kumar</span>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { zone: 'Hall 1-5', count: '2 officials', members: ['Mrs. Sunita Sharma', 'Ms. Priya Verma'], color: 'bg-[#e6f7f4] text-[#0f766e]' },
+                { zone: 'Hall 6-10', count: '1 official', members: ['Mr. Rajesh Kumar'], color: 'bg-[#eef2ff] text-[#4f46e5]' },
+                { zone: 'Hall 11-14', count: '1 official', members: ['Ms. Priya Verma'], color: 'bg-[#f3e8ff] text-[#7c3aed]' },
+                { zone: 'Parking Area', count: '1 official', members: ['Mr. Amit Singh'], color: 'bg-[#fff7ed] text-[#ea580c]' },
+                { zone: 'All Zones (Campus-wide)', count: '1 official', members: ['Mr. Premjit Lal'], color: 'bg-[#e8f8ef] text-[#16a34a]' },
+                { zone: 'Unassigned', count: '118 officials', members: ['Pending assignment'], color: 'bg-[#f3f4f6] text-[#6b7280]' },
+              ].map((z) => (
+                <div key={z.zone} className="bg-white rounded-xl border border-[#e8edf2] p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[14px] font-semibold text-[#111827]">{z.zone}</h3>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${z.color}`}>{z.count}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {z.members.map((m) => (
+                      <div key={m} className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-[#e6f7f4] rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-[#0f766e] text-[9px] font-bold">{m.split(' ').map(n => n[0]).join('')}</span>
+                        </div>
+                        <span className="text-[12.5px] text-[#374151] truncate">{m}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Hall 11-14</h3>
-                <p className="text-sm text-gray-500 mb-4">1 official assigned</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 font-semibold text-xs">PV</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Ms. Priya Verma</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Parking Area</h3>
-                <p className="text-sm text-gray-500 mb-4">1 official assigned</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                      <span className="text-teal-600 font-semibold text-xs">AS</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Mr. Amit Singh</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">All Zones (Campus-wide)</h3>
-                <p className="text-sm text-gray-500 mb-4">1 official assigned</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 font-semibold text-xs">PL</span>
-                    </div>
-                    <span className="text-sm text-gray-900">Mr. Premjit Lal</span>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         )
 
       case 'reports':
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Reports & Analytics</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Monthly Performance Report</h3>
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">Comprehensive performance analysis for all officials</p>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Generate Report →</button>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Reports & Analytics</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Generate performance and operational reports.</p>
+                </div>
               </div>
+            </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { title: 'Monthly Performance Report', desc: 'Comprehensive performance analysis for all officials', iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]' },
+                { title: 'Zone-wise Statistics', desc: 'Complaint distribution and resolution by zone', iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]' },
+                { title: 'Response Time Analysis', desc: 'Average response time trends and SLA compliance', iconBg: 'bg-[#fff7ed]', iconColor: 'text-[#ea580c]' },
+                { title: 'Official Workload', desc: 'Work distribution and load balancing analysis', iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]' },
+              ].map((r) => (
+                <div key={r.title} className="bg-white rounded-xl border border-[#e8edf2] p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className={`w-11 h-11 rounded-lg ${r.iconBg} ${r.iconColor} flex items-center justify-center`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <h3 className="text-[14px] font-semibold text-[#111827]">{r.title}</h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Zone-wise Statistics</h3>
+                  <p className="text-[12.5px] text-[#6b7280] mb-3">{r.desc}</p>
+                  <button className="text-[12.5px] font-semibold text-[#2563eb] hover:underline">Generate Report →</button>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">Complaint distribution and resolution by zone</p>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Generate Report →</button>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Response Time Analysis</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">Average response time trends and SLA compliance</p>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Generate Report →</button>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Official Workload</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">Work distribution and load balancing analysis</p>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Generate Report →</button>
-              </div>
+              ))}
             </div>
           </div>
         )
@@ -543,163 +474,123 @@ export default function ITPODashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-white">BM</span>
+    <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+      {/* Sidebar - same theme as main dashboard */}
+      <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
+        <div className="px-3.5 pt-3.5 pb-2">
+          <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
+            <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
+              BM<span className="text-[#1d4ed8]">360</span>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">BM360</h1>
-              <p className="text-xs text-gray-500">ITPO Dashboard</p>
-            </div>
+            <div className="text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5">BHARAT MANDAPAM</div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          <button
-            onClick={() => setCurrentView('overview')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-              currentView === 'overview' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1H2m10 4a1 1 0 001-1v-4a1 1 0 011-1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1H2" />
-            </svg>
-            Overview
-          </button>
-          <button
-            onClick={() => setCurrentView('officials')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-              currentView === 'officials' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Officials Directory
-          </button>
-          <button
-            onClick={() => setCurrentView('performance')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-              currentView === 'performance' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Performance Analytics
-          </button>
-          <button
-            onClick={() => setCurrentView('assignments')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-              currentView === 'assignments' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Zone Assignments
-          </button>
-          <button
-            onClick={() => setCurrentView('reports')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-              currentView === 'reports' ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Reports
-          </button>
-        </nav>
-
-        {/* Language Toggle */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLanguage('en')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                language === 'en' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage('hi')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                language === 'hi' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              हिन्दी
-            </button>
+        <div className="px-3 pt-2">
+          <div className="w-full flex items-center gap-2.5 rounded-xl bg-[#0e4c5e] px-2.5 py-2">
+            <span className="w-8 h-8 rounded-lg bg-[#14586a] flex items-center justify-center">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[13px] font-semibold leading-tight">ITPO Dashboard</span>
+              <span className="block text-[10px] text-[#9ec3d0] leading-tight mt-0.5">BM360 · ITPO Portal</span>
+            </span>
           </div>
         </div>
 
-        {/* User Section */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">IA</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">ITPO Administrator</p>
-              <p className="text-xs text-gray-500">Admin</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
-          </button>
+        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2">
+          <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">ITPO OFFICIALS</p>
+          <nav className="space-y-0.5">{navItems.map(navButton)}</nav>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Navigation */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="px-3.5 py-2.5 border-t border-white/10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold text-gray-900">ITPO Officials Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">IA</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">ITPO Admin</span>
-              </div>
+            <span className="text-[11px] text-[#b7d0d8]">Language / हिंदी</span>
+            <div className="flex items-center rounded-full bg-[#082f3b] p-0.5">
+              <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>EN</button>
+              <button onClick={() => setLanguage('hi')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>हिंदी</button>
             </div>
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          {renderContent()}
+        <div className="px-3.5 pb-2.5 flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-[#14586a] flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold leading-tight truncate">ITPO Administrator</p>
+            <p className="text-[11px] text-[#9ec3d0] leading-tight">ITPO Official</p>
+          </div>
+          <button onClick={handleLogout} className="text-[#9ec3d0] hover:text-white transition-colors" title="Logout">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          </button>
         </div>
+
+        <div className="relative mx-3 mb-3 rounded-xl border border-[#1b8f84] bg-[#0c4654] px-3 py-2">
+          <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            <p className="text-[12px] text-white truncate">{operationalZone}</p>
+            <button onClick={() => setZoneMenuOpen((open) => !open)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
+              Change
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+          </div>
+          {zoneMenuOpen && (
+            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white text-[#111827] rounded-lg shadow-lg border border-[#e5e7eb] overflow-hidden z-20">
+              {['Hall 1-5', 'Hall 6-10', 'Hall 11-14', 'Parking Area', 'All Zones (Entire Complex)'].map((zone) => (
+                <button
+                  key={zone}
+                  onClick={() => { setOperationalZone(zone); setZoneMenuOpen(false) }}
+                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[#f3f5f8]"
+                >
+                  {zone}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span>BM360</span>
+            <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
+            <span className="text-[#111827] font-semibold">{breadcrumbs[currentView]}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
+              <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
+              <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
+            </div>
+            <div className="relative">
+              <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                type="text"
+                value={headerSearch}
+                onChange={(e) => setHeaderSearch(e.target.value)}
+                placeholder="Search officials..."
+                className="w-[230px] h-9 pl-9 pr-3 rounded-full bg-[#f8fafc] text-[13px]"
+              />
+            </div>
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">IA</div>
+              <div className="leading-tight">
+                <p className="text-[12.5px] font-semibold text-[#111827]">ITPO Administrator</p>
+                <p className="text-[11px] text-[#6b7280]">ITPO Official</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto px-5 py-4">
+          {renderContent()}
+        </main>
       </div>
+      <ItpoOfficialFormModal open={showItpoForm} onClose={() => setShowItpoForm(false)} />
     </div>
   )
 }
