@@ -21,7 +21,6 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    // Simulate sending OTP
     setTimeout(() => {
       setLoading(false)
       setStep(2)
@@ -38,14 +37,11 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    // Simulate OTP verification
     setTimeout(() => {
       setLoading(false)
       if (otp === STATIC_OTP) {
-        // Store session (in real app, this would be a token)
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
-        // Navigate to dashboard
         window.location.href = '/dashboard'
       } else {
         setError('Invalid OTP. Please try again.')
@@ -69,173 +65,226 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Brand Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+      {/* Left Panel - Brand */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a2472] via-[#1a3a8f] to-[#0d3b66]"></div>
+
+        {/* Decorative circles */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-20 w-[30rem] h-[30rem] bg-cyan-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-indigo-400/10 rounded-full blur-2xl"></div>
+
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.07]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)',
+            backgroundSize: '48px 48px'
+          }}></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-2xl font-bold">BM</span>
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
+          {/* Logo */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">BM360</h1>
+              <h1 className="text-2xl font-bold tracking-tight">BM360</h1>
               <p className="text-blue-200 text-sm">Bharat Mandapam</p>
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Hero Content */}
           <div className="flex-1 flex flex-col justify-center">
-            <h2 className="text-5xl font-bold mb-6 leading-tight">
-              Bharat Mandapam<br />Operations Portal
+            <div className="mb-4 inline-flex items-center gap-2 self-start px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm text-blue-100">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              SYSTEM STATUS: OPERATIONAL
+            </div>
+
+            <h2 className="text-5xl xl:text-6xl font-bold mb-6 leading-[1.1] tracking-tight">
+              Bharat Mandapam<br />
+              <span className="bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent">
+                Operations Portal
+              </span>
             </h2>
-            <p className="text-xl text-blue-100 mb-8 leading-relaxed max-w-md">
+
+            <p className="text-lg text-blue-100/90 mb-10 leading-relaxed max-w-lg">
               One shared workspace for Bharat Mandapam operations, teamwork, and
               continuous improvement.
             </p>
 
             {/* Feature Cards */}
-            <div className="space-y-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="space-y-4 max-w-md">
+              <div className="group bg-white/[0.08] backdrop-blur-md rounded-xl p-5 border border-white/15 hover:bg-white/[0.12] hover:border-white/25 transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <span className="text-lg font-medium">Role-Based Jurisdiction</span>
+                  <div>
+                    <p className="font-semibold text-white">Role-Based Jurisdiction</p>
+                    <p className="text-sm text-blue-200/80">Access tailored to your responsibilities</p>
+                  </div>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+
+              <div className="group bg-white/[0.08] backdrop-blur-md rounded-xl p-5 border border-white/15 hover:bg-white/[0.12] hover:border-white/25 transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/25 group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                     </svg>
                   </div>
-                  <span className="text-lg font-medium">Zone & Area Mapping</span>
+                  <div>
+                    <p className="font-semibold text-white">Zone & Area Mapping</p>
+                    <p className="text-sm text-blue-200/80">Precise location-based assignments</p>
+                  </div>
                 </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+
+              <div className="group bg-white/[0.08] backdrop-blur-md rounded-xl p-5 border border-white/15 hover:bg-white/[0.12] hover:border-white/25 transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <span className="text-lg font-medium">Audit-Sealed Verification</span>
+                  <div>
+                    <p className="font-semibold text-white">Audit-Sealed Verification</p>
+                    <p className="text-sm text-blue-200/80">Complete transparency and accountability</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 text-blue-200">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">SYSTEM STATUS: OPERATIONAL</span>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-blue-200/70">© 2026 Bharat Mandapam. All rights reserved.</p>
+            <p className="text-sm text-blue-200/70">ITPO Platform v2.0</p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50 relative">
-        {/* Dot pattern background */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)',
-            backgroundSize: '20px 20px'
-          }}></div>
-        </div>
+      {/* Right Panel - Login Card */}
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 relative overflow-hidden">
+        {/* Subtle decorative elements */}
+        <div className="absolute -top-24 -right-24 w-72 h-72 bg-blue-100/50 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl"></div>
 
-        {/* Mobile Logo (visible on small screens) */}
-        <div className="lg:hidden absolute top-8 left-8 flex items-center gap-2">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-xl font-bold text-white">BM</span>
+        {/* Mobile Logo */}
+        <div className="lg:hidden absolute top-8 left-8 flex items-center gap-3">
+          <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
-          <span className="text-lg font-bold text-gray-900">BM360</span>
+          <span className="text-xl font-bold text-gray-900">BM360</span>
         </div>
 
-        {/* Login Form Card */}
-        <div className="relative z-10 w-full max-w-md mx-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+        {/* Login Card */}
+        <div className="relative z-10 w-full max-w-md mx-6">
+          <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/60 p-8 sm:p-10 border border-gray-100">
             {/* Step Indicator */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                    step === 1 ? 'bg-blue-600 text-white' : step === 2 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+            <div className="mb-10">
+              <div className="flex items-center gap-3">
+                {/* Step 1 */}
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                    step === 1 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' :
+                    step === 2 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
                   }`}>
-                    {step === 2 ? '✓' : '1'}
+                    {step === 2 ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : '1'}
                   </div>
-                  <span className={`font-medium ${step === 1 ? 'text-gray-900' : 'text-gray-400'}`}>Account Credentials</span>
+                  <div>
+                    <p className={`text-sm font-semibold ${step === 1 ? 'text-gray-900' : 'text-gray-400'}`}>Account</p>
+                    <p className={`text-xs ${step === 1 ? 'text-gray-500' : 'text-gray-400'}`}>Credentials</p>
+                  </div>
                 </div>
-                <div className="w-12 h-0.5 bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                    step === 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+
+                {/* Connector */}
+                <div className="flex-1 h-0.5 bg-gray-200 mx-1 relative">
+                  <div className={`absolute inset-0 bg-blue-600 transition-all duration-500 ${step === 2 ? 'w-full' : 'w-0'}`}></div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                    step === 2 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-200 text-gray-500'
                   }`}>
                     2
                   </div>
-                  <span className={`font-medium ${step === 2 ? 'text-gray-900' : 'text-gray-400'}`}>Verification Code</span>
+                  <div>
+                    <p className={`text-sm font-semibold ${step === 2 ? 'text-gray-900' : 'text-gray-400'}`}>Verification</p>
+                    <p className={`text-xs ${step === 2 ? 'text-gray-500' : 'text-gray-400'}`}>Code</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {step === 1 ? 'Sign in to BM360' : 'Verify your number'}
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
+                {step === 1 ? 'Welcome back' : 'Check your phone'}
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-500 leading-relaxed">
                 {step === 1
-                  ? 'Use your authorized Bharat Mandapam account to continue.'
-                  : `Enter the 6-digit code sent to +91 ${mobileNumber}`
+                  ? 'Sign in to access your Bharat Mandapam workspace.'
+                  : `We sent a 6-digit code to +91 ${mobileNumber || 'your number'}.`
                 }
               </p>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+                <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-red-600 font-medium">{error}</p>
               </div>
             )}
 
             {/* Form */}
             {step === 1 ? (
               <form onSubmit={handleStep1Submit} className="space-y-6">
-                {/* Mobile Number Input */}
+                {/* Mobile Number */}
                 <div>
-                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2.5">
                     Mobile Number
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                  <div className="relative group">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg border-r border-gray-200 pr-4">
                       +91
                     </span>
                     <input
                       type="tel"
                       id="mobile"
                       value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value)}
-                      placeholder="Enter your mobile number"
-                      className="w-full pl-16 pr-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-gray-900 bg-white placeholder-gray-400"
+                      onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="98765 43210"
+                      className="w-full pl-20 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
                       required
                       maxLength={10}
                     />
                   </div>
+                  <p className="mt-2 text-xs text-gray-400">Enter your 10-digit mobile number</p>
                 </div>
 
                 {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25"
                 >
                   {loading ? (
                     <>
@@ -243,13 +292,13 @@ export default function LoginPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Sending OTP...
+                      Sending code...
                     </>
                   ) : (
                     <>
-                      Continue to workspace
+                      Continue
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
                     </>
                   )}
@@ -259,25 +308,28 @@ export default function LoginPage() {
               <form onSubmit={handleStep2Submit} className="space-y-6">
                 {/* OTP Input */}
                 <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="otp" className="block text-sm font-semibold text-gray-700 mb-2.5">
                     Verification Code
                   </label>
                   <input
                     type="text"
                     id="otp"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter 6-digit OTP"
-                    className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg text-center tracking-widest text-gray-900 bg-white placeholder-gray-400"
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••••"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-2xl text-center tracking-[0.5em] font-bold text-gray-900 bg-gray-50/50 placeholder-gray-300 transition-all duration-200"
                     required
                     maxLength={6}
+                    autoFocus
                   />
-                  <p className="mt-2 text-sm text-gray-500">
-                    Demo OTP: <span className="font-bold text-blue-600">{STATIC_OTP}</span>
-                  </p>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                    <p className="text-sm text-blue-700">
+                      Demo OTP: <span className="font-bold text-blue-900 text-base tracking-widest">{STATIC_OTP}</span>
+                    </p>
+                  </div>
                 </div>
 
-                {/* Resend OTP Link */}
+                {/* Resend OTP */}
                 <div className="text-center">
                   <button
                     type="button"
@@ -285,15 +337,15 @@ export default function LoginPage() {
                     disabled={loading}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Resending...' : "Didn't receive code? Resend"}
+                    {loading ? 'Resending...' : "Didn't receive the code? Resend"}
                   </button>
                 </div>
 
-                {/* Submit Button */}
+                {/* Verify Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25"
                 >
                   {loading ? (
                     <>
@@ -304,7 +356,7 @@ export default function LoginPage() {
                       Verifying...
                     </>
                   ) : (
-                    'Verify & Continue'
+                    'Verify & Sign In'
                   )}
                 </button>
 
@@ -312,7 +364,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="w-full py-4 px-6 border border-gray-300 rounded-lg font-semibold text-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-6 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -323,15 +375,13 @@ export default function LoginPage() {
             )}
 
             {/* Help Link */}
-            <div className="mt-8 text-center">
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-                Contact ITPO Platform Administrator
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium text-sm inline-flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Need help? Contact ITPO Platform Administrator
               </a>
-            </div>
-
-            {/* Copyright */}
-            <div className="mt-12 text-center text-sm text-gray-500">
-              <p>© 2026 Bharat Mandapam. All rights reserved.</p>
             </div>
           </div>
         </div>
