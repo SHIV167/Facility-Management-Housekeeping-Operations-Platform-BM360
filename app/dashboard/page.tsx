@@ -146,19 +146,19 @@ export default function DashboardPage() {
               <p className="text-gray-600">{t.welcomeMessage}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div onClick={() => setCurrentView('all-complaints')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
                 <p className="text-sm font-medium text-gray-500 mb-1">{t.totalComplaints}</p>
                 <p className="text-3xl font-bold text-gray-900">156</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
                 <p className="text-sm font-medium text-gray-500 mb-1">{t.pendingComplaints}</p>
                 <p className="text-3xl font-bold text-orange-600">23</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div onClick={() => setCurrentView('resolved')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
                 <p className="text-sm font-medium text-gray-500 mb-1">{t.resolvedComplaints}</p>
                 <p className="text-3xl font-bold text-green-600">128</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
                 <p className="text-sm font-medium text-gray-500 mb-1">{t.overdueComplaints}</p>
                 <p className="text-3xl font-bold text-red-600">5</p>
               </div>
@@ -1190,6 +1190,9 @@ export default function DashboardPage() {
     { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: '1' },
     { id: 'housekeeping-ranking', label: 'Housekeeping Worker Ranking', icon: 'users' },
     { id: 'itpo-performance', label: 'ITPO Official Performance', icon: 'chart' },
+    { id: 'all-complaints', label: 'All Complaints', icon: 'clipboard' },
+    { id: 'resolved', label: 'Resolved', icon: 'check' },
+    { id: 'pending', label: 'Pending', icon: 'clock' },
   ]
 
   const masterItems: { id: ViewType; label: string; icon: string }[] = [
@@ -1211,6 +1214,8 @@ export default function DashboardPage() {
     if (name === 'pin') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
     if (name === 'building') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
     if (name === 'badge') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
+    if (name === 'check') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    if (name === 'clock') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
   }
 

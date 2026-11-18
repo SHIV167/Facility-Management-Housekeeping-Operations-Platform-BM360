@@ -70,6 +70,9 @@ export default function LoginPage() {
         {/* Gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0b3c4a] via-[#0e4c5e] to-[#0f766e]"></div>
 
+        {/* Background image */}
+        <div className="absolute inset-0 opacity-[0.22]" style={{ backgroundImage: 'url(https://vigpl.com/bharat-mandapam.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+
         {/* Decorative circles */}
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-20 w-[30rem] h-[30rem] bg-emerald-400/10 rounded-full blur-3xl"></div>
@@ -180,7 +183,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Card */}
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#eef5f4] via-[#f4f8f7] to-[#e4efee]">
         {/* Dot pattern background */}
         <div className="absolute inset-0 opacity-[0.35] pointer-events-none">
           <div className="absolute inset-0" style={{
