@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 
 type Props = {
   open: boolean
@@ -8,12 +9,141 @@ type Props = {
   onSuccess?: () => void
 }
 
+const ZONE_OPTIONS = [
+  { label: 'Hall 1-5', value: 'hall1-5' },
+  { label: 'Hall 6-10', value: 'hall6-10' },
+  { label: 'Hall 11-14', value: 'hall11-14' },
+  { label: 'Parking Area', value: 'parking' },
+  { label: 'Admin Building', value: 'admin' },
+]
+
+const SERVICE_OPTIONS = ['housekeeping', 'electrical', 'plumbing', 'hvac']
+
+function normalizeKey(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function parseScannedData(text: string) {
+  const data: Record<string, string> = {}
+  const trimmed = text.trim()
+  try {
+    const json = JSON.parse(trimmed)
+    Object.entries(json).forEach(([k, v]) => { data[k.toLowerCase()] = String(v) })
+  } catch {
+    if (trimmed.includes('|')) {
+      const parts = trimmed.split('|').map((p) => p.trim())
+      // BM360|zone|area|service or zone|area|service
+      const start = parts[0]?.toUpperCase() === 'BM360' ? 1 : 0
+      if (parts[start]) data.zone = parts[start]
+      if (parts[start + 1]) data.area = parts[start + 1]
+      if (parts[start + 2]) data.location = parts[start + 2]
+      if (parts[start + 3]) data.service = parts[start + 3]
+    } else if (trimmed.includes('=')) {
+      trimmed.split('&').forEach((pair) => {
+        const [k, v] = pair.split('=')
+        if (k && v) data[k.trim().toLowerCase()] = decodeURIComponent(v.trim())
+      })
+    } else {
+      data.area = trimmed
+    }
+  }
+  return data
+}
+
 export default function RegisterComplaintModal({ open, onClose, onSuccess }: Props) {
   const [allZones, setAllZones] = useState(true)
   const [selectedZone, setSelectedZone] = useState('')
+  const [subArea, setSubArea] = useState('')
   const [selectedPriority, setSelectedPriority] = useState('urgent')
   const [complaintDetails, setComplaintDetails] = useState('')
   const [selectedService, setSelectedService] = useState('housekeeping')
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [scannerError, setScannerError] = useState('')
+  const [scanMessage, setScanMessage] = useState('')
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+
+  const safeStop = (scanner: Html5Qrcode | null) => {
+    if (!scanner) return
+    try { scanner.stop().then(() => scanner.clear()).catch(() => {}) } catch {}
+  }
+
+  const applyScan = (decodedText: string) => {
+    const data = parseScannedData(decodedText)
+    const zoneRaw = data.zone || data.location_zone || data.sector || ''
+    const areaRaw = data.area || data.subarea || data.sub_area || data.location || data.spot || ''
+    const serviceRaw = data.service || data.category || data.catalog || ''
+
+    let matched = false
+
+    if (zoneRaw) {
+      const norm = normalizeKey(zoneRaw)
+      const match = ZONE_OPTIONS.find((z) => normalizeKey(z.label) === norm || normalizeKey(z.value) === norm)
+      if (match) {
+        setSelectedZone(match.value)
+        setAllZones(false)
+        matched = true
+      } else if (/all\s*zone/i.test(zoneRaw)) {
+        setAllZones(true)
+        matched = true
+      }
+    }
+
+    if (areaRaw) {
+      setSubArea(areaRaw)
+      matched = true
+    }
+
+    if (serviceRaw) {
+      const norm = normalizeKey(serviceRaw)
+      const svc = SERVICE_OPTIONS.find((s) => normalizeKey(s) === norm || normalizeKey(s).includes(norm) || norm.includes(normalizeKey(s)))
+      if (svc) {
+        setSelectedService(svc)
+        matched = true
+      }
+    }
+
+    setScanMessage(matched ? 'QR code applied — fields auto-filled' : 'QR scanned. No matching fields found.')
+    setTimeout(() => setScanMessage(''), 4000)
+  }
+
+  const stopScanner = () => {
+    const scanner = scannerRef.current
+    scannerRef.current = null
+    safeStop(scanner)
+    setScannerOpen(false)
+    setScannerError('')
+  }
+
+  useEffect(() => {
+    if (!scannerOpen) return
+    setScannerError('')
+    const timer = setTimeout(() => {
+      try {
+        const scanner = new Html5Qrcode('qr-reader')
+        scannerRef.current = scanner
+        scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (decodedText) => {
+            applyScan(decodedText)
+            stopScanner()
+          },
+          () => {}
+        ).catch(() => {
+          setScannerError('Camera unavailable. Please allow camera access or use a device with a camera.')
+        })
+      } catch {
+        setScannerError('Scanner failed to initialize.')
+      }
+    }, 150)
+    return () => {
+      clearTimeout(timer)
+      const scanner = scannerRef.current
+      scannerRef.current = null
+      safeStop(scanner)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scannerOpen])
 
   if (!open) return null
 
@@ -69,6 +199,16 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
 
           {/* Modal Body */}
           <form id="register-complaint-form" onSubmit={handleSubmit} className="p-6 overflow-y-auto">
+            {/* Scan feedback */}
+            {scanMessage && (
+              <div className="mb-4 p-3 bg-[#e6f7f4] border border-[#bfe8e0] rounded-lg flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#0f766e] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-[12.5px] text-[#0f766e] font-medium">{scanMessage}</p>
+              </div>
+            )}
+
             {/* Section 1: Operational Scope */}
             <div>
               <h2 className="text-[13px] font-semibold text-[#111827] mb-4 pb-2 border-b border-[#eef1f4] tracking-wide">
@@ -84,10 +224,9 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
                     onChange={(e) => setSelectedService(e.target.value)}
                     className={`${inputCls} appearance-none pr-16`}
                   >
-                    <option value="housekeeping">Housekeeping Operations</option>
-                    <option value="electrical">Electrical</option>
-                    <option value="plumbing">Plumbing</option>
-                    <option value="hvac">HVAC</option>
+                    {SERVICE_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}{s === 'housekeeping' ? ' Operations' : ''}</option>
+                    ))}
                   </select>
                   <svg className="w-4 h-4 text-[#9ca3af] absolute right-9 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" />
@@ -100,7 +239,19 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
 
               {/* Location */}
               <div className="mb-4">
-                <label className={labelCls}>Location</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className={labelCls.replace('mb-1.5', '')}>Location</label>
+                  <button
+                    type="button"
+                    onClick={() => setScannerOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#bfe8e0] rounded-md hover:bg-[#d9f0ec] transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v1m0 14v1m8-8h-1M5 12H4m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Scan QR
+                  </button>
+                </div>
                 <div className="space-y-3">
                   <div className="relative">
                     <select
@@ -110,11 +261,9 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
                       className={`${inputCls} appearance-none ${allZones ? 'bg-[#f8fafc] text-[#9ca3af] cursor-not-allowed' : ''}`}
                     >
                       <option value="">Choose Zone... (89)</option>
-                      <option value="hall1-5">Hall 1-5</option>
-                      <option value="hall6-10">Hall 6-10</option>
-                      <option value="hall11-14">Hall 11-14</option>
-                      <option value="parking">Parking Area</option>
-                      <option value="admin">Admin Building</option>
+                      {ZONE_OPTIONS.map((z) => (
+                        <option key={z.value} value={z.value}>{z.label}</option>
+                      ))}
                     </select>
                     <svg className="w-4 h-4 text-[#9ca3af] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" />
@@ -155,7 +304,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
                     <label className={labelCls}>Sub-Area / Specific Location</label>
                     <input
                       type="text"
-                      value={allZones ? '' : selectedZone}
+                      value={subArea}
+                      onChange={(e) => setSubArea(e.target.value)}
                       disabled={allZones}
                       placeholder={allZones ? "Select a Target Location / Zone first.." : "Enter specific location"}
                       className={`${inputCls} ${allZones ? 'bg-[#f8fafc] text-[#9ca3af] cursor-not-allowed' : ''}`}
@@ -303,6 +453,49 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
           </div>
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      {scannerOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={stopScanner} />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="bg-[#0b3c4a] px-5 py-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v1m0 14v1m8-8h-1M5 12H4m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <h2 className="text-[14px] font-semibold text-white">Scan Location QR Code</h2>
+              </div>
+              <button
+                onClick={stopScanner}
+                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-5">
+              {!scannerError ? (
+                <>
+                  <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black min-h-[280px]" />
+                  <p className="text-[12px] text-[#6b7280] mt-3 text-center">
+                    Point camera at the zone QR code to auto-fill location details
+                  </p>
+                </>
+              ) : (
+                <div className="py-10 text-center">
+                  <svg className="w-10 h-10 text-[#9ca3af] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-[13px] text-[#374151] font-medium mb-1">Camera Unavailable</p>
+                  <p className="text-[12px] text-[#6b7280]">{scannerError}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
