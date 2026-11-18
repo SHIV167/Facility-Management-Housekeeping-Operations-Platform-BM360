@@ -3,13 +3,19 @@
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
 
-type ViewType = 'overview' | 'complaint-register' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
 
 export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
   const [language, setLanguage] = useState<Language>('en')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState('Mr. Premjit Lal')
   const [filterZone, setFilterZone] = useState('All Zone Tagging Scopes')
+  const [statusFilter, setStatusFilter] = useState('Active Only')
+  const [opsOpen, setOpsOpen] = useState(true)
+  const [headerSearch, setHeaderSearch] = useState('')
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
+  const [operationalZone, setOperationalZone] = useState('Unassigned (Set Zone)')
 
   const t = translations[language]
 
@@ -17,6 +23,7 @@ export default function DashboardPage() {
     {
       id: 1,
       name: 'Mr. Premjit Lal',
+      initials: 'MP',
       username: '@mrpremjitlal',
       employeeId: '9123',
       designation: 'ED',
@@ -28,6 +35,7 @@ export default function DashboardPage() {
     {
       id: 2,
       name: 'Mrs. Sunita Sharma',
+      initials: 'SS',
       username: '@sunitasharma',
       employeeId: '9124',
       designation: 'Manager',
@@ -39,6 +47,7 @@ export default function DashboardPage() {
     {
       id: 3,
       name: 'Mr. Rajesh Kumar',
+      initials: 'RK',
       username: '@rajeshkumar',
       employeeId: '9125',
       designation: 'Supervisor',
@@ -111,6 +120,19 @@ export default function DashboardPage() {
     { id: 3, name: 'Plumbing', description: 'Plumbing and water-related issues', complaints: 8, status: 'Active' },
     { id: 4, name: 'HVAC', description: 'Air conditioning and ventilation', complaints: 5, status: 'Active' }
   ]
+
+  const filteredOfficials = officials.filter((official) => {
+    const query = searchQuery.trim().toLowerCase()
+    const matchesSearch = !query || [official.name, official.username, official.email, official.phone, official.employeeId]
+      .some((value) => value.toLowerCase().includes(query))
+    const matchesZone = filterZone === 'All Zone Tagging Scopes'
+      || (filterZone === 'All Zones (Entire Complex)' ? official.zones.includes('All Zones') : !official.zones.includes('All Zones'))
+    const matchesStatus = statusFilter === 'All Status'
+      || (statusFilter === 'Active Only' ? official.status === 'Active' : official.status === 'Inactive')
+    return matchesSearch && matchesZone && matchesStatus
+  })
+
+  const visibleOfficials = filteredOfficials.slice(0, rowsPerPage)
 
   const renderContent = () => {
     switch (currentView) {
@@ -197,208 +219,184 @@ export default function DashboardPage() {
       case 'itpo-officials':
         return (
           <div>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">ITPO Officials Performance</h1>
-              <p className="text-gray-600">Monitor and analyze ITPO officials' performance metrics and complaint resolution efficiency.</p>
-            </div>
-            <div className="flex items-center gap-3 mb-6">
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {t.refresh}
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {t.export}
-              </button>
-              <button onClick={() => window.location.href = '/dashboard/itpo-officials/form'} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                {t.addItpoOfficial}
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">TOTAL ITPO OFFICIALS</p>
-                <p className="text-3xl font-bold text-gray-900">124</p>
-                <p className="text-xs text-green-600 mt-2">↑ 12% from last month</p>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
+                  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">ITPO Officials Directory</h1>
+                  <p className="text-[13px] text-[#6b7280] mt-0.5">Manage authorized ITPO Officials and their operational zone tagging across Bharat Mandapam.</p>
+                </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">AVG. RESPONSE TIME</p>
-                <p className="text-3xl font-bold text-gray-900">8.5 min</p>
-                <p className="text-xs text-green-600 mt-2">↓ 15% improvement</p>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">RESOLUTION RATE</p>
-                <p className="text-3xl font-bold text-green-600">94.2%</p>
-                <p className="text-xs text-green-600 mt-2">↑ 3% from last month</p>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">COMPLAINTS ASSIGNED</p>
-                <p className="text-3xl font-bold text-gray-900">1,247</p>
-                <p className="text-xs text-gray-500 mt-2">This month</p>
+              <div className="flex items-center gap-2 shrink-0">
+                <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] hover:bg-white rounded-lg">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </button>
+                <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-gray-50">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export to Excel
+                </button>
+                <button onClick={() => window.location.href = '/dashboard/itpo-officials/form'} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add ITPO Official
+                </button>
               </div>
             </div>
 
-            {/* Performance Charts/Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Complaint Resolution by Official</h3>
-                <div className="space-y-4">
-                  {officials.map((official) => (
-                    <div key={official.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">
-                            {official.name.split(' ').map(n => n[0]).join('')}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{official.name}</p>
-                          <p className="text-xs text-gray-500">{official.designation}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">87%</p>
-                        <p className="text-xs text-gray-500">Resolution Rate</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Ranking</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <span className="text-2xl font-bold text-yellow-600">1</span>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">Mr. Premjit Lal</p>
-                      <p className="text-sm text-gray-500">98% Resolution Rate • 5.2min Avg Response</p>
-                    </div>
-                    <span className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs font-medium">Top Performer</span>
+            <div className="grid grid-cols-4 gap-3 mb-3">
+              {[
+                { label: 'TOTAL ITPO OFFICIALS', value: '124', iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]', icon: 'shield' },
+                { label: 'CAMPUS-WIDE (ALL ZONES)', value: '72', iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]', icon: 'globe' },
+                { label: 'ZONE-SPECIFIC TAGGED', value: '52', iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]', icon: 'pin' },
+                { label: 'ACTIVE ACCOUNTS', value: '122', iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]', icon: 'check' },
+              ].map((card) => (
+                <div key={card.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{card.label}</p>
+                    <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{card.value}</p>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl font-bold text-gray-600">2</span>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">Mrs. Sunita Sharma</p>
-                      <p className="text-sm text-gray-500">95% Resolution Rate • 6.8min Avg Response</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl font-bold text-gray-600">3</span>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">Mr. Rajesh Kumar</p>
-                      <p className="text-sm text-gray-500">92% Resolution Rate • 7.5min Avg Response</p>
-                    </div>
+                  <div className={`w-10 h-10 rounded-full ${card.iconBg} ${card.iconColor} flex items-center justify-center`}>
+                    {card.icon === 'shield' && (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    )}
+                    {card.icon === 'globe' && (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    )}
+                    {card.icon === 'pin' && (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    )}
+                    {card.icon === 'check' && (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    )}
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Search officials..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <select
-                  value={filterZone}
-                  onChange={(e) => setFilterZone(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option>All Zone Tagging Scopes</option>
-                  <option>All Zones (Entire Complex)</option>
-                  <option>Zone-Specific</option>
-                </select>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="relative flex-1">
+                <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, email, phone, or employee ID"
+                  className="w-full h-10 pl-9 pr-9 bg-white border border-[#e5e7eb] rounded-lg text-[13px]"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#4b5563]" aria-label="Clear search">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                )}
               </div>
+              <select value={filterZone} onChange={(e) => setFilterZone(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] min-w-[190px]">
+                <option>All Zone Tagging Scopes</option>
+                <option>All Zones (Entire Complex)</option>
+                <option>Zone-Specific</option>
+              </select>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] min-w-[130px]">
+                <option>Active Only</option>
+                <option>Inactive Only</option>
+                <option>All Status</option>
+              </select>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">OFFICIAL NAME & LOGIN</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">DESIGNATION</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ASSIGNED COMPLAINTS</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RESOLVED</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">RESOLUTION RATE</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AVG RESPONSE TIME</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                <thead>
+                  <tr className="border-b border-[#eef1f4]">
+                    {['OFFICIAL NAME & LOGIN', 'DESIGNATION', 'CONTACT', 'TAGGED OPERATIONAL ZONES', 'STATUS', 'ACTIONS'].map((heading) => (
+                      <th key={heading} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{heading}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {officials.map((official) => (
-                    <tr key={official.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                <tbody>
+                  {visibleOfficials.map((official) => (
+                    <tr key={official.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 font-semibold text-sm">
-                              {official.name.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{official.name}</p>
-                            <p className="text-xs text-gray-500">{official.username}</p>
-                            <p className="text-xs text-gray-400">ID: {official.employeeId}</p>
+                          <div className="w-9 h-9 rounded-full bg-[#12786f] text-white text-[12px] font-semibold flex items-center justify-center shrink-0">{official.initials}</div>
+                          <div className="min-w-0">
+                            <p className="text-[13.5px] font-semibold text-[#111827] leading-tight">{official.name}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[12px] text-[#0f766e]">{official.username}</span>
+                              <span className="text-[11px] text-[#6b7280] bg-[#f3f4f6] rounded px-1.5 py-[1px]">{official.employeeId}</span>
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{official.designation}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">142</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">128</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          90.1%
+                      <td className="px-4 py-3 text-[13px] text-[#374151]">{official.designation}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-[12.5px] text-[#374151]">
+                          <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                          {official.phone}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[12px] text-[#6b7280] mt-0.5">
+                          <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                          {official.email}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#eef4ff] text-[#2563eb] text-[12px] font-medium">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          {official.zones}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">7.2 min</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          official.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1.5 text-[12.5px] font-medium ${official.status === 'Active' ? 'text-[#16a34a]' : 'text-[#6b7280]'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${official.status === 'Active' ? 'bg-[#22c55e]' : 'bg-[#9ca3af]'}`} />
                           {official.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View Details</button>
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
-                          <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-gray-50">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            Edit
+                          </button>
+                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-gray-50">Edit Zones</button>
+                          <button className="px-2 py-1 text-[12px] font-medium text-[#ef4444] hover:bg-red-50 rounded-md">Disable</button>
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {visibleOfficials.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#6b7280]">No officials match this search.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <p className="text-sm text-gray-500">Showing 1 to 3 of 124 officials</p>
-                <div className="flex items-center gap-4">
-                  <select className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
+              <div className="px-4 py-2.5 border-t border-[#eef1f4] flex items-center justify-between">
+                <p className="text-[12.5px] text-[#6b7280]">
+                  Showing {visibleOfficials.length === 0 ? 0 : 1} to {visibleOfficials.length} of {filteredOfficials.length} officials
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12.5px] text-[#6b7280]">Rows per page</span>
+                  <select value={rowsPerPage} onChange={(e) => setRowsPerPage(Number(e.target.value))} className="h-8 px-2 bg-white border border-[#e5e7eb] rounded-md text-[12.5px]">
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
                   </select>
-                  <span className="text-sm text-gray-500">rows per page</span>
                   <div className="flex items-center gap-1">
-                    <button className="p-2 rounded hover:bg-gray-100">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
+                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-gray-100 flex items-center justify-center" aria-label="Previous page">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 19l-7-7 7-7" /></svg>
                     </button>
-                    <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm font-medium">1</button>
-                    <button className="p-2 rounded hover:bg-gray-100">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                    <button className="w-7 h-7 rounded-md bg-[#16a34a] text-white text-[12px] font-semibold">1</button>
+                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-gray-100 flex items-center justify-center" aria-label="Next page">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
                     </button>
                   </div>
                 </div>
@@ -407,6 +405,70 @@ export default function DashboardPage() {
           </div>
         )
 
+      case 'housekeeping-ranking':
+        return (
+          <div>
+            <h1 className="text-[20px] font-semibold text-[#1f2937] mb-1">Housekeeping Worker Ranking</h1>
+            <p className="text-[13px] text-[#6b7280] mb-4">Ranked field performance across Bharat Mandapam housekeeping teams.</p>
+            <div className="bg-white rounded-xl border border-[#e8edf2] overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#eef1f4]">
+                    {['RANK', 'WORKER', 'AGENCY', 'TASKS CLOSED', 'SCORE'].map((heading) => (
+                      <th key={heading} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{heading}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['1', 'Ramesh Yadav', 'Soni Facility Management', '186', '98'],
+                    ['2', 'Kavita Devi', 'BLUSPRING ENTERPRISES LTD.', '164', '95'],
+                    ['3', 'Imran Khan', 'Soni Facility Management', '151', '93'],
+                  ].map((row) => (
+                    <tr key={row[0]} className="border-b border-[#f3f4f6] last:border-0">
+                      {row.map((cell) => <td key={cell} className="px-4 py-3 text-[13px] text-[#374151]">{cell}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+
+      case 'itpo-performance':
+        return (
+          <div>
+            <h1 className="text-[20px] font-semibold text-[#1f2937] mb-1">ITPO Official Performance</h1>
+            <p className="text-[13px] text-[#6b7280] mb-4">Resolution rate and response time for authorized ITPO officials.</p>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                ['AVG. RESPONSE TIME', '8.5 min'],
+                ['RESOLUTION RATE', '94.2%'],
+                ['COMPLAINTS ASSIGNED', '1,247'],
+              ].map(([label, value]) => (
+                <div key={label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{label}</p>
+                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-xl border border-[#e8edf2] overflow-hidden">
+              {officials.map((official, index) => (
+                <div key={official.id} className="flex items-center justify-between px-4 py-3 border-b border-[#f3f4f6] last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 text-[13px] font-semibold text-[#6b7280]">{index + 1}</span>
+                    <div className="w-9 h-9 rounded-full bg-[#12786f] text-white text-[12px] font-semibold flex items-center justify-center">{official.initials}</div>
+                    <div>
+                      <p className="text-[13.5px] font-semibold text-[#111827]">{official.name}</p>
+                      <p className="text-[12px] text-[#6b7280]">{official.designation}</p>
+                    </div>
+                  </div>
+                  <p className="text-[13px] font-medium text-[#16a34a]">{index === 0 ? '98%' : index === 1 ? '95%' : '92%'} resolution</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       case 'all-complaints':
         return (
           <div>
@@ -1105,319 +1167,191 @@ export default function DashboardPage() {
     }
   }
 
-  const getBreadcrumbText = () => {
-    switch (currentView) {
-      case 'overview': return t.overview
-      case 'complaint-register': return t.complaintRegister
-      case 'master-data-hub': return 'Master Data Hub'
-      case 'zones-areas': return 'Zones and Areas'
-      case 'agencies': return 'Agencies'
-      case 'itpo-officials': return 'ITPO Officials Performance'
-      case 'field-staff': return 'Field Staff'
-      case 'escalation-settings': return 'Escalation Settings'
-      case 'all-complaints': return t.allComplaints
-      case 'resolved': return t.resolved
-      case 'pending': return t.pending
-      default: return ''
-    }
+  const breadcrumbs: Record<ViewType, string> = {
+    overview: 'Overview',
+    'complaint-register': 'Complaint Register',
+    'housekeeping-ranking': 'Housekeeping Worker Ranking',
+    'itpo-performance': 'ITPO Official Performance',
+    'master-data-hub': 'Master Data Hub',
+    'zones-areas': 'Zones & Areas',
+    agencies: 'Agencies',
+    'itpo-officials': 'ITPO Officials',
+    'field-staff': 'Field Staff',
+    'escalation-settings': 'Escalation Settings',
+    'all-complaints': 'All Complaints',
+    resolved: 'Resolved',
+    pending: 'Pending',
+  }
+
+  const complaintItems: { id: ViewType; label: string; icon: string; badge?: string }[] = [
+    { id: 'overview', label: 'Overview', icon: 'grid' },
+    { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: '1' },
+    { id: 'housekeeping-ranking', label: 'Housekeeping Worker Ranking', icon: 'users' },
+    { id: 'itpo-performance', label: 'ITPO Official Performance', icon: 'chart' },
+  ]
+
+  const masterItems: { id: ViewType; label: string; icon: string }[] = [
+    { id: 'master-data-hub', label: 'Master Data Hub', icon: 'database' },
+    { id: 'zones-areas', label: 'Zones & Areas', icon: 'pin' },
+    { id: 'agencies', label: 'Agencies', icon: 'building' },
+    { id: 'itpo-officials', label: 'ITPO Officials', icon: 'badge' },
+    { id: 'field-staff', label: 'Field Staff', icon: 'users' },
+    { id: 'escalation-settings', label: 'Escalation Settings', icon: 'gear' },
+  ]
+
+  const NavIcon = ({ name }: { name: string }) => {
+    const common = 'w-[18px] h-[18px] shrink-0'
+    if (name === 'grid') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
+    if (name === 'clipboard') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+    if (name === 'users') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    if (name === 'chart') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    if (name === 'database') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 7c0 1.657 3.582 3 8 3s8-1.343 8-3-3.582-3-8-3-8 1.343-8 3zm0 5c0 1.657 3.582 3 8 3s8-1.343 8-3M4 7v10c0 1.657 3.582 3 8 3s8-1.343 8-3V7" /></svg>
+    if (name === 'pin') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    if (name === 'building') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+    if (name === 'badge') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
+    return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+  }
+
+  const navButton = (item: { id: ViewType; label: string; icon: string; badge?: string }) => {
+    const active = currentView === item.id
+    return (
+      <button
+        key={item.id}
+        onClick={() => setCurrentView(item.id)}
+        className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
+          active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
+        }`}
+      >
+        <NavIcon name={item.icon} />
+        <span className="flex-1 leading-tight">{item.label}</span>
+        {item.badge && (
+          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#e11d48] text-white text-[10px] font-bold flex items-center justify-center">{item.badge}</span>
+        )}
+      </button>
+    )
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-lg font-bold text-white">BM</span>
+    <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+      <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
+        <div className="px-3.5 pt-3.5 pb-2">
+          <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
+            <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
+              BM<span className="text-[#1d4ed8]">360</span>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">BM360</h1>
-              <p className="text-xs text-gray-500">Bharat Mandapam</p>
-            </div>
+            <div className="text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5">BHARAT MANDAPAM</div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4">
-          {/* ITPO Operations Section */}
-          <div className="px-4 mb-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t.itpoOperations}</p>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setCurrentView('overview')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'overview' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                {t.overview}
-              </button>
-              <button
-                onClick={() => setCurrentView('complaint-register')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'complaint-register' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                {t.complaintRegister}
-              </button>
-              <button
-                onClick={() => setCurrentView('itpo-officials')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'itpo-officials' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                ITPO Officials Performance
-              </button>
-            </nav>
-          </div>
-
-          {/* COMPLAINTS Section */}
-          <div className="px-4 mb-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t.complaints}</p>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setCurrentView('all-complaints')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'all-complaints' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {t.allComplaints}
-              </button>
-              <button
-                onClick={() => setCurrentView('resolved')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'resolved' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {t.resolved}
-              </button>
-              <button
-                onClick={() => setCurrentView('pending')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'pending' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                {t.pending}
-              </button>
-            </nav>
-          </div>
-
-          {/* MASTER DATA ENTRY Section */}
-          <div className="px-4 mb-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t.masterDataEntry}</p>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setCurrentView('master-data-hub')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'master-data-hub' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                Master Data Hub
-              </button>
-              <button
-                onClick={() => setCurrentView('zones-areas')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'zones-areas' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Zones and Areas
-              </button>
-              <button
-                onClick={() => setCurrentView('agencies')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'agencies' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                Agencies
-              </button>
-              <button
-                onClick={() => setCurrentView('itpo-officials')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'itpo-officials' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                ITPO Officials
-              </button>
-              <button
-                onClick={() => setCurrentView('field-staff')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'field-staff' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Field Staff
-              </button>
-              <button
-                onClick={() => setCurrentView('escalation-settings')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  currentView === 'escalation-settings' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Escalation Settings
-              </button>
-            </nav>
-          </div>
-
-          {/* Language Section */}
-          <div className="px-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t.language}</p>
-            <nav className="space-y-1">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  language === 'en' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
-                {t.english}
-              </button>
-              <button
-                onClick={() => setLanguage('hi')}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  language === 'hi' ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
-                {t.hindi}
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        {/* User Section */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">IA</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">{t.itpoAdministrator}</p>
-              <p className="text-xs text-gray-500">{t.operationalZone}</p>
-            </div>
-          </div>
+        <div className="px-3">
           <button
-            onClick={() => window.location.href = '/'}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+            onClick={() => setOpsOpen((open) => !open)}
+            className="w-full flex items-center gap-2.5 rounded-xl bg-[#0e4c5e] px-2.5 py-2 text-left"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            {t.logout}
+            <span className="w-8 h-8 rounded-lg bg-[#14586a] flex items-center justify-center">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[13px] font-semibold leading-tight">ITPO Operations</span>
+              <span className="block text-[10px] text-[#9ec3d0] leading-tight mt-0.5">BM360 · Operations</span>
+            </span>
+            <svg className={`w-4 h-4 text-[#9ec3d0] transition-transform ${opsOpen ? '' : '-rotate-90'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
           </button>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Navigation Bar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2">
+          {opsOpen && (
+            <>
+              <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">COMPLAINTS</p>
+              <nav className="space-y-0.5">{complaintItems.map(navButton)}</nav>
+            </>
+          )}
+          <p className="px-2 pt-4 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">MASTER DATA ENTRY</p>
+          <nav className="space-y-0.5">{masterItems.map(navButton)}</nav>
+        </div>
+
+        <div className="px-3.5 py-2.5 border-t border-white/10">
           <div className="flex items-center justify-between">
-            {/* Breadcrumbs */}
-            <div className="flex items-center gap-2 text-sm">
-              <a href="#" className="text-gray-500 hover:text-gray-700">{t.bm360}</a>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <span className="text-gray-900 font-medium">{getBreadcrumbText()}</span>
-            </div>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-4">
-              {/* Language Selector */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setLanguage('en')}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    language === 'en' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  onClick={() => setLanguage('hi')}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    language === 'hi' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  हिन्दी
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-
-              {/* User */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">IA</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{t.itpoAdministrator}</span>
-                <button
-                  onClick={() => window.location.href = '/'}
-                  className="ml-4 px-3 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50"
-                >
-                  Logout
-                </button>
-              </div>
+            <span className="text-[11px] text-[#b7d0d8]">Language / हिंदी</span>
+            <div className="flex items-center rounded-full bg-[#082f3b] p-0.5">
+              <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>EN</button>
+              <button onClick={() => setLanguage('hi')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>हिंदी</button>
             </div>
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          {renderContent()}
+        <div className="px-3.5 pb-2.5 flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-[#14586a] flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold leading-tight truncate">ITPO Administrator</p>
+            <p className="text-[11px] text-[#9ec3d0] leading-tight">ITPO Official</p>
+          </div>
         </div>
+
+        <div className="relative mx-3 mb-3 rounded-xl border border-[#1b8f84] bg-[#0c4654] px-3 py-2">
+          <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            <p className="text-[12px] text-white truncate">{operationalZone}</p>
+            <button onClick={() => setZoneMenuOpen((open) => !open)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
+              Change
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+          </div>
+          {zoneMenuOpen && (
+            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white text-[#111827] rounded-lg shadow-lg border border-[#e5e7eb] overflow-hidden z-20">
+              {['Unassigned (Set Zone)', 'All Zones (Entire Complex)', 'Hall 1-5', 'Hall 6-10'].map((zone) => (
+                <button
+                  key={zone}
+                  onClick={() => { setOperationalZone(zone); setZoneMenuOpen(false) }}
+                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[#f3f5f8]"
+                >
+                  {zone}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </aside>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span>BM360</span>
+            <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
+            <span className="text-[#111827] font-semibold">{breadcrumbs[currentView]}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
+              <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
+              <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
+            </div>
+            <div className="relative">
+              <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                type="text"
+                value={headerSearch}
+                onChange={(e) => setHeaderSearch(e.target.value)}
+                placeholder="Search complaints..."
+                className="w-[230px] h-9 pl-9 pr-3 rounded-full bg-[#f8fafc] text-[13px]"
+              />
+            </div>
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">IA</div>
+              <div className="leading-tight">
+                <p className="text-[12.5px] font-semibold text-[#111827]">ITPO Administrator</p>
+                <p className="text-[11px] text-[#6b7280]">ITPO Official</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto px-5 py-4">
+          {renderContent()}
+        </main>
       </div>
     </div>
   )
