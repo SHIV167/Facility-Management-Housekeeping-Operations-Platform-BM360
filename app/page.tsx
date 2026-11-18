@@ -86,7 +86,7 @@ export default function LoginPage() {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
           {/* Logo */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-10">
             <div className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center shadow-lg">
               <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" strokeLinecap="round" strokeLinejoin="round"/>
@@ -164,15 +164,31 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-blue-200/70">© 2026 Bharat Mandapam. All rights reserved.</p>
-            <p className="text-sm text-blue-200/70">ITPO Platform v2.0</p>
+          <div className="mt-10 flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+              </span>
+              <p className="text-sm text-blue-100">© 2026 Bharat Mandapam. All rights reserved.</p>
+            </div>
+            <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15">
+              <p className="text-sm font-medium text-blue-100">ITPO Platform v2.0</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Right Panel - Login Card */}
       <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 relative overflow-hidden">
+        {/* Dot pattern background */}
+        <div className="absolute inset-0 opacity-[0.35] pointer-events-none">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
+            backgroundSize: '24px 24px'
+          }}></div>
+        </div>
+
         {/* Subtle decorative elements */}
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-blue-100/50 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl"></div>
@@ -311,18 +327,40 @@ export default function LoginPage() {
                   <label htmlFor="otp" className="block text-sm font-semibold text-gray-700 mb-2.5">
                     Verification Code
                   </label>
-                  <input
-                    type="text"
-                    id="otp"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="••••••"
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-2xl text-center tracking-[0.5em] font-bold text-gray-900 bg-gray-50/50 placeholder-gray-300 transition-all duration-200"
-                    required
-                    maxLength={6}
-                    autoFocus
-                  />
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                  <div className="flex justify-center gap-3" onPaste={(e) => {
+                    e.preventDefault()
+                    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+                    setOtp(pasted)
+                    const next = Math.min(pasted.length, 5)
+                    document.getElementById(`otp-${next}`)?.focus()
+                  }}>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <input
+                        key={i}
+                        id={`otp-${i}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={otp[i] || ''}
+                        autoFocus={i === 0}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(-1)
+                          const chars = otp.split('')
+                          chars[i] = val
+                          const joined = chars.join('').slice(0, 6)
+                          setOtp(joined)
+                          if (val && i < 5) document.getElementById(`otp-${i + 1}`)?.focus()
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !otp[i] && i > 0) {
+                            document.getElementById(`otp-${i - 1}`)?.focus()
+                          }
+                        }}
+                        className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-gray-50/50 text-gray-900 transition-all duration-200"
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
                     <p className="text-sm text-blue-700">
                       Demo OTP: <span className="font-bold text-blue-900 text-base tracking-widest">{STATIC_OTP}</span>
                     </p>
