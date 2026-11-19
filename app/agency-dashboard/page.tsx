@@ -6,6 +6,8 @@ import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
+import AddSupervisorModal, { SupervisorFormData } from '@/components/AddSupervisorModal'
+import AddFieldStaffModal, { FieldStaffFormData } from '@/components/AddFieldStaffModal'
 import DocumentTitle from '@/components/DocumentTitle'
 
 export default function AgencyDashboardPage() {
@@ -22,6 +24,14 @@ export default function AgencyDashboardPage() {
   const [selectedComplaint, setSelectedComplaint] = useState<(typeof complaints)[number] | null>(null)
 const [attendanceOpen, setAttendanceOpen] = useState(false)
 const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
+const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'staff' | 'reports'>('overview')
+const [userRole, setUserRole] = useState<'manager' | 'supervisor'>('manager')
+const [staffSearch, setStaffSearch] = useState('')
+const [staffRoleFilter, setStaffRoleFilter] = useState('All Roles')
+const [staffStatusFilter, setStaffStatusFilter] = useState('All Status')
+const [copiedStaffId, setCopiedStaffId] = useState<string | null>(null)
+const [supervisorFormOpen, setSupervisorFormOpen] = useState(false)
+const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
@@ -130,6 +140,66 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       body: JSON.stringify(record),
     }).catch(() => {})
   }
+  const [staffMembers, setStaffMembers] = useState([
+    { id: 'SFM-5078', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_927', phone: '9953655078', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-2854', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_490', phone: '9599692854', agency: 'Soni Facility Management', zones: ['Z13_HALL_2_5_FIRST_FLOORS', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-5765', name: 'Ajay', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ajay_583', phone: '9572645765', agency: 'Soni Facility Management', zones: ['Z09_HALL_2_4', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'S-8585981877', name: 'AJENDER DHAKA', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ajenderdha_897', phone: '8585981877', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
+    { id: 'SFM-OH-01', name: 'Ajender Dhaka', role: 'Supervisor', designation: 'Operation Head', username: '@soni_ajenderdhaka', phone: '8585981877', agency: 'Soni Facility Management', zones: ['All Zones'], shift: 'No Shift', status: 'Active' },
+    { id: 'S-7303250081', name: 'AKASH', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_akash_667', phone: '7303250081', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 's-8178229001', name: 'AKASH KUMAR', role: 'Field Staff', designation: 'Housekeeping Field Staff', username: '@hk_akashkumar_140', phone: '8178229001', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-3596', name: 'Anil', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_anil_392', phone: '8130933596', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
+    { id: 'SFM-9115', name: 'Ankit', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ankit_933', phone: '9536389115', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'S-8273720470', name: 'ANKUR', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ankur_285', phone: '8273720470', agency: 'Soni Facility Management', zones: ['LOC-69D15C644867', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-4087', name: 'Arjun', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_arjun_209', phone: '7065644087', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-SUP-03', name: 'Arti', role: 'Supervisor', designation: 'Supervisor', username: '@soni_arti', phone: '7042963256', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'SFM-9185', name: 'Ashok', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ashok_840', phone: '8860589185', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
+    { id: 'SFM-6246', name: 'Daksh', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_daksh_648', phone: '8285246146', agency: 'Soni Facility Management', zones: ['LOC-C7D4DDDB2082', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
+    { id: 'TEST-AGENCY-HEAD', name: 'BM360 Test Agency Head', role: 'Supervisor', designation: 'Test Agency Head', username: '@test_agency_head', phone: '—', agency: 'Soni Facility Management', zones: ['Unassigned'], shift: 'No Shift', status: 'Active' },
+  ])
+
+  const isManager = userRole === 'manager'
+
+  const handleAddSupervisor = (data: SupervisorFormData) => {
+    setStaffMembers((prev) => [{
+      id: data.employeeId || `SFM-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: data.fullName,
+      role: 'Supervisor',
+      designation: data.designation,
+      username: data.username,
+      phone: data.mobile,
+      agency: 'Soni Facility Management',
+      zones: [data.zone],
+      shift: 'No Shift',
+      status: 'Pending',
+    }, ...prev])
+  }
+
+  const handleAddFieldStaff = (data: FieldStaffFormData) => {
+    setStaffMembers((prev) => [{
+      id: data.employeeId || `SFM-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: data.fullName,
+      role: 'Field Staff',
+      designation: data.designation,
+      username: data.username,
+      phone: data.mobile,
+      agency: 'Soni Facility Management',
+      zones: [data.zone],
+      shift: 'No Shift',
+      status: 'Pending',
+    }, ...prev])
+  }
+  const filteredStaff = staffMembers.filter((m) => {
+    const q = staffSearch.trim().toLowerCase()
+    const matchQ = !q || [m.name, m.id, m.username, m.designation, m.phone, m.zones.join(' ')].some((v) => v.toLowerCase().includes(q))
+    const matchRole = staffRoleFilter === 'All Roles' || m.role === staffRoleFilter
+    const matchStatus = staffStatusFilter === 'All Status' || (staffStatusFilter === 'Active' ? m.status === 'Active' : m.status === 'Pending')
+    return matchQ && matchRole && matchStatus
+  })
+  const supCount = staffMembers.filter((m) => m.role === 'Supervisor').length
+  const fieldCount = staffMembers.filter((m) => m.role === 'Field Staff').length
+  const activeCount = staffMembers.filter((m) => m.status === 'Active').length
+  const pendingCount = staffMembers.filter((m) => m.status === 'Pending').length
   return (
     
       <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
@@ -161,10 +231,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">COMPLAINTS</p>
           <nav className="space-y-0.5">
             {navItems.map((item) => {
-              const active = item.id === 'complaints'
+              const active = item.id === activeView
               return (
                 <button
                   key={item.id}
+                  onClick={() => setActiveView(item.id as 'overview' | 'complaints' | 'staff' | 'reports')}
                   className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
                     active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
                   }`}
@@ -258,6 +329,155 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         </header>
 
         <main className="flex-1 overflow-y-auto px-5 py-4">
+          {activeView === 'staff' ? (
+          <div>
+            {/* Staff header */}
+            <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Agency Staff &amp; Supervisors</h1>
+                <p className="text-[13px] text-[#6b7280] mt-1">{isManager ? 'Manage staff, supervisors, zones and shifts.' : 'View-only access — contact your manager for changes.'}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setUserRole(isManager ? 'supervisor' : 'manager')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors ${isManager ? 'bg-[#0e4c5e] text-white border-[#0e4c5e]' : 'bg-white text-[#374151] border-[#e5e7eb] hover:bg-[#f8fafc]'}">
+                  {isManager ? 'Manager Access' : 'Supervisor Access'}
+                </button>
+                {isManager && (
+                  <><button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Refresh</button>
+                  <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export to Excel</button></>
+                )}
+              </div>
+            </div>
+
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
+              {([
+                { label: 'TOTAL STAFF', value: staffMembers.length, color: 'text-[#111827]' },
+                { label: 'SUPERVISORS', value: supCount, color: 'text-[#4f46e5]' },
+                { label: 'FIELD STAFF', value: fieldCount, color: 'text-[#111827]' },
+                { label: 'ACTIVE', value: activeCount, color: 'text-[#16a34a]' },
+                { label: 'PENDING', value: pendingCount, color: 'text-[#ea580c]' },
+              ]).map((c) => (
+                <div key={c.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.label}</p>
+                  <p className={`text-[28px] font-semibold leading-none mt-1.5 ${c.color}`}>{c.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} placeholder="Search staff, ID, username, designation, zone..." className="w-full h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+              </div>
+              {[
+                { val: staffRoleFilter, set: setStaffRoleFilter, opts: ['All Roles', 'Supervisor', 'Field Staff'] },
+                { val: staffStatusFilter, set: setStaffStatusFilter, opts: ['All Status', 'Active', 'Pending'] },
+              ].map((f, i) => (
+                <select key={i} value={f.val} onChange={(e) => f.set(e.target.value)} className="h-9 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151]">
+                  {f.opts.map((o) => <option key={o}>{o}</option>)}
+                </select>
+              ))}
+              {isManager && (
+                <>
+                <button onClick={() => setFieldStaffFormOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Add Field Staff
+                </button>
+                <button onClick={() => setSupervisorFormOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  Add Supervisor
+                </button>
+                </>
+              )}
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#eef1f4]">
+                      {['#', 'STAFF', 'ID', 'ROLE / DESIGNATION', 'USERNAME', 'PHONE', 'AGENCY', 'ZONES', 'SHIFT', 'STATUS', 'ACTIONS'].map((h) => (
+                        <th key={h} className="px-3 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStaff.map((m, idx) => {
+                      const ini = m.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      return (
+                        <tr key={m.id + idx} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                          <td className="px-3 py-3 text-[12px] text-[#9ca3af]">{idx + 1}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{ini}</div>
+                              <div className="min-w-0"><p className="text-[13px] font-semibold text-[#111827] truncate max-w-[120px]">{m.name}</p><p className="text-[10.5px] text-[#9ca3af]">{m.role === 'Supervisor' ? '★ Direct (Agency Ops)' : 'Agency Staff'}</p></div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-[12px] font-medium text-[#374151] whitespace-nowrap">{m.id}</td>
+                          <td className="px-3 py-3">
+                            <p className="text-[12.5px] font-semibold text-[#111827]">{m.role}</p>
+                            <p className="text-[11px] text-[#6b7280]">{m.designation}</p>
+                          </td>
+                          <td className="px-3 py-3 text-[12px] text-[#0f766e] whitespace-nowrap">{m.username}</td>
+                          <td className="px-3 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{m.phone}</td>
+                          <td className="px-3 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{m.agency}</td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-1 max-w-[180px]">
+                              {m.zones.slice(0, 2).map((z) => <span key={z} className="px-1.5 py-0.5 rounded bg-[#f3f4f6] text-[10px] font-medium text-[#4b5563] whitespace-nowrap">{z}</span>)}
+                              {m.zones.length > 2 && <span className="px-1.5 py-0.5 rounded bg-[#f3f4f6] text-[10px] font-medium text-[#6b7280]">+{m.zones.length - 2} more</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-[12px] text-[#6b7280] whitespace-nowrap">{m.shift}</td>
+                          <td className="px-3 py-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${m.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>{m.status}</span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {isManager && (
+                                <>
+                                  <button title="Edit Staff Details" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4] transition-colors">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                  </button>
+                                  <button title="Schedule / View Shifts by Date" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#d97706] hover:bg-[#fff7ed] transition-colors">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                  </button>
+                                  <button title="Manage Zones" className="px-2 py-1 text-[11.5px] font-medium text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">Zones</button>
+                                </>
+                              )}
+                              <button
+                                title="Copy Username"
+                                onClick={() => { navigator.clipboard?.writeText(m.username); setCopiedStaffId(m.id); setTimeout(() => setCopiedStaffId(null), 1500) }}
+                                className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors"
+                              >
+                                {copiedStaffId === m.id ? (
+                                  <svg className="w-3.5 h-3.5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                ) : (
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+                                )}
+                              </button>
+                              {isManager && m.status === 'Pending' && <button className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {filteredStaff.length === 0 && (
+                      <tr><td colSpan={11} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No staff match your filters.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {!isManager && (
+                <div className="px-5 py-3 border-t border-[#eef1f4] bg-[#f8fafc]">
+                  <p className="text-[12px] text-[#9ca3af]">Supervisor view — read-only. Switch to Manager Access to add/edit staff.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          ) : (
+          <>
           {/* Greeting Header */}
           <div className="mb-4">
             <div className="flex items-start justify-between gap-4">
@@ -296,7 +516,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
           </div>
 
-          {/* Complaint Overview Section */}
+          {activeView === 'overview' && (
           <div className="mb-3">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[15px] font-semibold text-[#111827]">Complaint Overview</h2>
@@ -356,7 +576,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
           </div>
 
-          {/* All Complaints Section */}
+          )}
+
+          {(activeView === 'overview' || activeView === 'complaints') && (
           <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
             <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
               <div>
@@ -468,6 +690,49 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               </div>
             </div>
           </div>
+          )}
+
+          {activeView === 'reports' && (
+          <div>
+            <div className="mb-4">
+              <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Reports & Analytics</h1>
+              <p className="text-[13px] text-[#6b7280] mt-1">Complaint and staff performance across your agency zones.</p>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              {[{ l: 'TOTAL COMPLAINTS', v: '54', c: 'text-[#111827]' }, { l: 'RESOLVED', v: '51', c: 'text-[#16a34a]' }, { l: 'AVG RESOLUTION', v: '2.4h', c: 'text-[#111827]' }, { l: 'SLA COMPLIANCE', v: '94%', c: 'text-[#0f766e]' }].map((c) => (
+                <div key={c.l} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.l}</p>
+                  <p className={`text-[28px] font-semibold leading-none mt-1.5 ${c.c}`}>{c.v}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid lg:grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Complaints by Zone</h3>
+                {[['Hall 1-5', 14, '#0e4c5e'], ['Hall 6-10', 11, '#0f766e'], ['Hall 11-14', 9, '#1b8f84'], ['Admin Building', 8, '#12786f'], ['Parking & Open Areas', 7, '#0d9488'], ['Other Zones', 5, '#14b8a6']].map(([z, v, col]) => (
+                  <div key={z as string} className="mb-3">
+                    <div className="flex justify-between text-[12px] mb-1"><span className="text-[#374151] font-medium">{z}</span><span className="text-[#6b7280]">{v}</span></div>
+                    <div className="h-2 rounded-full bg-[#f3f4f6]"><div className="h-2 rounded-full" style={{ width: `${(v as number) / 14 * 100}%`, background: col as string }} /></div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Staff Summary</h3>
+                {[['Active Supervisors', supCount, '#4f46e5'], ['Field Staff', fieldCount, '#0e4c5e'], ['Pending Activation', pendingCount, '#ea580c'], ['Zones Covered', new Set(staffMembers.flatMap((m) => m.zones)).size, '#16a34a']].map(([l, v, col]) => (
+                  <div key={l as string} className="flex items-center justify-between py-2.5 border-b border-[#f3f4f6] last:border-0">
+                    <span className="text-[13px] text-[#374151]">{l}</span>
+                    <span className="text-[15px] font-semibold" style={{ color: col as string }}>{v}</span>
+                  </div>
+                ))}
+                <div className="mt-4 pt-4 border-t border-[#eef1f4]">
+                  <p className='text-[12px] text-[#9ca3af]'>Reports are generated from live portal data. Export options available for managers.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          )}
+          </>
+          )}
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} />
@@ -477,6 +742,19 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
         onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone); setZoneModalOpen(false) }}
+      />
+      <AddSupervisorModal
+        open={supervisorFormOpen}
+        onClose={() => setSupervisorFormOpen(false)}
+        agencyName="Soni Facility Management"
+        onSubmit={handleAddSupervisor}
+      />
+      <AddFieldStaffModal
+        open={fieldStaffFormOpen}
+        onClose={() => setFieldStaffFormOpen(false)}
+        agencyName="Soni Facility Management"
+        supervisors={staffMembers.filter((m) => m.role === 'Supervisor').map((m) => ({ name: m.name, username: m.username }))}
+        onSubmit={handleAddFieldStaff}
       />
       <AttendanceModal
         open={attendanceOpen}
