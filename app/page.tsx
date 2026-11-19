@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import DocumentTitle from '@/components/DocumentTitle'
 
 export default function LoginPage() {
   const [step, setStep] = useState(1)
@@ -64,7 +65,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    
+      <div className="min-h-screen flex">
+      <DocumentTitle title="BM360 Login" />
       {/* Left Panel - Brand */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
         {/* Gradient background */}

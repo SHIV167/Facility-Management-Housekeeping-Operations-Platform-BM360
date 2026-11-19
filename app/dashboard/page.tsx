@@ -3,6 +3,14 @@
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
+import ZoneSelectModal from '@/components/ZoneSelectModal'
+import ZoneFormModal from '@/components/ZoneFormModal'
+import { defaultZones, ZoneRecord } from '@/lib/zones'
+import AgencyFormModal from '@/components/AgencyFormModal'
+import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
+import { defaultAgencies, AgencyRecord, defaultEmployees, EmployeeRecord } from '@/lib/agencies'
+import ImportEmployeesModal, { ImportedEmployee } from '@/components/ImportEmployeesModal'
+import DocumentTitle from '@/components/DocumentTitle'
 
 type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
 
@@ -15,7 +23,21 @@ export default function DashboardPage() {
   const [opsOpen, setOpsOpen] = useState(true)
   const [headerSearch, setHeaderSearch] = useState('')
   const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
+  const [zoneModalOpen, setZoneModalOpen] = useState(false)
+const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
+const [zoneFormOpen, setZoneFormOpen] = useState(false)
+const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
+const [zoneSearch, setZoneSearch] = useState('')
+const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
+const [agencyFormOpen, setAgencyFormOpen] = useState(false)
+const [editingAgency, setEditingAgency] = useState<AgencyRecord | null>(null)
+const [agencySearch, setAgencySearch] = useState('')
+const [employees, setEmployees] = useState<EmployeeRecord[]>(defaultEmployees)
+const [selectedAgencyId, setSelectedAgencyId] = useState<number | null>(null)
+const [importOpen, setImportOpen] = useState(false)
+const [employeeSearch, setEmployeeSearch] = useState('')
+const [attendanceOpen, setAttendanceOpen] = useState(false)
+const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
   const [operationalZone, setOperationalZone] = useState('Unassigned (Set Zone)')
   const [showItpoForm, setShowItpoForm] = useState(false)
 
@@ -102,12 +124,6 @@ export default function DashboardPage() {
     }
   ]
 
-  const zones = [
-    { id: 1, name: 'Hall 1-5', area: '12000 sq ft', manager: 'Mrs. Sunita Sharma', status: 'Active' },
-    { id: 2, name: 'Hall 6-10', area: '15000 sq ft', manager: 'Mr. Rajesh Kumar', status: 'Active' },
-    { id: 3, name: 'Hall 11-14', area: '18000 sq ft', manager: 'Mr. Premjit Lal', status: 'Active' },
-    { id: 4, name: 'Parking Area', area: '25000 sq ft', manager: 'Pending Assignment', status: 'Inactive' }
-  ]
 
   const areas = [
     { id: 1, name: 'Main Entrance', zone: 'Hall 1-5', type: 'Common Area', status: 'Active' },
@@ -136,30 +152,221 @@ export default function DashboardPage() {
 
   const visibleOfficials = filteredOfficials.slice(0, rowsPerPage)
 
+  const filteredZones = zones.filter((z) => z.name.toLowerCase().includes(zoneSearch.trim().toLowerCase()))
+
+  const handleSaveZone = (data: Omit<ZoneRecord, 'id'> & { id?: number }) => {
+    if (data.id) {
+      setZones(zones.map((z) => (z.id === data.id ? { ...z, ...data } : z)))
+    } else {
+      setZones([...zones, { ...data, id: Math.max(...zones.map((z) => z.id), 0) + 1 }])
+    }
+  }
+
+  const handleDeleteZone = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this zone?')) {
+      setZones(zones.filter((z) => z.id !== id))
+    }
+  }
+
+  const filteredAgencies = agencies.filter((a) =>
+    [a.name, a.contactPerson, a.phone, a.email].some((v) => v.toLowerCase().includes(agencySearch.trim().toLowerCase()))
+  )
+
+  const handleSaveAgency = (data: Omit<AgencyRecord, 'id'> & { id?: number }) => {
+    if (data.id) {
+      setAgencies(agencies.map((a) => (a.id === data.id ? { ...a, ...data } : a)))
+    } else {
+      setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }])
+    }
+  }
+
+  const handleDeleteAgency = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this agency?')) {
+      setAgencies(agencies.filter((a) => a.id !== id))
+    }
+  }
+
+  const staffOptions: StaffOption[] = [
+    { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
+    { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
+    { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
+    { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
+  ]
+
+  const handleMarkAttendance = (record: AttendanceRecord) => {
+    setAttendanceRecords((prev) => [record, ...prev.filter((r) => r.staffId !== record.staffId)])
+    fetch('/api/attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record),
+    }).catch(() => {})
+  }
+
+  const handleImportEmployees = (items: ImportedEmployee[]) => {
+    if (!selectedAgencyId) return
+    const base = Math.max(...employees.map((e) => e.id), 0)
+    setEmployees([...employees, ...items.map((it, i) => ({ ...it, id: base + i + 1, agencyId: selectedAgencyId, status: 'Active' as const }))])
+    setAgencies(agencies.map((a) => (a.id === selectedAgencyId ? { ...a, employeeCount: a.employeeCount + items.length } : a)))
+  }
+
+  const handleDeleteEmployee = (id: number) => {
+    const emp = employees.find((e) => e.id === id)
+    if (emp && window.confirm(`Delete ${emp.name}?`)) {
+      setEmployees(employees.filter((e) => e.id !== id))
+      setAgencies(agencies.map((a) => (a.id === emp.agencyId ? { ...a, employeeCount: Math.max(a.employeeCount - 1, 0) } : a)))
+    }
+  }
+
   const renderContent = () => {
+    if (selectedAgencyId) {
+      const agency = agencies.find((a) => a.id === selectedAgencyId)
+      if (agency) {
+        const agencyEmployees = employees.filter((e) => e.agencyId === agency.id)
+        const activeEmp = agencyEmployees.filter((e) => e.status === 'Active').length
+        const agencyComplaints = complaints.filter((c) => c.agency === agency.name)
+        const resolvedC = agencyComplaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
+        const initials = agency.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+        const filteredEmp = agencyEmployees.filter((e) => e.name.toLowerCase().includes(employeeSearch.trim().toLowerCase()) || e.role.toLowerCase().includes(employeeSearch.trim().toLowerCase()) || e.zone.toLowerCase().includes(employeeSearch.trim().toLowerCase()))
+        return (
+          <div>
+            <button onClick={() => { setSelectedAgencyId(null); setEmployeeSearch('') }} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#0f766e] hover:text-[#0b3c4a] mb-4">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 19l-7-7 7-7" /></svg>
+              Back to Agencies
+            </button>
+
+            {/* Agency header card */}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 mb-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-[#0e4c5e] text-white text-[18px] font-bold flex items-center justify-center shrink-0">{initials}</div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-[20px] font-semibold text-[#1f2937]">{agency.name}</h1>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${agency.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{agency.status}</span>
+                    </div>
+                    <p className="text-[12px] text-[#9ca3af] mt-0.5">ID: AG-{String(agency.id).padStart(3, '0')} • Partner since {agency.joinedDate}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {agency.services.map((svc) => <span key={svc} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#eef2ff] text-[#4f46e5]">{svc}</span>)}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[12.5px] text-[#6b7280] space-y-1">
+                  <p><span className="font-semibold text-[#374151]">Contact:</span> {agency.contactPerson}</p>
+                  <p><span className="font-semibold text-[#374151]">Phone:</span> {agency.phone}</p>
+                  <p><span className="font-semibold text-[#374151]">Email:</span> {agency.email}</p>
+                  <p><span className="font-semibold text-[#374151]">Address:</span> {agency.address}</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-[#eef1f4]">
+                <p className="text-[11px] font-semibold tracking-[0.05em] text-[#9ca3af] uppercase mb-2">Operational Zones ({agency.zones.length})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {agency.zones.length ? agency.zones.map((z) => (
+                    <span key={z} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#f8fafc] border border-[#e8edf2] text-[12px] font-medium text-[#374151]">
+                      <svg className="w-3 h-3 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      {z}
+                    </span>
+                  )) : <span className="text-[12.5px] text-[#9ca3af]">No zones assigned</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              {([
+                { label: 'TOTAL EMPLOYEES', value: String(agency.employeeCount), iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]' },
+                { label: 'ACTIVE STAFF', value: String(activeEmp), iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]' },
+                { label: 'ZONES COVERED', value: String(agency.zones.length), iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]' },
+                { label: 'COMPLAINTS HANDLED', value: String(agencyComplaints.length), iconBg: 'bg-[#fff7ed]', iconColor: 'text-[#ea580c]' },
+              ]).map((c) => (
+                <div key={c.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.label}</p>
+                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{c.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Employees section */}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Employees</h3>
+                  <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredEmp.length} of {agencyEmployees.length} imported employees</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" value={employeeSearch} onChange={(e) => setEmployeeSearch(e.target.value)} placeholder="Search employees..." className="w-52 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                  </div>
+                  <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    Import Employees
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#eef1f4]">
+                      {['EMPLOYEE', 'ROLE', 'PHONE', 'ZONE', 'SHIFT', 'STATUS', ''].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEmp.map((emp) => {
+                      const ini = emp.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      return (
+                        <tr key={emp.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-[#e6f7f4] text-[#0f766e] text-[11px] font-bold flex items-center justify-center">{ini}</div>
+                              <p className="text-[13.5px] font-semibold text-[#111827]">{emp.name}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.role}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.phone}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.zone}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.shift}</td>
+                          <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${emp.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{emp.status}</span></td>
+                          <td className="px-4 py-3"><button onClick={() => handleDeleteEmployee(emp.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#dc2626] bg-[#fef2f2] rounded-md hover:bg-[#fee2e2]">Delete</button></td>
+                        </tr>
+                      )
+                    })}
+                    {filteredEmp.length === 0 && (
+                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No employees found — use Import Employees to add staff.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    }
     switch (currentView) {
       case 'overview':
         return (
-          <div>
+          
+      <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.dashboardOverview}</h1>
-              <p className="text-gray-600">{t.welcomeMessage}</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">{t.dashboardOverview}</h1>
+              <p className="text-[13px] text-[#6b7280]">{t.welcomeMessage}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div onClick={() => setCurrentView('all-complaints')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
-                <p className="text-sm font-medium text-gray-500 mb-1">{t.totalComplaints}</p>
-                <p className="text-3xl font-bold text-gray-900">156</p>
+              <div onClick={() => setCurrentView('all-complaints')} role="button" className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">{t.totalComplaints}</p>
+                <p className="text-[28px] font-semibold text-[#111827]">156</p>
               </div>
-              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
-                <p className="text-sm font-medium text-gray-500 mb-1">{t.pendingComplaints}</p>
+              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">{t.pendingComplaints}</p>
                 <p className="text-3xl font-bold text-orange-600">23</p>
               </div>
-              <div onClick={() => setCurrentView('resolved')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
-                <p className="text-sm font-medium text-gray-500 mb-1">{t.resolvedComplaints}</p>
+              <div onClick={() => setCurrentView('resolved')} role="button" className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">{t.resolvedComplaints}</p>
                 <p className="text-3xl font-bold text-green-600">128</p>
               </div>
-              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
-                <p className="text-sm font-medium text-gray-500 mb-1">{t.overdueComplaints}</p>
+              <div onClick={() => setCurrentView('pending')} role="button" className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 cursor-pointer hover:border-[#1b8f84] hover:shadow-md transition-all">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">{t.overdueComplaints}</p>
                 <p className="text-3xl font-bold text-red-600">5</p>
               </div>
             </div>
@@ -170,40 +377,40 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Complaint Register</h1>
-              <p className="text-gray-600">View and manage all complaints across Bharat Mandapam</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Complaint Register</h1>
+              <p className="text-[13px] text-[#6b7280]">View and manage all complaints across Bharat Mandapam</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Agency</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ID</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Title</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Priority</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Agency</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {complaints.map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-gray-50">
+                    <tr key={complaint.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">#{complaint.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.title}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                          complaint.status === 'PENDING' ? 'bg-orange-100 text-orange-800' :
-                          'bg-blue-100 text-blue-800'
+                          complaint.status === 'COMPLETED' ? 'bg-[#e8f8ef] text-[#16a34a]' :
+                          complaint.status === 'PENDING' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                          'bg-[#eef2ff] text-[#4f46e5]'
                         }`}>
                           {complaint.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.priority === 'URGENT' ? 'bg-red-100 text-red-800' :
-                          complaint.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
+                          complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' :
+                          complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                          'bg-[#f3f4f6] text-[#6b7280]'
                         }`}>
                           {complaint.priority}
                         </span>
@@ -240,7 +447,7 @@ export default function DashboardPage() {
                   </svg>
                   Refresh
                 </button>
-                <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-gray-50">
+                <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -364,11 +571,12 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-gray-50">
+                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             Edit
                           </button>
-                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-gray-50">Edit Zones</button>
+                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">Edit Zones</button>
+                          <button onClick={() => window.location.href = `/official-dashboard?id=${official.id}`} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-md hover:bg-[#d7f0ea]">Dashboard</button>
                           <button className="px-2 py-1 text-[12px] font-medium text-[#ef4444] hover:bg-red-50 rounded-md">Disable</button>
                         </div>
                       </td>
@@ -393,11 +601,11 @@ export default function DashboardPage() {
                     <option value={50}>50</option>
                   </select>
                   <div className="flex items-center gap-1">
-                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-gray-100 flex items-center justify-center" aria-label="Previous page">
+                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-[#f3f5f8] flex items-center justify-center" aria-label="Previous page">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 19l-7-7 7-7" /></svg>
                     </button>
                     <button className="w-7 h-7 rounded-md bg-[#16a34a] text-white text-[12px] font-semibold">1</button>
-                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-gray-100 flex items-center justify-center" aria-label="Next page">
+                    <button className="w-7 h-7 rounded-md text-[#9ca3af] hover:bg-[#f3f5f8] flex items-center justify-center" aria-label="Next page">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
                     </button>
                   </div>
@@ -475,40 +683,40 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">All Complaints</h1>
-              <p className="text-gray-600">View all complaints across the system</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">All Complaints</h1>
+              <p className="text-[13px] text-[#6b7280]">View all complaints across the system</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Assigned To</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ID</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Title</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Priority</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Assigned To</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {complaints.map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-gray-50">
+                    <tr key={complaint.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">#{complaint.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.title}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                          complaint.status === 'PENDING' ? 'bg-orange-100 text-orange-800' :
-                          'bg-blue-100 text-blue-800'
+                          complaint.status === 'COMPLETED' ? 'bg-[#e8f8ef] text-[#16a34a]' :
+                          complaint.status === 'PENDING' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                          'bg-[#eef2ff] text-[#4f46e5]'
                         }`}>
                           {complaint.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.priority === 'URGENT' ? 'bg-red-100 text-red-800' :
-                          complaint.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
+                          complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' :
+                          complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                          'bg-[#f3f4f6] text-[#6b7280]'
                         }`}>
                           {complaint.priority}
                         </span>
@@ -527,23 +735,23 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Resolved Complaints</h1>
-              <p className="text-gray-600">View all resolved complaints</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Resolved Complaints</h1>
+              <p className="text-[13px] text-[#6b7280]">View all resolved complaints</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Resolved Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Agency</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ID</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Title</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Resolved Date</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Agency</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {complaints.filter(c => c.status === 'RESOLVED' || c.status === 'COMPLETED').map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-gray-50">
+                    <tr key={complaint.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">#{complaint.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.title}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.date}</td>
@@ -561,32 +769,32 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Pending Complaints</h1>
-              <p className="text-gray-600">View all pending complaints</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Pending Complaints</h1>
+              <p className="text-[13px] text-[#6b7280]">View all pending complaints</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Due Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Assigned To</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ID</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Title</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Due Date</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Priority</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Assigned To</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {complaints.filter(c => c.status === 'PENDING').map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-gray-50">
+                    <tr key={complaint.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">#{complaint.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.title}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{complaint.dueDate}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.priority === 'URGENT' ? 'bg-red-100 text-red-800' :
-                          complaint.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                          'bg-gray-100 text-gray-800'
+                          complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' :
+                          complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                          'bg-[#f3f4f6] text-[#6b7280]'
                         }`}>
                           {complaint.priority}
                         </span>
@@ -605,44 +813,44 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.zonesManagement}</h1>
-              <p className="text-gray-600">{t.zonesDescription}</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">{t.zonesManagement}</h1>
+              <p className="text-[13px] text-[#6b7280]">{t.zonesDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/zones/form'} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              <button onClick={() => window.location.href = '/dashboard/zones/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 {t.addZone}
               </button>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Zone Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Area</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Manager</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Zone Name</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Area</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Manager</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {zones.map((zone) => (
-                    <tr key={zone.id} className="hover:bg-gray-50">
+                    <tr key={zone.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{zone.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{zone.area}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{zone.manager}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          zone.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          zone.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'
                         }`}>
                           {zone.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
+                          <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
                       </td>
@@ -658,42 +866,42 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.areasManagement}</h1>
-              <p className="text-gray-600">{t.areasDescription}</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">{t.areasManagement}</h1>
+              <p className="text-[13px] text-[#6b7280]">{t.areasDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/areas/form'} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              <button onClick={() => window.location.href = '/dashboard/areas/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 {t.addArea}
               </button>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Area Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Zone</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Area Name</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Zone</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {areas.map((area) => (
-                    <tr key={area.id} className="hover:bg-gray-50">
+                    <tr key={area.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{area.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{area.zone}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{area.type}</td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">
                           {area.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
+                          <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
                       </td>
@@ -709,42 +917,42 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.categoriesManagement}</h1>
-              <p className="text-gray-600">{t.categoriesDescription}</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">{t.categoriesManagement}</h1>
+              <p className="text-[13px] text-[#6b7280]">{t.categoriesDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/categories/form'} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              <button onClick={() => window.location.href = '/dashboard/categories/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 {t.addCategory}
               </button>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Category Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Complaints</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Category Name</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Description</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Complaints</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#f3f4f6]">
                   {categories.map((category) => (
-                    <tr key={category.id} className="hover:bg-gray-50">
+                    <tr key={category.id} className="hover:bg-[#fafbfc]">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{category.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{category.description}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{category.complaints}</td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">
                           {category.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
+                          <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
                       </td>
@@ -760,14 +968,14 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Master Data Hub</h1>
-              <p className="text-gray-600">Centralized management of all master data for Bharat Mandapam operations.</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Master Data Hub</h1>
+              <p className="text-[13px] text-[#6b7280]">Centralized management of all master data for Bharat Mandapam operations.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('zones-areas')}>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('zones-areas')}>
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-[#e6f7f4] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -776,11 +984,11 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage operational zones and specific areas within Bharat Mandapam.</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">12</span>
-                  <span className="text-sm text-gray-500">Zones</span>
+                  <span className="text-2xl font-bold text-[#0f766e]">12</span>
+                  <span className="text-sm text-[#6b7280]">Zones</span>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('agencies')}>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('agencies')}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -792,10 +1000,10 @@ export default function DashboardPage() {
                 <p className="text-gray-600 text-sm mb-4">Manage housekeeping and facility management agencies.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-green-600">8</span>
-                  <span className="text-sm text-gray-500">Agencies</span>
+                  <span className="text-sm text-[#6b7280]">Agencies</span>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('itpo-officials')}>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('itpo-officials')}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -807,10 +1015,10 @@ export default function DashboardPage() {
                 <p className="text-gray-600 text-sm mb-4">Manage ITPO officials and their operational jurisdictions.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-purple-600">124</span>
-                  <span className="text-sm text-gray-500">Officials</span>
+                  <span className="text-sm text-[#6b7280]">Officials</span>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('field-staff')}>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('field-staff')}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -822,10 +1030,10 @@ export default function DashboardPage() {
                 <p className="text-gray-600 text-sm mb-4">Manage field staff and their assignments.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-orange-600">256</span>
-                  <span className="text-sm text-gray-500">Staff</span>
+                  <span className="text-sm text-[#6b7280]">Staff</span>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('escalation-settings')}>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentView('escalation-settings')}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -838,7 +1046,7 @@ export default function DashboardPage() {
                 <p className="text-gray-600 text-sm mb-4">Configure complaint escalation rules and timelines.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-red-600">5</span>
-                  <span className="text-sm text-gray-500">Rules</span>
+                  <span className="text-sm text-[#6b7280]">Rules</span>
                 </div>
               </div>
             </div>
@@ -849,42 +1057,80 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Zones and Areas</h1>
-              <p className="text-gray-600">Manage operational zones and specific areas within Bharat Mandapam.</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Zones and Areas</h1>
+              <p className="text-[13px] text-[#6b7280]">Manage operational zones and specific areas within Bharat Mandapam.</p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Zones</h3>
-                  <button onClick={() => window.location.href = '/dashboard/zones/form'} className="text-blue-600 hover:text-blue-700 text-sm font-medium">+ Add Zone</button>
-                </div>
-                <div className="space-y-3">
-                  {zones.map((zone) => (
-                    <div key={zone.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{zone.name}</p>
-                        <p className="text-sm text-gray-500">{zone.area}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${zone.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {zone.status}
-                      </span>
+            <div className="grid grid-cols-1 gap-6 mb-6">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-[#111827]">Zones</h3>
+                    <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredZones.length} of {zones.length} zones</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                      <input type="text" value={zoneSearch} onChange={(e) => setZoneSearch(e.target.value)} placeholder="Search zones..." className="w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
                     </div>
-                  ))}
+                    <button onClick={() => { setEditingZone(null); setZoneFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Add Zone
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-[480px] overflow-y-auto">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-white">
+                      <tr className="border-b border-[#eef1f4]">
+                        {['ZONE NAME', 'AREA', 'MANAGER', 'STATUS', 'ACTIONS'].map((h) => (
+                          <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredZones.map((zone) => (
+                        <tr key={zone.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#e6f7f4] text-[#0f766e] flex items-center justify-center shrink-0">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                              </div>
+                              <p className="text-[13.5px] font-semibold text-[#111827]">{zone.name}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{zone.area}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{zone.manager}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${zone.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{zone.status}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => { setEditingZone(zone); setZoneFormOpen(true) }} className="px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">Edit</button>
+                              <button onClick={() => handleDeleteZone(zone.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#dc2626] bg-[#fef2f2] rounded-md hover:bg-[#fee2e2]">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredZones.length === 0 && (
+                        <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No zones match your search</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Areas</h3>
-                  <button onClick={() => window.location.href = '/dashboard/areas/form'} className="text-blue-600 hover:text-blue-700 text-sm font-medium">+ Add Area</button>
+                  <button onClick={() => window.location.href = '/dashboard/areas/form'} className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">+ Add Area</button>
                 </div>
                 <div className="space-y-3">
                   {areas.map((area) => (
-                    <div key={area.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={area.id} className="flex items-center justify-between p-3 bg-[#f8fafc] rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">{area.name}</p>
-                        <p className="text-sm text-gray-500">{area.zone} • {area.type}</p>
+                        <p className="text-sm text-[#6b7280]">{area.zone} • {area.type}</p>
                       </div>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">
                         {area.status}
                       </span>
                     </div>
@@ -898,111 +1144,94 @@ export default function DashboardPage() {
       case 'agencies':
         return (
           <div>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Agencies</h1>
-              <p className="text-gray-600">Manage housekeeping and facility management agencies.</p>
+            <div className="mb-4">
+              <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Agencies</h1>
+              <p className="text-[13px] text-[#6b7280] mt-1">Manage housekeeping and facility management agencies across Bharat Mandapam.</p>
             </div>
-            <div className="flex items-center gap-3 mb-6">
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Agency
-              </button>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AGENCY NAME</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">CONTACT PERSON</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">PHONE</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">EMAIL</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SERVICES</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">SF</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Soni Facility Management</p>
-                          <p className="text-xs text-gray-500">ID: AG-001</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Laxman Lal</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">9876543210</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">contact@sonifacility.com</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Housekeeping
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
-                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-semibold text-sm">BL</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">BLUSPRING ENTERPRISES LTD.</p>
-                          <p className="text-xs text-gray-500">ID: AG-002</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Rajesh Kumar</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">9876543211</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">info@bluspring.com</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Housekeeping
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
-                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Agency Directory</h3>
+                  <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredAgencies.length} of {agencies.length} agencies</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" value={agencySearch} onChange={(e) => setAgencySearch(e.target.value)} placeholder="Search agencies..." className="w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                  </div>
+                  <button onClick={() => { setEditingAgency(null); setAgencyFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    Add Agency
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#eef1f4]">
+                      {['AGENCY', 'CONTACT PERSON', 'PHONE', 'EMAIL', 'SERVICES', 'STATUS', 'ACTIONS'].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAgencies.map((agency) => {
+                      const initials = agency.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      return (
+                        <tr key={agency.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-[#0e4c5e] text-white text-[11px] font-bold flex items-center justify-center shrink-0">{initials}</div>
+                              <div className="min-w-0">
+                                <p className="text-[13.5px] font-semibold text-[#111827] leading-tight">{agency.name}</p>
+                                <p className="text-[11px] text-[#9ca3af] mt-0.5">ID: AG-{String(agency.id).padStart(3, '0')}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{agency.contactPerson}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{agency.phone}</td>
+                          <td className="px-4 py-3 text-[13px] text-[#374151]">{agency.email}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {agency.services.slice(0, 2).map((svc) => (
+                                <span key={svc} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#eef2ff] text-[#4f46e5]">{svc}</span>
+                              ))}
+                              {agency.services.length > 2 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#f3f4f6] text-[#6b7280]">+{agency.services.length - 2}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${agency.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{agency.status}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => setSelectedAgencyId(agency.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#1d4ed8] bg-[#e8eefc] rounded-md hover:bg-[#dbe4fb]">Details</button>
+                              <button onClick={() => { setEditingAgency(agency); setAgencyFormOpen(true) }} className="px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">{t.edit}</button>
+                              <button onClick={() => handleDeleteAgency(agency.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#dc2626] bg-[#fef2f2] rounded-md hover:bg-[#fee2e2]">{t.delete}</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {filteredAgencies.length === 0 && (
+                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No agencies match your search</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )
-
       case 'field-staff':
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Field Staff</h1>
-              <p className="text-gray-600">Manage field staff and their assignments across zones.</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Field Staff</h1>
+              <p className="text-[13px] text-[#6b7280]">Manage field staff and their assignments across zones.</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              <button className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -1010,41 +1239,74 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">TOTAL STAFF</p>
-                <p className="text-3xl font-bold text-gray-900">256</p>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">TOTAL STAFF</p>
+                <p className="text-[28px] font-semibold text-[#111827]">256</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">ACTIVE ON DUTY</p>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">ACTIVE ON DUTY</p>
                 <p className="text-3xl font-bold text-green-600">198</p>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <p className="text-sm font-medium text-gray-500 mb-1">ON LEAVE</p>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
+                <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">ON LEAVE</p>
                 <p className="text-3xl font-bold text-orange-600">58</p>
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        {/* Daily Attendance */}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5 mb-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#e6f7f4] text-[#0f766e] flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[15px] font-semibold text-[#111827]">Daily Attendance</h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                        {attendanceRecords.length ? 'Marked' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="text-[12.5px] text-[#6b7280] mt-0.5">Capture front-camera photo with automatic date &amp; time (GPS optional).</p>
+                  </div>
+                </div>
+                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm shrink-0">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Mark Daily Attendance
+                </button>
+              </div>
+              {attendanceRecords.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-[#eef1f4] flex flex-wrap gap-2">
+                  {attendanceRecords.slice(0, 6).map((r) => (
+                    <span key={r.staffId} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#f8fafc] border border-[#e8edf2] text-[11.5px] font-medium text-[#374151]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]"></span>
+                      {r.staffName} · {r.timestamp}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+<div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STAFF NAME</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">AGENCY</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ASSIGNED ZONE</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SHIFT</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">STATUS</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">ACTIONS</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">STAFF NAME</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">AGENCY</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ASSIGNED ZONE</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">SHIFT</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">STATUS</th>
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ACTIONS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
+                <tbody className="divide-y divide-[#f3f4f6]">
+                  <tr className="hover:bg-[#fafbfc]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold text-sm">RS</span>
+                        <div className="w-10 h-10 bg-[#e6f7f4] rounded-full flex items-center justify-center">
+                          <span className="text-[#0f766e] font-semibold text-sm">RS</span>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">Ramesh Singh</p>
-                          <p className="text-xs text-gray-500">ID: ST-001</p>
+                          <p className="text-xs text-[#6b7280]">ID: ST-001</p>
                         </div>
                       </div>
                     </td>
@@ -1052,18 +1314,18 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">Hall 1-5</td>
                     <td className="px-6 py-4 text-sm text-gray-900">Morning (6AM - 2PM)</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">
                         On Duty
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                         <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
                       </div>
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
+                  <tr className="hover:bg-[#fafbfc]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -1071,7 +1333,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">Suresh Gupta</p>
-                          <p className="text-xs text-gray-500">ID: ST-002</p>
+                          <p className="text-xs text-[#6b7280]">ID: ST-002</p>
                         </div>
                       </div>
                     </td>
@@ -1079,13 +1341,13 @@ export default function DashboardPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">Hall 6-10</td>
                     <td className="px-6 py-4 text-sm text-gray-900">Evening (2PM - 10PM)</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff7ed] text-[#ea580c]">
                         On Leave
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                        <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                         <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
                       </div>
                     </td>
@@ -1100,11 +1362,11 @@ export default function DashboardPage() {
         return (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Escalation Settings</h1>
-              <p className="text-gray-600">Configure complaint escalation rules and timelines for efficient resolution.</p>
+              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Escalation Settings</h1>
+              <p className="text-[13px] text-[#6b7280]">Configure complaint escalation rules and timelines for efficient resolution.</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+              <button className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -1112,50 +1374,50 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Level 1 Escalation</h3>
-                    <p className="text-sm text-gray-500">Auto-escalate after 30 minutes</p>
+                    <p className="text-sm text-[#6b7280]">Auto-escalate after 30 minutes</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
+                    <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-[#f8fafc] rounded-lg p-4">
                   <p className="text-sm text-gray-600"><strong>Escalate to:</strong> Zone Supervisor</p>
                   <p className="text-sm text-gray-600"><strong>Priority:</strong> Medium</p>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Level 2 Escalation</h3>
-                    <p className="text-sm text-gray-500">Auto-escalate after 1 hour</p>
+                    <p className="text-sm text-[#6b7280]">Auto-escalate after 1 hour</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
+                    <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-[#f8fafc] rounded-lg p-4">
                   <p className="text-sm text-gray-600"><strong>Escalate to:</strong> ITPO Manager</p>
                   <p className="text-sm text-gray-600"><strong>Priority:</strong> High</p>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Level 3 Escalation</h3>
-                    <p className="text-sm text-gray-500">Auto-escalate after 2 hours</p>
+                    <p className="text-sm text-[#6b7280]">Auto-escalate after 2 hours</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">{t.edit}</button>
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
+                    <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-[#f8fafc] rounded-lg p-4">
                   <p className="text-sm text-gray-600"><strong>Escalate to:</strong> ITPO Director</p>
                   <p className="text-sm text-gray-600"><strong>Priority:</strong> Urgent</p>
                 </div>
@@ -1240,6 +1502,7 @@ export default function DashboardPage() {
 
   return (
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+      <DocumentTitle title="BM360 Admin Dashboard" />
       <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
         <div className="px-3.5 pt-3.5 pb-2">
           <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
@@ -1301,24 +1564,11 @@ export default function DashboardPage() {
           <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             <p className="text-[12px] text-white truncate">{operationalZone}</p>
-            <button onClick={() => setZoneMenuOpen((open) => !open)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
+            <button onClick={() => setZoneModalOpen(true)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
               Change
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
             </button>
           </div>
-          {zoneMenuOpen && (
-            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white text-[#111827] rounded-lg shadow-lg border border-[#e5e7eb] overflow-hidden z-20">
-              {['Unassigned (Set Zone)', 'All Zones (Entire Complex)', 'Hall 1-5', 'Hall 6-10'].map((zone) => (
-                <button
-                  key={zone}
-                  onClick={() => { setOperationalZone(zone); setZoneMenuOpen(false) }}
-                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[#f3f5f8]"
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -1347,6 +1597,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="flex items-center gap-2 pl-1">
+
               <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">IA</div>
               <div className="leading-tight">
                 <p className="text-[12.5px] font-semibold text-[#111827]">ITPO Administrator</p>
@@ -1361,6 +1612,36 @@ export default function DashboardPage() {
         </main>
       </div>
       <ItpoOfficialFormModal open={showItpoForm} onClose={() => setShowItpoForm(false)} />
+      <ZoneFormModal
+        open={zoneFormOpen}
+        onClose={() => setZoneFormOpen(false)}
+        zone={editingZone}
+        onSave={handleSaveZone}
+      />
+      <AgencyFormModal
+        open={agencyFormOpen}
+        onClose={() => setAgencyFormOpen(false)}
+        agency={editingAgency}
+        onSave={handleSaveAgency}
+      />
+      <ImportEmployeesModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportEmployees}
+      />
+      <AttendanceModal
+        open={attendanceOpen}
+        onClose={() => setAttendanceOpen(false)}
+        staff={staffOptions}
+        markedIds={attendanceRecords.map((r) => r.staffId)}
+        onMark={handleMarkAttendance}
+      />
+      <ZoneSelectModal
+        open={zoneModalOpen}
+        onClose={() => setZoneModalOpen(false)}
+        currentZone={operationalZone}
+        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone); setZoneModalOpen(false) }}
+      />
     </div>
   )
 }

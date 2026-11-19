@@ -3,6 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import RegisterComplaintModal from '@/components/RegisterComplaintModal'
+import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
+import ZoneSelectModal from '@/components/ZoneSelectModal'
+import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
+import DocumentTitle from '@/components/DocumentTitle'
 
 export default function AgencyDashboardPage() {
   const router = useRouter()
@@ -12,9 +16,12 @@ export default function AgencyDashboardPage() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('All Campus')
-  const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
+  const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [overviewTab, setOverviewTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
+  const [selectedComplaint, setSelectedComplaint] = useState<(typeof complaints)[number] | null>(null)
+const [attendanceOpen, setAttendanceOpen] = useState(false)
+const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
@@ -108,8 +115,25 @@ export default function AgencyDashboardPage() {
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
   }
 
+  const staffOptions: StaffOption[] = [
+    { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
+    { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
+    { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
+    { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
+  ]
+
+  const handleMarkAttendance = (record: AttendanceRecord) => {
+    setAttendanceRecords((prev) => [record, ...prev.filter((r) => r.staffId !== record.staffId)])
+    fetch('/api/attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record),
+    }).catch(() => {})
+  }
   return (
-    <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+    
+      <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+      <DocumentTitle title="Agency Portal" />
       {/* Sidebar - same theme as main dashboard */}
       <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
         <div className="px-3.5 pt-3.5 pb-2">
@@ -183,24 +207,11 @@ export default function AgencyDashboardPage() {
           <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             <p className="text-[12px] text-white truncate">{operationalZone}</p>
-            <button onClick={() => setZoneMenuOpen((open) => !open)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
+            <button onClick={() => setZoneModalOpen(true)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
               Change
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
             </button>
           </div>
-          {zoneMenuOpen && (
-            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white text-[#111827] rounded-lg shadow-lg border border-[#e5e7eb] overflow-hidden z-20">
-              {['All Campus', 'Hall 1-5', 'Hall 6-10', 'Hall 11-14', 'Parking Area'].map((zone) => (
-                <button
-                  key={zone}
-                  onClick={() => { setOperationalZone(zone); setZoneMenuOpen(false) }}
-                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[#f3f5f8]"
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -230,6 +241,13 @@ export default function AgencyDashboardPage() {
               />
             </div>
             <div className="flex items-center gap-2 pl-1">
+              <button
+                onClick={() => setZoneModalOpen(true)}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#e6f7f4] border border-[#b7e4d4] text-[12.5px] font-semibold text-[#0f766e] hover:bg-[#d7f0ea] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Change Zone
+              </button>
               <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">LL</div>
               <div className="leading-tight">
                 <p className="text-[12.5px] font-semibold text-[#111827]">Laxman Lal</p>
@@ -253,17 +271,28 @@ export default function AgencyDashboardPage() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#e6f7f4] text-[#0f766e]">Agency Manager</span>
                     <span className="text-[#9ca3af]">•</span>
                     <span className="text-[12.5px] text-[#6b7280]">{operationalZone}</span>
-                    <button onClick={() => setZoneMenuOpen(true)} className="text-[12px] font-medium text-[#2563eb] hover:underline">Change Zone</button>
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setShowComplaintForm(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm shrink-0"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                New Complaint
-              </button>
+              <div className="flex flex-col gap-2 items-end shrink-0">
+                <button
+                  onClick={() => setAttendanceOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea] shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Daily Attendance
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                    {attendanceRecords.length ? `${attendanceRecords.length} Marked` : 'Pending'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setShowComplaintForm(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  New Complaint
+                </button>
+              </div>
             </div>
           </div>
 
@@ -371,7 +400,7 @@ export default function AgencyDashboardPage() {
                     <tr
                       key={complaint.id}
                       className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc] cursor-pointer"
-                      onClick={() => window.location.href = `/agency-dashboard/complaint-details?id=${complaint.id}`}
+                      onClick={() => setSelectedComplaint(complaint)}
                     >
                       <td className="px-4 py-3.5">
                         <div className="w-11 h-11 bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2]">
@@ -442,6 +471,20 @@ export default function AgencyDashboardPage() {
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} />
+      <ComplaintDetailsModal open={!!selectedComplaint} complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} />
+      <ZoneSelectModal
+        open={zoneModalOpen}
+        onClose={() => setZoneModalOpen(false)}
+        currentZone={operationalZone}
+        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone); setZoneModalOpen(false) }}
+      />
+      <AttendanceModal
+        open={attendanceOpen}
+        onClose={() => setAttendanceOpen(false)}
+        staff={staffOptions}
+        markedIds={attendanceRecords.map((r) => r.staffId)}
+        onMark={handleMarkAttendance}
+      />
     </div>
   )
 }

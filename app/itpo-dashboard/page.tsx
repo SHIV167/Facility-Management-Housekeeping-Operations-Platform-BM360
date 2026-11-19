@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
+import ZoneSelectModal from '@/components/ZoneSelectModal'
+import DocumentTitle from '@/components/DocumentTitle'
 
 type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
@@ -12,7 +14,7 @@ export default function ITPODashboardPage() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('Hall 1-5')
-  const [zoneMenuOpen, setZoneMenuOpen] = useState(false)
+  const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [showItpoForm, setShowItpoForm] = useState(false)
 
   const handleLogout = () => {
@@ -145,7 +147,8 @@ export default function ITPODashboardPage() {
     switch (currentView) {
       case 'overview':
         return (
-          <div className="space-y-4">
+          
+      <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
@@ -475,6 +478,7 @@ export default function ITPODashboardPage() {
 
   return (
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
+      <DocumentTitle title="ITPO Dashboard" />
       {/* Sidebar - same theme as main dashboard */}
       <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
         <div className="px-3.5 pt-3.5 pb-2">
@@ -530,24 +534,11 @@ export default function ITPODashboardPage() {
           <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             <p className="text-[12px] text-white truncate">{operationalZone}</p>
-            <button onClick={() => setZoneMenuOpen((open) => !open)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
+            <button onClick={() => setZoneModalOpen(true)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
               Change
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
             </button>
           </div>
-          {zoneMenuOpen && (
-            <div className="absolute left-0 right-0 bottom-full mb-1 bg-white text-[#111827] rounded-lg shadow-lg border border-[#e5e7eb] overflow-hidden z-20">
-              {['Hall 1-5', 'Hall 6-10', 'Hall 11-14', 'Parking Area', 'All Zones (Entire Complex)'].map((zone) => (
-                <button
-                  key={zone}
-                  onClick={() => { setOperationalZone(zone); setZoneMenuOpen(false) }}
-                  className="w-full text-left px-3 py-2 text-[12px] hover:bg-[#f3f5f8]"
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -576,7 +567,14 @@ export default function ITPODashboardPage() {
                 className="w-[230px] h-9 pl-9 pr-3 rounded-full bg-[#f8fafc] text-[13px]"
               />
             </div>
-            <div className="flex items-center gap-2 pl-1">
+            <div className="flex items-center gap-2 pl-1">              <button
+                onClick={() => setZoneModalOpen(true)}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#e6f7f4] border border-[#b7e4d4] text-[12.5px] font-semibold text-[#0f766e] hover:bg-[#d7f0ea] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Change Zone
+              </button>
+
               <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">IA</div>
               <div className="leading-tight">
                 <p className="text-[12.5px] font-semibold text-[#111827]">ITPO Administrator</p>
@@ -591,6 +589,12 @@ export default function ITPODashboardPage() {
         </main>
       </div>
       <ItpoOfficialFormModal open={showItpoForm} onClose={() => setShowItpoForm(false)} />
+      <ZoneSelectModal
+        open={zoneModalOpen}
+        onClose={() => setZoneModalOpen(false)}
+        currentZone={operationalZone}
+        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone); setZoneModalOpen(false) }}
+      />
     </div>
   )
 }
