@@ -22,9 +22,13 @@
     "html5-qrcode": "^2.3.8",
     "next": "^16.4.6",
     "postcss": "^8.5.33",
+    "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6"
   }
 }
