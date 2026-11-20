@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+
 import { translations, Language } from '@/lib/translations'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
@@ -11,8 +11,12 @@ import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/Att
 import { defaultAgencies, AgencyRecord, defaultEmployees, EmployeeRecord } from '@/lib/agencies'
 import ImportEmployeesModal, { ImportedEmployee } from '@/components/ImportEmployeesModal'
 import DocumentTitle from '@/components/DocumentTitle'
+import QrCodeModal from '@/components/QrCodeModal'
+import QRCode from 'qrcode'
+import { QrRecord, buildQrPayload, loadQrRecords, saveQrRecords } from '@/lib/qrcodes'
+import { useEffect, useState } from 'react'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager'
 
 export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
@@ -28,6 +32,13 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
 const [zoneFormOpen, setZoneFormOpen] = useState(false)
 const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
 const [zoneSearch, setZoneSearch] = useState('')
+const [qrRecords, setQrRecords] = useState<QrRecord[]>([])
+const [qrFormOpen, setQrFormOpen] = useState(false)
+const [editingQr, setEditingQr] = useState<QrRecord | null>(null)
+const [qrSearch, setQrSearch] = useState('')
+const [qrStatusFilter, setQrStatusFilter] = useState('All Status')
+const [qrThumbs, setQrThumbs] = useState<Record<string, string>>({})
+const [qrOrigin, setQrOrigin] = useState('')
 const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
 const [agencyFormOpen, setAgencyFormOpen] = useState(false)
 const [editingAgency, setEditingAgency] = useState<AgencyRecord | null>(null)
@@ -1436,11 +1447,143 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
 
+      case 'qr-manager': {
+        const qrItems = [
+          ...defaultZones.map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto', system: true })),
+          ...qrRecords.map((r) => ({ ...r, system: false })),
+        ]
+        const q = qrSearch.trim().toLowerCase()
+        const filtered = qrItems.filter((item) => {
+          const matchQ = !q || [item.title, item.zone || '', item.url || '', item.type].some((v) => String(v).toLowerCase().includes(q))
+          const matchS = qrStatusFilter === 'All Status' || item.status === qrStatusFilter
+          return matchQ && matchS
+        })
+        return (
+          <div>
+            <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937]">QR Manager</h1>
+                <p className="text-[13px] text-[#6b7280] mt-1">Generate, customize and print QR codes for zones, gates and links. Citizens scan to open the complaint form — no login needed.</p>
+              </div>
+              <button onClick={() => { setEditingQr(null); setQrFormOpen(true) }} className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Generate QR Code
+              </button>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              {([
+                { l: 'TOTAL QRS', v: qrItems.length, c: 'text-[#111827]' },
+                { l: 'ZONE-LINKED', v: qrItems.filter((i) => i.type === 'complaint').length, c: 'text-[#0f766e]' },
+                { l: 'CUSTOM URLS', v: qrRecords.length, c: 'text-[#4f46e5]' },
+                { l: 'ACTIVE', v: qrItems.filter((i) => i.status === 'Active').length, c: 'text-[#16a34a]' },
+              ]).map((c) => (
+                <div key={c.l} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.l}</p>
+                  <p className={`text-[26px] font-semibold leading-none mt-1.5 ${c.c}`}>{c.v}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" value={qrSearch} onChange={(e) => setQrSearch(e.target.value)} placeholder="Search QR codes by title, zone or URL..." className="w-full h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+              </div>
+              <select value={qrStatusFilter} onChange={(e) => setQrStatusFilter(e.target.value)} className="h-9 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151]">
+                {['All Status', 'Active', 'Inactive'].map((o) => <option key={o}>{o}</option>)}
+              </select>
+              <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Print Sheet
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {filtered.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-3.5 flex flex-col items-center text-center print:break-inside-avoid">
+                  {qrThumbs[item.id] ? <img src={qrThumbs[item.id]} alt={item.title} className="w-[110px] h-[110px]" /> : <div className="w-[110px] h-[110px] rounded bg-[#f3f4f6] animate-pulse" />}
+                  <p className="text-[12px] font-semibold text-[#111827] mt-2.5 leading-tight">{item.title}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wide ${item.type === 'complaint' ? 'bg-[#e6f7f4] text-[#0f766e]' : 'bg-[#eef2ff] text-[#4f46e5]'}`}>{item.type === 'complaint' ? 'Complaint' : 'Custom'}</span>
+                    {item.system && <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wide bg-[#f3f4f6] text-[#6b7280]">Auto</span>}
+                    <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wide ${item.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#9ca3af]'}`}>{item.status}</span>
+                  </div>
+                  <p className="text-[9.5px] text-[#9ca3af] font-mono mt-1.5 break-all px-1 leading-tight">{buildQrPayload(item, qrOrigin || 'http://localhost:3000')}</p>
+                  <div className="flex items-center gap-1 mt-2.5 w-full">
+                    <button onClick={() => downloadQr(item.id, item.title)} title="Download PNG" className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-semibold text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      PNG
+                    </button>
+                    {!item.system && (
+                      <>
+                        <button onClick={() => { setEditingQr(item); setQrFormOpen(true) }} title="Edit" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4]">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onClick={() => handleToggleQr(item.id)} title={item.status === 'Active' ? 'Deactivate' : 'Activate'} className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#d97706] hover:bg-[#fff7ed]">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button onClick={() => handleDeleteQr(item.id)} title="Delete" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2]">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {filtered.length === 0 && <p className="col-span-full text-center text-[13px] text-[#9ca3af] py-10">No QR codes match your filters.</p>}
+            </div>
+            <p className="text-[11px] text-[#9ca3af] mt-4">Zone QR codes are auto-generated from the Zones master list. Custom QR codes are saved in this browser until a database is connected.</p>
+          </div>
+        )
+      }
       default:
         return <div>Page not found</div>
     }
   }
 
+  useEffect(() => {
+    setQrRecords(loadQrRecords())
+    setQrOrigin(window.location.origin)
+  }, [])
+
+  useEffect(() => {
+    if (!qrOrigin) return
+    const items = [
+      ...defaultZones.map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto' })),
+      ...qrRecords,
+    ]
+    let cancelled = false
+    items.forEach(async (item) => {
+      try {
+        const url = buildQrPayload(item, qrOrigin)
+        const dataUrl = await QRCode.toDataURL(url, { width: 140, margin: 1, color: { dark: item.fgColor, light: item.bgColor } })
+        if (!cancelled) setQrThumbs((prev) => ({ ...prev, [item.id]: dataUrl }))
+      } catch {}
+    })
+    return () => { cancelled = true }
+  }, [qrOrigin, qrRecords])
+
+  const persistQr = (records: QrRecord[]) => { setQrRecords(records); saveQrRecords(records) }
+
+  const handleSaveQr = (record: QrRecord) => {
+    persistQr(editingQr ? qrRecords.map((r) => (r.id === record.id ? record : r)) : [...qrRecords, record])
+    setEditingQr(null)
+  }
+
+  const handleDeleteQr = (id: string) => {
+    if (window.confirm('Delete this QR code?')) persistQr(qrRecords.filter((r) => r.id !== id))
+  }
+
+  const handleToggleQr = (id: string) => {
+    persistQr(qrRecords.map((r) => (r.id === id ? { ...r, status: r.status === 'Active' ? 'Inactive' : 'Active' } : r)))
+  }
+
+  const downloadQr = (id: string, title: string) => {
+    const src = qrThumbs[id]
+    if (!src) return
+    const a = document.createElement('a')
+    a.href = src
+    a.download = `qr-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`
+    a.click()
+  }
   const breadcrumbs: Record<ViewType, string> = {
     overview: 'Overview',
     'complaint-register': 'Complaint Register',
@@ -1451,6 +1594,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     agencies: 'Agencies',
     'itpo-officials': 'ITPO Officials',
     'field-staff': 'Field Staff',
+    'qr-manager': 'QR Manager',
     'escalation-settings': 'Escalation Settings',
     'all-complaints': 'All Complaints',
     resolved: 'Resolved',
@@ -1473,6 +1617,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     { id: 'agencies', label: 'Agencies', icon: 'building' },
     { id: 'itpo-officials', label: 'ITPO Officials', icon: 'badge' },
     { id: 'field-staff', label: 'Field Staff', icon: 'users' },
+    { id: 'qr-manager', label: 'QR Manager', icon: 'qr' },
     { id: 'escalation-settings', label: 'Escalation Settings', icon: 'gear' },
   ]
 
@@ -1488,6 +1633,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     if (name === 'badge') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
     if (name === 'check') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     if (name === 'clock') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    if (name === 'qr') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M14 14h3v3h-3zM21 14v3M14 21h3M18 18h3v3" /></svg>
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
   }
 
@@ -1627,6 +1773,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         onClose={() => setZoneFormOpen(false)}
         zone={editingZone}
         onSave={handleSaveZone}
+      />
+      <QrCodeModal
+        open={qrFormOpen}
+        onClose={() => { setQrFormOpen(false); setEditingQr(null) }}
+        editing={editingQr}
+        onSave={handleSaveQr}
       />
       <AgencyFormModal
         open={agencyFormOpen}
