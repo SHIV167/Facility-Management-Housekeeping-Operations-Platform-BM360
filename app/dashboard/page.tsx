@@ -1263,7 +1263,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <div className="flex items-center gap-2">
                       <h3 className="text-[15px] font-semibold text-[#111827]">Daily Attendance</h3>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
-                        {attendanceRecords.length ? 'Marked' : 'Pending'}
+                        {attendanceRecords.length ? 'Marked Today' : 'Pending'}
                       </span>
                     </div>
                     <p className="text-[12.5px] text-[#6b7280] mt-0.5">Capture front-camera photo with automatic date &amp; time (GPS optional).</p>
@@ -1275,13 +1275,23 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </button>
               </div>
               {attendanceRecords.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-[#eef1f4] flex flex-wrap gap-2">
-                  {attendanceRecords.slice(0, 6).map((r) => (
-                    <span key={r.staffId} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#f8fafc] border border-[#e8edf2] text-[11.5px] font-medium text-[#374151]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]"></span>
-                      {r.staffName} · {r.timestamp}
-                    </span>
-                  ))}
+                <div className="mt-4 pt-4 border-t border-[#eef1f4] space-y-2">
+                  {attendanceRecords.slice(0, 6).map((r) => {
+                    const ini = r.staffName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                    return (
+                      <div key={r.staffId} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e8edf2]">
+                        <div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{ini}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-[13px] font-semibold text-[#111827]">{r.staffName}</p>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#e8f8ef] text-[#16a34a]">Marked Today</span>
+                          </div>
+                          <p className="text-[11.5px] text-[#6b7280] mt-0.5">{r.timestamp}{r.gps ? ` · ${r.gps}` : ''}</p>
+                        </div>
+                        {r.photo && <img src={r.photo} alt="Attendance" className="w-9 h-9 rounded-lg object-cover border border-[#e8edf2] shrink-0" />}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

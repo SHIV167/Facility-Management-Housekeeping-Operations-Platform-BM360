@@ -502,7 +502,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   Daily Attendance
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
-                    {attendanceRecords.length ? `${attendanceRecords.length} Marked` : 'Pending'}
+                    {attendanceRecords.length ? `${attendanceRecords.length} Marked Today` : 'Pending'}
                   </span>
                 </button>
                 <button
@@ -515,6 +515,34 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               </div>
             </div>
           </div>
+
+          {attendanceRecords.length > 0 && (
+            <div className="mb-4 bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-4 h-4 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <h3 className="text-[13.5px] font-semibold text-[#111827]">Daily Attendance</h3>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#e8f8ef] text-[#16a34a]">{attendanceRecords.length} Marked Today</span>
+              </div>
+              <div className="space-y-2">
+                {attendanceRecords.slice(0, 5).map((r) => {
+                  const ini = r.staffName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                  return (
+                    <div key={r.staffId} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#f8fafc] border border-[#e8edf2]">
+                      <div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{ini}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[12.5px] font-semibold text-[#111827]">{r.staffName}</p>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#e8f8ef] text-[#16a34a]">Marked Today</span>
+                        </div>
+                        <p className="text-[11px] text-[#6b7280] mt-0.5">{r.timestamp}{r.gps ? ` · ${r.gps}` : ''}</p>
+                      </div>
+                      {r.photo && <img src={r.photo} alt="Attendance" className="w-9 h-9 rounded-lg object-cover border border-[#e8edf2] shrink-0" />}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {activeView === 'overview' && (
           <div className="mb-3">
