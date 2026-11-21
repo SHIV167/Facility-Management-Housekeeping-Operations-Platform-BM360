@@ -45,6 +45,16 @@ export default function LoginPage() {
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
         logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
+        try {
+          const zones = JSON.parse(localStorage.getItem('bm360_zones') || '[]')
+          const matched = zones.find((z: { accessMobile?: string }) => z.accessMobile === mobileNumber)
+          if (matched) {
+            localStorage.setItem('bm360_assigned_zone', matched.name)
+            logActivity(mobileNumber, 'User', 'Zone Access Granted', `Mapped to zone: ${matched.name}`)
+          } else {
+            localStorage.removeItem('bm360_assigned_zone')
+          }
+        } catch {}
         window.location.href = '/dashboard'
       } else {
         setError('Invalid OTP. Please try again.')

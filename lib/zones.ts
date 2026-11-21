@@ -58,12 +58,16 @@ export interface ZoneRecord {
   area: string
   manager: string
   status: 'Active' | 'Inactive'
+  accessMobile?: string
 }
 
-export const defaultZones: ZoneRecord[] = ZONE_NAMES.map((name, i) => ({
-  id: i + 1,
-  name,
-  area: '—',
-  manager: 'Unassigned',
-  status: 'Active',
-}))
+export const defaultZones: ZoneRecord[] = [
+  { id: 0, name: ALL_ZONES_LABEL, area: 'Entire Complex', manager: 'ITPO HQ', status: 'Active' },
+  ...ZONE_NAMES.map((name, i) => ({
+    id: i + 1,
+    name,
+    area: '—',
+    manager: 'Unassigned',
+    status: 'Active' as const,
+  })),
+]

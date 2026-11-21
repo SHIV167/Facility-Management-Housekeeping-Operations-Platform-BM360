@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
@@ -19,6 +19,10 @@ export default function AgencyDashboardPage() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('All Campus')
+  useEffect(() => {
+    const z = localStorage.getItem('bm360_assigned_zone')
+    if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Campus' : z)
+  }, [])
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [overviewTab, setOverviewTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)

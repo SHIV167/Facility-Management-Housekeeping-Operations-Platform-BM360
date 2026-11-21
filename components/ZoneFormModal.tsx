@@ -17,6 +17,7 @@ export default function ZoneFormModal({ open, onClose, onSave, zone }: ZoneFormM
   const [name, setName] = useState('')
   const [area, setArea] = useState('')
   const [manager, setManager] = useState('')
+  const [accessMobile, setAccessMobile] = useState('')
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active')
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function ZoneFormModal({ open, onClose, onSave, zone }: ZoneFormM
       setName(zone?.name ?? '')
       setArea(zone?.area ?? '')
       setManager(zone?.manager ?? '')
+      setAccessMobile(zone?.accessMobile ?? '')
       setStatus(zone?.status ?? 'Active')
     }
   }, [open, zone])
@@ -32,7 +34,7 @@ export default function ZoneFormModal({ open, onClose, onSave, zone }: ZoneFormM
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave({ id: zone?.id, name: name.trim() || 'Unnamed Zone', area: area.trim() || '—', manager: manager.trim() || 'Unassigned', status })
+    onSave({ id: zone?.id, name: name.trim() || 'Unnamed Zone', area: area.trim() || '—', manager: manager.trim() || 'Unassigned', status, accessMobile: accessMobile.trim() || undefined })
     onClose()
   }
 
@@ -76,6 +78,11 @@ export default function ZoneFormModal({ open, onClose, onSave, zone }: ZoneFormM
               <label className={labelCls}>Manager</label>
               <input type="text" value={manager} onChange={(e) => setManager(e.target.value)} placeholder="e.g. Mrs. Sunita Sharma" className={inputCls} />
             </div>
+          </div>
+          <div>
+            <label className={labelCls}>Authorized Mobile (Zone Access)</label>
+            <input type="tel" value={accessMobile} onChange={(e) => setAccessMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="e.g. 9876543210 — maps this zone to a login mobile" className={inputCls} />
+            <p className="text-[10.5px] text-[#9ca3af] mt-1">User logging in with this mobile sees only this zone's complaints &amp; data.</p>
           </div>
           <div>
             <label className={labelCls}>Status</label>

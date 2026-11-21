@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
@@ -15,6 +15,10 @@ export default function ITPODashboardPage() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('Hall 1-5')
+  useEffect(() => {
+    const z = localStorage.getItem('bm360_assigned_zone')
+    if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : z)
+  }, [])
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [showItpoForm, setShowItpoForm] = useState(false)
 

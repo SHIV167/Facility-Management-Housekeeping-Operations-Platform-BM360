@@ -31,6 +31,10 @@ export default function DashboardPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
 const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
+  useEffect(() => {
+    try { const raw = localStorage.getItem('bm360_zones'); if (raw) setZones(JSON.parse(raw)) } catch {}
+  }, [])
+  useEffect(() => { try { localStorage.setItem('bm360_zones', JSON.stringify(zones)) } catch {} }, [zones])
 const [zoneFormOpen, setZoneFormOpen] = useState(false)
 const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
 const [zoneSearch, setZoneSearch] = useState('')
@@ -58,6 +62,10 @@ const [employeeSearch, setEmployeeSearch] = useState('')
 const [attendanceOpen, setAttendanceOpen] = useState(false)
 const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
   const [operationalZone, setOperationalZone] = useState('Unassigned (Set Zone)')
+  useEffect(() => {
+    const z = localStorage.getItem('bm360_assigned_zone')
+    if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : z)
+  }, [])
   const [showItpoForm, setShowItpoForm] = useState(false)
 
   const t = translations[language]
@@ -1110,7 +1118,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <table className="w-full">
                     <thead className="sticky top-0 bg-white">
                       <tr className="border-b border-[#eef1f4]">
-                        {['ZONE NAME', 'AREA', 'MANAGER', 'STATUS', 'ACTIONS'].map((h) => (
+                        {['ZONE NAME', 'AREA', 'MANAGER', 'ZONE ACCESS', 'STATUS', 'ACTIONS'].map((h) => (
                           <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af]">{h}</th>
                         ))}
                       </tr>
@@ -1128,6 +1136,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                           </td>
                           <td className="px-4 py-3 text-[13px] text-[#374151]">{zone.area}</td>
                           <td className="px-4 py-3 text-[13px] text-[#374151]">{zone.manager}</td>
+                          <td className="px-4 py-3"><span className="text-[12px] font-mono text-[#0f766e]">{zone.accessMobile || '—'}</span></td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${zone.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{zone.status}</span>
                           </td>
