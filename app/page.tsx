@@ -47,7 +47,9 @@ export default function LoginPage() {
         logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
         try {
           const zones = JSON.parse(localStorage.getItem('bm360_zones') || '[]')
-          const matched = zones.find((z: { accessMobile?: string }) => z.accessMobile === mobileNumber)
+          const allArea = zones.find((z: { id?: number; name?: string }) => z.id === 0 || z.name === 'All Campus Zones (Entire Complex)')
+          const allowed = (allArea?.accessMobile || '').split(',').map((m: string) => m.trim()).filter(Boolean)
+          const matched = allowed.includes(mobileNumber) ? allArea : null
           if (matched) {
             localStorage.setItem('bm360_assigned_zone', matched.name)
             logActivity(mobileNumber, 'User', 'Zone Access Granted', `Mapped to zone: ${matched.name}`)

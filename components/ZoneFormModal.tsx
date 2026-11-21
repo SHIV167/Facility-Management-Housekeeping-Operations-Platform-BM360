@@ -79,11 +79,13 @@ export default function ZoneFormModal({ open, onClose, onSave, zone }: ZoneFormM
               <input type="text" value={manager} onChange={(e) => setManager(e.target.value)} placeholder="e.g. Mrs. Sunita Sharma" className={inputCls} />
             </div>
           </div>
+          {(zone?.id === 0 || zone?.name === 'All Campus Zones (Entire Complex)') && (
           <div>
-            <label className={labelCls}>Authorized Mobile (Zone Access)</label>
-            <input type="tel" value={accessMobile} onChange={(e) => setAccessMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="e.g. 9876543210 — maps this zone to a login mobile" className={inputCls} />
-            <p className="text-[10.5px] text-[#9ca3af] mt-1">User logging in with this mobile sees only this zone's complaints &amp; data.</p>
+            <label className={labelCls}>Authorized Mobile (All-Area Restriction)</label>
+            <input type="text" value={accessMobile} onChange={(e) => setAccessMobile(e.target.value.replace(/[^\d,\s]/g, ''))} placeholder="e.g. 9876543210, 9123456789 — comma-separated mobiles for All Campus access" className={inputCls} />
+            <p className="text-[10.5px] text-[#9ca3af] mt-1">Multiple mobiles allowed — separate with commas. Only the All Campus zone is mobile-restricted; all other zones remain visible to everyone.</p>
           </div>
+          )}
           <div>
             <label className={labelCls}>Status</label>
             <div className="flex gap-2">
