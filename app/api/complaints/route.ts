@@ -4,7 +4,9 @@ import { join } from 'path'
 
 const DATA_DIR = join(process.cwd(), 'data')
 const CSV_PATH = join(DATA_DIR, 'complaints.csv')
+const LOG_PATH = join(DATA_DIR, 'activity_log.csv')
 const HEADER = 'id,complaint_type,zone,sub_area,description,reported_by,name,mobile,created_at,status\n'
+const LOG_HEADER = 'id,timestamp,actor,role,action,details\n'
 
 function ensureCsv() {
   mkdirSync(DATA_DIR, { recursive: true })
@@ -37,6 +39,16 @@ export async function POST(req: NextRequest) {
       'Submitted',
     ].join(',') + '\n'
     appendFileSync(CSV_PATH, line)
+    if (!existsSync(LOG_PATH)) appendFileSync(LOG_PATH, LOG_HEADER)
+    const logRows = readFileSync(LOG_PATH, 'utf8').trim().split('\n').slice(1)
+    appendFileSync(LOG_PATH, [
+      logRows.length + 1,
+      `"${createdAt}"`,
+      esc(name),
+      '"Citizen"',
+      '"Complaint Submitted"',
+      esc(`CMP-${String(id).padStart(4, '0')} · ${complaintType || 'General'} · ${zone || 'No zone'} · ${subArea || ''}`),
+    ].join(',') + '\n')
     return NextResponse.json({ ok: true, id: `CMP-${String(id).padStart(4, '0')}` })
   } catch (e) {
     return NextResponse.json({ ok: false, error: 'Failed to save complaint' }, { status: 500 })

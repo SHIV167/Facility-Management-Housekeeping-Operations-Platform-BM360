@@ -8,6 +8,7 @@ import ZoneSelectModal from '@/components/ZoneSelectModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
 import AddSupervisorModal, { SupervisorFormData } from '@/components/AddSupervisorModal'
 import AddFieldStaffModal, { FieldStaffFormData } from '@/components/AddFieldStaffModal'
+import { logActivity } from '@/lib/activity'
 import DocumentTitle from '@/components/DocumentTitle'
 
 export default function AgencyDashboardPage() {
@@ -139,6 +140,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record),
     }).catch(() => {})
+    logActivity('Laxman Lal', 'Agency Manager', 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
   }
   const [staffMembers, setStaffMembers] = useState([
     { id: 'SFM-5078', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_927', phone: '9953655078', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
@@ -173,6 +175,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       shift: 'No Shift',
       status: 'Pending',
     }, ...prev])
+    logActivity('Laxman Lal', 'Agency Manager', 'Supervisor Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
   }
 
   const handleAddFieldStaff = (data: FieldStaffFormData) => {
@@ -188,6 +191,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       shift: 'No Shift',
       status: 'Pending',
     }, ...prev])
+    logActivity('Laxman Lal', 'Agency Manager', 'Field Staff Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
   }
   const filteredStaff = staffMembers.filter((m) => {
     const q = staffSearch.trim().toLowerCase()

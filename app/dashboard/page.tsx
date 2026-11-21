@@ -14,9 +14,10 @@ import DocumentTitle from '@/components/DocumentTitle'
 import QrCodeModal from '@/components/QrCodeModal'
 import QRCode from 'qrcode'
 import { QrRecord, buildQrPayload, loadQrRecords, saveQrRecords } from '@/lib/qrcodes'
+import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs'
 
 export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
@@ -39,6 +40,9 @@ const [qrSearch, setQrSearch] = useState('')
 const [qrStatusFilter, setQrStatusFilter] = useState('All Status')
 const [qrThumbs, setQrThumbs] = useState<Record<string, string>>({})
 const [qrOrigin, setQrOrigin] = useState('')
+const [activityLogs, setActivityLogs] = useState<ActivityRecord[]>([])
+const [logSearch, setLogSearch] = useState('')
+const [logActorFilter, setLogActorFilter] = useState('All Users')
 const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
 const [agencyFormOpen, setAgencyFormOpen] = useState(false)
 const [editingAgency, setEditingAgency] = useState<AgencyRecord | null>(null)
@@ -168,14 +172,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   const handleSaveZone = (data: Omit<ZoneRecord, 'id'> & { id?: number }) => {
     if (data.id) {
       setZones(zones.map((z) => (z.id === data.id ? { ...z, ...data } : z)))
+      logActivity('System Admin', 'Admin', 'Zone Updated', data.name)
     } else {
       setZones([...zones, { ...data, id: Math.max(...zones.map((z) => z.id), 0) + 1 }])
+      logActivity('System Admin', 'Admin', 'Zone Created', data.name)
     }
   }
 
   const handleDeleteZone = (id: number) => {
     if (window.confirm('Are you sure you want to delete this zone?')) {
       setZones(zones.filter((z) => z.id !== id))
+      logActivity('System Admin', 'Admin', 'Zone Deleted', 'Zone ID ' + id)
     }
   }
 
@@ -186,14 +193,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   const handleSaveAgency = (data: Omit<AgencyRecord, 'id'> & { id?: number }) => {
     if (data.id) {
       setAgencies(agencies.map((a) => (a.id === data.id ? { ...a, ...data } : a)))
+      logActivity('System Admin', 'Admin', 'Agency Updated', data.name)
     } else {
       setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }])
+      logActivity('System Admin', 'Admin', 'Agency Created', data.name)
     }
   }
 
   const handleDeleteAgency = (id: number) => {
     if (window.confirm('Are you sure you want to delete this agency?')) {
       setAgencies(agencies.filter((a) => a.id !== id))
+      logActivity('System Admin', 'Admin', 'Agency Deleted', 'Agency ID ' + id)
     }
   }
 
@@ -211,6 +221,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record),
     }).catch(() => {})
+    logActivity('System Admin', 'Admin', 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
   }
 
   const handleImportEmployees = (items: ImportedEmployee[]) => {
@@ -218,12 +229,14 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     const base = Math.max(...employees.map((e) => e.id), 0)
     setEmployees([...employees, ...items.map((it, i) => ({ ...it, id: base + i + 1, agencyId: selectedAgencyId, status: 'Active' as const }))])
     setAgencies(agencies.map((a) => (a.id === selectedAgencyId ? { ...a, employeeCount: a.employeeCount + items.length } : a)))
+    logActivity('System Admin', 'Admin', 'Employees Imported', items.length + ' employee(s) added')
   }
 
   const handleDeleteEmployee = (id: number) => {
     const emp = employees.find((e) => e.id === id)
     if (emp && window.confirm(`Delete ${emp.name}?`)) {
       setEmployees(employees.filter((e) => e.id !== id))
+      logActivity('System Admin', 'Admin', 'Employee Deleted', emp.name)
       setAgencies(agencies.map((a) => (a.id === emp.agencyId ? { ...a, employeeCount: Math.max(a.employeeCount - 1, 0) } : a)))
     }
   }
@@ -1534,6 +1547,73 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
       }
+      case 'activity-logs': {
+        const actors = Array.from(new Set(activityLogs.map((l) => l.actor))).sort()
+        const filteredLogs = activityLogs.filter((l) => {
+          const q = logSearch.trim().toLowerCase()
+          const matchQ = !q || [l.actor, l.action, l.details, l.timestamp].some((v) => v.toLowerCase().includes(q))
+          const matchA = logActorFilter === 'All Users' || l.actor === logActorFilter
+          return matchQ && matchA
+        })
+        const actionColor = (a: string) => a.includes('Deleted') ? 'bg-[#fef2f2] text-[#dc2626]' : a.includes('Created') || a.includes('Marked') || a.includes('Imported') ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#eef2ff] text-[#4f46e5]'
+        return (
+          <div>
+            <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937]">Activity Logs</h1>
+                <p className="text-[13px] text-[#6b7280] mt-1">Audit trail of all actions across the portal — who did what and when.</p>
+              </div>
+              <a href="/api/activity?download=csv" className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Export CSV
+              </a>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[{ l: 'TOTAL EVENTS', v: activityLogs.length, c: 'text-[#111827]' }, { l: 'USERS', v: actors.length, c: 'text-[#0f766e]' }, { l: 'UNIQUE ACTIONS', v: new Set(activityLogs.map((l) => l.action)).size, c: 'text-[#4f46e5]' }].map((c) => (
+                <div key={c.l} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.l}</p>
+                  <p className={`text-[26px] font-semibold leading-none mt-1.5 ${c.c}`}>{c.v}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
+                <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)} placeholder="Search logs by user, action or details..." className="w-full h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+              </div>
+              <select value={logActorFilter} onChange={(e) => setLogActorFilter(e.target.value)} className="h-9 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151]">
+                <option>All Users</option>
+                {actors.map((a) => <option key={a}>{a}</option>)}
+              </select>
+              <button onClick={refreshLogs} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Refresh
+              </button>
+            </div>
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead><tr className="border-b border-[#eef1f4]">
+                    {['TIME', 'USER', 'ROLE', 'ACTION', 'DETAILS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {filteredLogs.map((l) => (
+                      <tr key={l.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                        <td className="px-4 py-3 text-[12px] text-[#6b7280] whitespace-nowrap">{l.timestamp}</td>
+                        <td className="px-4 py-3"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-[#0e4c5e] text-white text-[9px] font-bold flex items-center justify-center">{l.actor.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}</div><span className="text-[12.5px] font-semibold text-[#111827]">{l.actor}</span></div></td>
+                        <td className="px-4 py-3 text-[12px] text-[#6b7280] whitespace-nowrap">{l.role}</td>
+                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${actionColor(l.action)}`}>{l.action}</span></td>
+                        <td className="px-4 py-3 text-[12px] text-[#374151] max-w-[280px] truncate" title={l.details}>{l.details}</td>
+                      </tr>
+                    ))}
+                    {filteredLogs.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No activity recorded yet. Actions like zone edits, attendance marks and QR changes will appear here.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      }
       default:
         return <div>Page not found</div>
     }
@@ -1561,18 +1641,28 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     return () => { cancelled = true }
   }, [qrOrigin, qrRecords])
 
+  const refreshLogs = () => {
+    fetch('/api/activity').then((r) => r.json()).then((d) => { if (d.ok) setActivityLogs(d.logs) }).catch(() => {})
+  }
+
+  useEffect(() => { refreshLogs() }, [])
+  useEffect(() => { if (currentView === 'activity-logs') refreshLogs() }, [currentView])
+
   const persistQr = (records: QrRecord[]) => { setQrRecords(records); saveQrRecords(records) }
 
   const handleSaveQr = (record: QrRecord) => {
+    logActivity('System Admin', 'Admin', editingQr ? 'QR Updated' : 'QR Created', record.title)
     persistQr(editingQr ? qrRecords.map((r) => (r.id === record.id ? record : r)) : [...qrRecords, record])
     setEditingQr(null)
   }
 
   const handleDeleteQr = (id: string) => {
-    if (window.confirm('Delete this QR code?')) persistQr(qrRecords.filter((r) => r.id !== id))
+    if (window.confirm('Delete this QR code?')) { persistQr(qrRecords.filter((r) => r.id !== id)); logActivity('System Admin', 'Admin', 'QR Deleted', id) }
   }
 
   const handleToggleQr = (id: string) => {
+    const rec = qrRecords.find((r) => r.id === id)
+    if (rec) logActivity('System Admin', 'Admin', rec.status === 'Active' ? 'QR Deactivated' : 'QR Activated', rec.title)
     persistQr(qrRecords.map((r) => (r.id === id ? { ...r, status: r.status === 'Active' ? 'Inactive' : 'Active' } : r)))
   }
 
@@ -1595,6 +1685,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     'itpo-officials': 'ITPO Officials',
     'field-staff': 'Field Staff',
     'qr-manager': 'QR Manager',
+    'activity-logs': 'Activity Logs',
     'escalation-settings': 'Escalation Settings',
     'all-complaints': 'All Complaints',
     resolved: 'Resolved',
@@ -1618,6 +1709,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     { id: 'itpo-officials', label: 'ITPO Officials', icon: 'badge' },
     { id: 'field-staff', label: 'Field Staff', icon: 'users' },
     { id: 'qr-manager', label: 'QR Manager', icon: 'qr' },
+    { id: 'activity-logs', label: 'Activity Logs', icon: 'log' },
     { id: 'escalation-settings', label: 'Escalation Settings', icon: 'gear' },
   ]
 
@@ -1633,6 +1725,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     if (name === 'badge') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 11-4 0 2 2 0 014 0zm6 0h4" /></svg>
     if (name === 'check') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     if (name === 'clock') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    if (name === 'log') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
     if (name === 'qr') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M14 14h3v3h-3zM21 14v3M14 21h3M18 18h3v3" /></svg>
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
   }
