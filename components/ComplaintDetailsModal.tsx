@@ -16,13 +16,21 @@ export interface ComplaintData {
   photo?: string | null
 }
 
+interface ComplaintUpdate {
+  action: string
+  timestamp: string
+  by: string
+}
+
 interface ComplaintDetailsModalProps {
   open: boolean
   onClose: () => void
   complaint: ComplaintData | null
+  history?: ComplaintUpdate[]
+  onStatusChange?: (status: 'PENDING' | 'COMPLETED') => void
 }
 
-export default function ComplaintDetailsModal({ open, onClose, complaint }: ComplaintDetailsModalProps) {
+export default function ComplaintDetailsModal({ open, onClose, complaint, history = [], onStatusChange }: ComplaintDetailsModalProps) {
   const [selectedPhoto, setSelectedPhoto] = useState(0)
 
   if (!open || !complaint) return null
@@ -170,23 +178,38 @@ export default function ComplaintDetailsModal({ open, onClose, complaint }: Comp
           <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4">
             <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase mb-3">Execution History & Audit Trail</h4>
             <div className="space-y-3">
-              {[
-                { action: 'Complaint Created', timestamp: complaint.date || '—', by: 'Brij Lal (ITPO)' },
-                ...(isCompleted
-                  ? [{ action: 'Work Completed', timestamp: complaint.date || '—', by: complaint.agency || 'Field Staff' }]
-                  : [{ action: 'Assigned to Agency', timestamp: complaint.date || '—', by: 'System' }]),
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="w-3 h-3 rounded-full mt-1 bg-[#16a34a]"></div>
-                  <div>
-                    <p className="text-[13px] text-[#111827]">
-                      <span className="font-semibold">{item.action}</span>
-                      {item.by && <span className="text-[#6b7280]"> — by {item.by}</span>}
-                    </p>
-                    <p className="text-[11.5px] text-[#9ca3af]">{item.timestamp}</p>
+              {history.length > 0 ? (
+                history.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <div className={`w-3 h-3 rounded-full mt-1 ${item.action.includes('Closed') || item.action.includes('Completed') ? 'bg-[#16a34a]' : 'bg-[#ea580c]'}`}></div>
+                    <div>
+                      <p className="text-[13px] text-[#111827]">
+                        <span className="font-semibold">{item.action}</span>
+                        {item.by && <span className="text-[#6b7280]"> — by {item.by}</span>}
+                      </p>
+                      <p className="text-[11.5px] text-[#9ca3af]">{item.timestamp}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                [
+                  { action: 'Complaint Created', timestamp: complaint.date || '—', by: 'Brij Lal (ITPO)' },
+                  ...(isCompleted
+                    ? [{ action: 'Work Completed', timestamp: complaint.date || '—', by: complaint.agency || 'Field Staff' }]
+                    : [{ action: 'Assigned to Agency', timestamp: complaint.date || '—', by: 'System' }]),
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <div className="w-3 h-3 rounded-full mt-1 bg-[#16a34a]"></div>
+                    <div>
+                      <p className="text-[13px] text-[#111827]">
+                        <span className="font-semibold">{item.action}</span>
+                        {item.by && <span className="text-[#6b7280]"> — by {item.by}</span>}
+                      </p>
+                      <p className="text-[11.5px] text-[#9ca3af]">{item.timestamp}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -195,6 +218,24 @@ export default function ComplaintDetailsModal({ open, onClose, complaint }: Comp
         <div className="bg-[#f8fafc] border-t border-[#e8edf2] px-5 py-3.5 flex items-center justify-between shrink-0">
           <p className="text-[12px] text-[#9ca3af]">Tenant: Bharat Mandapam 360</p>
           <div className="flex items-center gap-2">
+            {onStatusChange && !isCompleted && (
+              <button
+                onClick={() => onStatusChange('COMPLETED')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-[13px] font-semibold transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                Mark Completed
+              </button>
+            )}
+            {onStatusChange && isCompleted && (
+              <button
+                onClick={() => onStatusChange('PENDING')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#fed7aa] bg-[#fff7ed] text-[#c2410c] rounded-lg text-[13px] font-semibold hover:bg-[#ffedd5] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Reopen
+              </button>
+            )}
             <button
               onClick={() => alert('Photo download functionality')}
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#e5e7eb] bg-white text-[#374151] rounded-lg text-[13px] font-medium hover:bg-[#f3f5f8] transition-colors"

@@ -22,7 +22,7 @@ export default function AgencyDashboardPage() {
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [overviewTab, setOverviewTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
-  const [selectedComplaint, setSelectedComplaint] = useState<(typeof complaints)[number] | null>(null)
+  // selectedComplaintId declared below with complaint history state
 const [attendanceOpen, setAttendanceOpen] = useState(false)
 const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
 const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'staff' | 'reports'>('overview')
@@ -39,7 +39,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     router.push('/')
   }
 
-  const complaints = [
+  const [complaints, setComplaints] = useState([
     {
       id: 54,
       date: 'Nov 17 10:42 AM',
@@ -105,7 +105,21 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       dueDate: '11:30 AM Nov 16',
       photo: null
     }
-  ]
+  ])
+
+  const [complaintHistory, setComplaintHistory] = useState<Record<number, { action: string; timestamp: string; by: string }[]>>({})
+  const [selectedComplaintId, setSelectedComplaintId] = useState<number | null>(null)
+
+  const handleComplaintStatus = (id: number, status: 'PENDING' | 'COMPLETED') => {
+    const now = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    const by = 'Laxman Lal (Agency Manager)'
+    const action = status === 'COMPLETED' ? 'Complaint Closed / Completed' : 'Complaint Reopened'
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status, completionTime: status === 'COMPLETED' ? `Completed on ${now}` : undefined } : c)))
+    setComplaintHistory((prev) => ({ ...prev, [id]: [...(prev[id] || []), { action, timestamp: now, by }] }))
+    logActivity('Laxman Lal', 'Agency Manager', action, `Complaint #${id}`)
+  }
+
+  const activeComplaint = selectedComplaintId != null ? complaints.find((c) => c.id === selectedComplaintId) || null : null
 
   const filteredComplaints = complaints.filter((c) =>
     overviewTab === 'all' ? true : overviewTab === 'pending' ? c.status === 'PENDING' : c.status === 'COMPLETED'
@@ -654,7 +668,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                     <tr
                       key={complaint.id}
                       className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc] cursor-pointer"
-                      onClick={() => setSelectedComplaint(complaint)}
+                      onClick={() => setSelectedComplaintId(complaint.id)}
                     >
                       <td className="px-4 py-3.5">
                         <div className="w-11 h-11 bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2]">
@@ -768,7 +782,13 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} />
-      <ComplaintDetailsModal open={!!selectedComplaint} complaint={selectedComplaint} onClose={() => setSelectedComplaint(null)} />
+      <ComplaintDetailsModal
+        open={activeComplaint != null}
+        complaint={activeComplaint}
+        history={activeComplaint ? complaintHistory[activeComplaint.id] || [] : []}
+        onStatusChange={activeComplaint ? (status) => handleComplaintStatus(activeComplaint.id, status) : undefined}
+        onClose={() => setSelectedComplaintId(null)}
+      />
       <ZoneSelectModal
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
