@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { translations, Language } from '@/lib/translations'
+import { logActivity } from '@/lib/activity'
 
 export default function ComplaintFormPage() {
   const router = useRouter()
@@ -25,6 +26,7 @@ export default function ComplaintFormPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log('Form submitted:', formData)
+    logActivity('System Admin', 'Admin', 'Complaint Saved', 'Master data form submitted')
     alert(language === 'en' ? t.successfullySaved : t.successfullySaved)
     router.push('/dashboard')
   }

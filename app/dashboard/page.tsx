@@ -8,6 +8,7 @@ import ZoneFormModal from '@/components/ZoneFormModal'
 import { defaultZones, ZoneRecord } from '@/lib/zones'
 import AgencyFormModal from '@/components/AgencyFormModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
+import AttendanceEditModal, { AttendanceRow } from '@/components/AttendanceEditModal'
 import { defaultAgencies, AgencyRecord, defaultEmployees, EmployeeRecord } from '@/lib/agencies'
 import ImportEmployeesModal, { ImportedEmployee } from '@/components/ImportEmployeesModal'
 import DocumentTitle from '@/components/DocumentTitle'
@@ -41,6 +42,9 @@ const [qrStatusFilter, setQrStatusFilter] = useState('All Status')
 const [qrThumbs, setQrThumbs] = useState<Record<string, string>>({})
 const [qrOrigin, setQrOrigin] = useState('')
 const [activityLogs, setActivityLogs] = useState<ActivityRecord[]>([])
+const [attRecords, setAttRecords] = useState<AttendanceRow[]>([])
+const [attSearch, setAttSearch] = useState('')
+const [editingAtt, setEditingAtt] = useState<AttendanceRow | null>(null)
 const [logSearch, setLogSearch] = useState('')
 const [logActorFilter, setLogActorFilter] = useState('All Users')
 const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
@@ -1319,6 +1323,60 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
               )}
             </div>
+            {/* Attendance Records */}
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden mb-6">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Attendance Records</h3>
+                  <p className="text-[12px] text-[#9ca3af] mt-0.5">{attRecords.length} saved record{attRecords.length === 1 ? '' : 's'} · persisted to attendance.csv</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" value={attSearch} onChange={(e) => setAttSearch(e.target.value)} placeholder="Search records..." className="h-9 pl-9 pr-3 w-56 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                  </div>
+                  <button onClick={refreshAttRecords} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Refresh
+                  </button>
+                  <a href="/api/attendance" className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Export CSV
+                  </a>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
+                    <tr>
+                      {['STAFF', 'ZONE', 'DATE & TIME', 'GPS', 'PHOTO', 'ACTIONS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase whitespace-nowrap">{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f3f4f6]">
+                    {attRecords.filter((r) => !attSearch || [r.staffName, r.zone, r.dateTime, r.gps].some((v) => v.toLowerCase().includes(attSearch.toLowerCase()))).map((r) => {
+                      const ini = r.staffName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      return (
+                        <tr key={r.id} className="hover:bg-[#fafbfc]">
+                          <td className="px-4 py-3"><div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center">{ini}</div><div><p className="text-[13px] font-semibold text-[#111827]">{r.staffName}</p><p className="text-[10.5px] text-[#9ca3af]">ID {r.staffId}</p></div></div></td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.zone || '—'}</td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.dateTime}</td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{r.gps || '—'}</td>
+                          <td className="px-4 py-3">{r.photoFile ? <img src={`/api/photo?f=${encodeURIComponent(r.photoFile)}`} alt="" className="w-9 h-9 rounded-lg object-cover border border-[#e8edf2]" /> : <span className="text-[11px] text-[#9ca3af]">—</span>}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => setEditingAtt(r)} title="Edit record" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                              <button onClick={() => handleDeleteAtt(r.id)} title="Delete record" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {attRecords.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No attendance records yet. Mark attendance to save records here.</td></tr>}
+                    {attRecords.length > 0 && attRecords.filter((r) => !attSearch || [r.staffName, r.zone, r.dateTime, r.gps].some((v) => v.toLowerCase().includes(attSearch.toLowerCase()))).length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No records match your search.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
@@ -1648,6 +1706,22 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   useEffect(() => { refreshLogs() }, [])
   useEffect(() => { if (currentView === 'activity-logs') refreshLogs() }, [currentView])
 
+  const refreshAttRecords = () => {
+    fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => { if (d.ok) setAttRecords(d.records) }).catch(() => {})
+  }
+  useEffect(() => { if (currentView === 'field-staff') refreshAttRecords() }, [currentView])
+
+  const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string }) => {
+    await fetch('/api/attendance', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...data }) }).catch(() => {})
+    setEditingAtt(null); refreshAttRecords()
+  }
+
+  const handleDeleteAtt = async (id: number) => {
+    if (!window.confirm('Delete this attendance record?')) return
+    await fetch('/api/attendance', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
+    refreshAttRecords()
+  }
+
   const persistQr = (records: QrRecord[]) => { setQrRecords(records); saveQrRecords(records) }
 
   const handleSaveQr = (record: QrRecord) => {
@@ -1891,11 +1965,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         markedIds={attendanceRecords.map((r) => r.staffId)}
         onMark={handleMarkAttendance}
       />
+      <AttendanceEditModal
+        open={editingAtt != null}
+        record={editingAtt}
+        onClose={() => setEditingAtt(null)}
+        onSave={handleUpdateAtt}
+      />
       <ZoneSelectModal
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
-        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone); setZoneModalOpen(false) }}
+        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('System Admin', 'Admin', 'Zone Switched', z) }}
       />
     </div>
   )

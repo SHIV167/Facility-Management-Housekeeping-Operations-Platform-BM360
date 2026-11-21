@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
 import DocumentTitle from '@/components/DocumentTitle'
+import { logActivity } from '@/lib/activity'
 
 type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
@@ -567,7 +568,8 @@ export default function ITPODashboardPage() {
                 className="w-[230px] h-9 pl-9 pr-3 rounded-full bg-[#f8fafc] text-[13px]"
               />
             </div>
-            <div className="flex items-center gap-2 pl-1">              <button
+            <div className="flex items-center gap-2 pl-1">
+              <button
                 onClick={() => setZoneModalOpen(true)}
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#e6f7f4] border border-[#b7e4d4] text-[12.5px] font-semibold text-[#0f766e] hover:bg-[#d7f0ea] transition-colors"
               >
@@ -593,7 +595,7 @@ export default function ITPODashboardPage() {
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
-        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone); setZoneModalOpen(false) }}
+        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('ITPO Officer', 'ITPO', 'Zone Switched', z) }}
       />
     </div>
   )

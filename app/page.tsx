@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import DocumentTitle from '@/components/DocumentTitle'
+import { logActivity } from '@/lib/activity'
 
 export default function LoginPage() {
   const [step, setStep] = useState(1)
@@ -43,6 +44,7 @@ export default function LoginPage() {
       if (otp === STATIC_OTP) {
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
+        logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
         window.location.href = '/dashboard'
       } else {
         setError('Invalid OTP. Please try again.')

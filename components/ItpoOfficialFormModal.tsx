@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
+import { logActivity } from '@/lib/activity'
 
 type Props = {
   open: boolean
@@ -28,6 +29,7 @@ export default function ItpoOfficialFormModal({ open, onClose }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log('Form submitted:', formData)
+    logActivity('System Admin', 'Admin', 'ITPO Official Saved', `${formData.name || 'New official'} · ${formData.designation || ''}`.trim())
     alert(t.successfullySaved)
     onClose()
   }
@@ -217,4 +219,4 @@ export default function ItpoOfficialFormModal({ open, onClose }: Props) {
       </div>
     </>
   )
-}
+}

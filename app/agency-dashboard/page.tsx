@@ -793,7 +793,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
-        onConfirm={(zone) => { setOperationalZone(zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone); setZoneModalOpen(false) }}
+        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('Laxman Lal', 'Agency Manager', 'Zone Switched', z) }}
       />
       <AddSupervisorModal
         open={supervisorFormOpen}

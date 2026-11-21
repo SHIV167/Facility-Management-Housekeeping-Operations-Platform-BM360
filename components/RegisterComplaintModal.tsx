@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { logActivity } from '@/lib/activity'
 
 type Props = {
   open: boolean
@@ -150,6 +151,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     alert('Complaint registered successfully!')
+    logActivity('Agency Manager', 'Agency', 'Complaint Registered', `New complaint submitted via portal`)
     onClose()
     onSuccess?.()
   }
