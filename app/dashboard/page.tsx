@@ -17,10 +17,12 @@ import QRCode from 'qrcode'
 import { QrRecord, buildQrPayload, loadQrRecords, saveQrRecords } from '@/lib/qrcodes'
 import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
+import { useToast } from '@/components/Toast'
 
 type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs'
 
 export default function DashboardPage() {
+  const { toast } = useToast()
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
   const [language, setLanguage] = useState<Language>('en')
   const [searchQuery, setSearchQuery] = useState('Mr. Premjit Lal')
@@ -194,9 +196,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       fetch('/api/zones', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).catch(() => {})
       setZones(zones.map((z) => (z.id === data.id ? { ...z, ...data } : z)))
       logActivity('System Admin', 'Admin', 'Zone Updated', data.name)
+      toast('Zone updated', 'success')
     } else {
       fetch('/api/zones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => { if (d.ok) setZones((prev) => [...prev, { ...data, id: d.zone.id, accessMobile: d.zone.access_mobiles || data.accessMobile }]) }).catch(() => setZones([...zones, { ...data, id: Math.max(...zones.map((z) => z.id), 0) + 1 }]))
       logActivity('System Admin', 'Admin', 'Zone Created', data.name)
+      toast('Zone created', 'success')
     }
   }
 
@@ -205,6 +209,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       fetch('/api/zones', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
       setZones(zones.filter((z) => z.id !== id))
       logActivity('System Admin', 'Admin', 'Zone Deleted', 'Zone ID ' + id)
+      toast('Zone deleted', 'success')
     }
   }
 
@@ -217,9 +222,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       fetch('/api/agencies', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).catch(() => {})
       setAgencies(agencies.map((a) => (a.id === data.id ? { ...a, ...data } : a)))
       logActivity('System Admin', 'Admin', 'Agency Updated', data.name)
+      toast('Agency updated', 'success')
     } else {
       fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => { if (d.ok) setAgencies((prev) => [...prev, { ...data, id: d.agency.id }]) }).catch(() => setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }]))
       logActivity('System Admin', 'Admin', 'Agency Created', data.name)
+      toast('Agency created', 'success')
     }
   }
 
@@ -228,6 +235,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       fetch('/api/agencies', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
       setAgencies(agencies.filter((a) => a.id !== id))
       logActivity('System Admin', 'Admin', 'Agency Deleted', 'Agency ID ' + id)
+      toast('Agency deleted', 'success')
     }
   }
 
@@ -246,6 +254,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       body: JSON.stringify(record),
     }).catch(() => {})
     logActivity('System Admin', 'Admin', 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
+    toast('Attendance marked', 'success')
   }
 
   const handleImportEmployees = (items: ImportedEmployee[]) => {
@@ -254,6 +263,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     setEmployees([...employees, ...items.map((it, i) => ({ ...it, id: base + i + 1, agencyId: selectedAgencyId, status: 'Active' as const }))])
     setAgencies(agencies.map((a) => (a.id === selectedAgencyId ? { ...a, employeeCount: a.employeeCount + items.length } : a)))
     logActivity('System Admin', 'Admin', 'Employees Imported', items.length + ' employee(s) added')
+    toast('Employees imported', 'success')
     items.forEach((it) => {
       fetch('/api/staff', {
         method: 'POST',
@@ -268,6 +278,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     if (emp && window.confirm(`Delete ${emp.name}?`)) {
       setEmployees(employees.filter((e) => e.id !== id))
       logActivity('System Admin', 'Admin', 'Employee Deleted', emp.name)
+      toast('Employee deleted', 'success')
       setAgencies(agencies.map((a) => (a.id === emp.agencyId ? { ...a, employeeCount: Math.max(a.employeeCount - 1, 0) } : a)))
     }
   }

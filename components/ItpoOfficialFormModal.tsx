@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { translations, Language } from '@/lib/translations'
 import { logActivity } from '@/lib/activity'
+import { useToast } from '@/components/Toast'
 
 type Props = {
   open: boolean
@@ -10,6 +11,7 @@ type Props = {
 }
 
 export default function ItpoOfficialFormModal({ open, onClose }: Props) {
+  const { toast } = useToast()
   const [language, setLanguage] = useState<Language>('en')
   const t = translations[language]
 
@@ -30,7 +32,7 @@ export default function ItpoOfficialFormModal({ open, onClose }: Props) {
     e.preventDefault()
     console.log('Form submitted:', formData)
     logActivity('System Admin', 'Admin', 'ITPO Official Saved', `${formData.name || 'New official'} · ${formData.designation || ''}`.trim())
-    alert(t.successfullySaved)
+    toast(t.successfullySaved)
     onClose()
   }
 

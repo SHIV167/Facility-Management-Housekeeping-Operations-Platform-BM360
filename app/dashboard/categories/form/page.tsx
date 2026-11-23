@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { translations, Language } from '@/lib/translations'
 import { logActivity } from '@/lib/activity'
+import { useToast } from '@/components/Toast'
 
 export default function CategoryFormPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const [language, setLanguage] = useState<Language>('en')
   const t = translations[language]
@@ -20,7 +22,7 @@ export default function CategoryFormPage() {
     e.preventDefault()
     console.log('Form submitted:', formData)
     logActivity('System Admin', 'Admin', 'Category Saved', 'Master data form submitted')
-    alert(language === 'en' ? t.successfullySaved : t.successfullySaved)
+    toast(language === 'en' ? t.successfullySaved : t.successfullySaved)
     router.push('/dashboard')
   }
 

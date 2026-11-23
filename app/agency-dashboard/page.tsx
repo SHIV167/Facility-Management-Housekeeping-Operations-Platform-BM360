@@ -10,8 +10,10 @@ import AddSupervisorModal, { SupervisorFormData } from '@/components/AddSupervis
 import AddFieldStaffModal, { FieldStaffFormData } from '@/components/AddFieldStaffModal'
 import { logActivity } from '@/lib/activity'
 import DocumentTitle from '@/components/DocumentTitle'
+import { useToast } from '@/components/Toast'
 
 export default function AgencyDashboardPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState('Last 7 Days')
@@ -133,6 +135,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status, completionTime: status === 'COMPLETED' ? `Completed on ${now}` : undefined } : c)))
     setComplaintHistory((prev) => ({ ...prev, [id]: [...(prev[id] || []), { action, timestamp: now, by }] }))
     logActivity('Laxman Lal', 'Agency Manager', action, `Complaint #${id}`)
+    toast(status === 'COMPLETED' ? `Complaint #${id} closed successfully` : `Complaint #${id} reopened`, status === 'COMPLETED' ? 'success' : 'info')
   }
 
   const activeComplaint = selectedComplaintId != null ? complaints.find((c) => c.id === selectedComplaintId) || null : null
@@ -171,6 +174,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       body: JSON.stringify(record),
     }).catch(() => {})
     logActivity('Laxman Lal', 'Agency Manager', 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
+
+    toast('Attendance marked', 'success')
   }
   const [staffMembers, setStaffMembers] = useState([
     { id: 'SFM-5078', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_927', phone: '9953655078', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
@@ -206,6 +211,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       status: 'Pending',
     }, ...prev])
     logActivity('Laxman Lal', 'Agency Manager', 'Supervisor Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+
+    toast('Supervisor added', 'success')
     fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Supervisor', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
 
@@ -223,6 +230,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       status: 'Pending',
     }, ...prev])
     logActivity('Laxman Lal', 'Agency Manager', 'Field Staff Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+
+    toast('Field Staff added', 'success')
     fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Field Staff', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
   const filteredStaff = staffMembers.filter((m) => {
@@ -811,7 +820,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
-        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('Laxman Lal', 'Agency Manager', 'Zone Switched', z) }}
+        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('Laxman Lal', 'Agency Manager', 'Zone Switched', z); toast('Zone switched to ' + z, 'info') }}
       />
       <AddSupervisorModal
         open={supervisorFormOpen}

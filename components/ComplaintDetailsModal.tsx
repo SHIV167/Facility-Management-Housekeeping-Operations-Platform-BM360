@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/Toast'
 
 export interface ComplaintData {
   id: number
@@ -31,6 +32,7 @@ interface ComplaintDetailsModalProps {
 }
 
 export default function ComplaintDetailsModal({ open, onClose, complaint, history = [], onStatusChange }: ComplaintDetailsModalProps) {
+  const { toast } = useToast()
   const [selectedPhoto, setSelectedPhoto] = useState(0)
 
   if (!open || !complaint) return null
@@ -128,7 +130,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">Site Evidence Photos ({photos.length})</h4>
               <button
-                onClick={() => alert('Photo upload functionality')}
+                onClick={() => toast('Photo upload functionality')}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0e4c5e] hover:bg-[#0b3c4a] text-white text-[12px] font-semibold rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,7 +239,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               </button>
             )}
             <button
-              onClick={() => alert('Photo download functionality')}
+              onClick={() => toast('Photo download functionality')}
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#e5e7eb] bg-white text-[#374151] rounded-lg text-[13px] font-medium hover:bg-[#f3f5f8] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

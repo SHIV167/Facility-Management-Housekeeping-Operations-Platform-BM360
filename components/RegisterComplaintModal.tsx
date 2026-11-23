@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { logActivity } from '@/lib/activity'
+import { useToast } from '@/components/Toast'
 
 type Props = {
   open: boolean
@@ -52,6 +53,7 @@ function parseScannedData(text: string) {
 }
 
 export default function RegisterComplaintModal({ open, onClose, onSuccess }: Props) {
+  const { toast } = useToast()
   const [allZones, setAllZones] = useState(true)
   const [selectedZone, setSelectedZone] = useState('')
   const [subArea, setSubArea] = useState('')
@@ -163,18 +165,18 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
         mobile: '—',
       }),
     }).catch(() => {})
-    alert('Complaint registered successfully!')
+    toast('Complaint registered successfully!')
     logActivity('Agency Manager', 'Agency', 'Complaint Registered', `New complaint submitted via portal`)
     onClose()
     onSuccess?.()
   }
 
   const handleTakePhoto = () => {
-    alert('Camera functionality - will be implemented with device camera API')
+    toast('Camera functionality - will be implemented with device camera API')
   }
 
   const handleAttachPhoto = () => {
-    alert('Photo upload functionality')
+    toast('Photo upload functionality')
   }
 
   const inputCls = "w-full h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#111827] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#1b8f84]/20 focus:border-[#1b8f84] transition-colors"

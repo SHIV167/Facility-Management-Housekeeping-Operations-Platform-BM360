@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import DocumentTitle from '@/components/DocumentTitle'
 import { logActivity } from '@/lib/activity'
+import { useToast } from '@/components/Toast'
 
 export default function LoginPage() {
+  const { toast } = useToast()
   const [step, setStep] = useState(1)
   const [mobileNumber, setMobileNumber] = useState('')
   const [otp, setOtp] = useState('')
@@ -105,7 +107,7 @@ export default function LoginPage() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      alert('OTP resent successfully!')
+      toast('OTP resent successfully!')
     }, 1000)
   }
 

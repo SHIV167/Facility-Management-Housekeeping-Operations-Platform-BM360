@@ -6,10 +6,12 @@ import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
 import DocumentTitle from '@/components/DocumentTitle'
 import { logActivity } from '@/lib/activity'
+import { useToast } from '@/components/Toast'
 
 type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
 export default function ITPODashboardPage() {
+  const { toast } = useToast()
   const router = useRouter()
   const [currentView, setCurrentView] = useState<ViewType>('overview')
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
