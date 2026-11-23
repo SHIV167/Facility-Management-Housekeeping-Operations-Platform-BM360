@@ -14,7 +14,7 @@ type Props = {
 
 const emptyForm = {
   name: '', username: '', employeeId: '', designation: '',
-  phone: '', email: '', zones: '', status: 'Active',
+  phone: '', email: '', password: '', zones: '', status: 'Active',
 }
 
 export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }: Props) {
@@ -28,7 +28,7 @@ export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }
     if (open) {
       setFormData(editing ? {
         name: editing.name || '', username: editing.username || '', employeeId: editing.employeeId || editing.employee_id || '',
-        designation: editing.designation || '', phone: editing.phone || '', email: editing.email || '',
+        designation: editing.designation || '', phone: editing.phone || '', email: editing.email || '', password: '',
         zones: editing.zonesList ? editing.zonesList.join(', ') : (editing.zones || ''), status: editing.status || 'Active',
       } : emptyForm)
     }
@@ -177,6 +177,19 @@ export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className={inputCls}
                   placeholder={language === 'en' ? 'Enter email address' : 'ईमेल पता दर्ज करें'}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Password {editing ? '(leave blank to keep current)' : '*'}</label>
+                <input
+                  type="password"
+                  required={!editing}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className={inputCls}
+                  placeholder={language === 'en' ? 'Login password' : 'लॉगिन पासवर्ड'}
+                  minLength={6}
                 />
               </div>
 

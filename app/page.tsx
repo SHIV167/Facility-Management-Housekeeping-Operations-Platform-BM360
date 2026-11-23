@@ -87,10 +87,10 @@ export default function LoginPage() {
         setLoading(false)
         if (d.ok) {
           localStorage.setItem('isLoggedIn', 'true')
-          localStorage.setItem('userRole', 'Admin')
-          localStorage.setItem('mobileNumber', 'admin')
+          localStorage.setItem('userRole', d.role || 'Admin')
+          localStorage.setItem('mobileNumber', username.trim())
           localStorage.removeItem('bm360_assigned_zone')
-          window.location.href = '/dashboard'
+          window.location.href = d.role === 'ITPO Official' ? `/official-dashboard?id=${d.officialId}` : '/dashboard'
         } else {
           setError(d.error || 'Invalid username or password')
         }
@@ -417,7 +417,7 @@ export default function LoginPage() {
                 </button>
 
                 <button type="button" onClick={() => { setAdminMode(true); setError('') }} className="w-full text-sm text-[#0f766e] font-semibold hover:underline">
-                  Admin login (username &amp; password)
+                  Staff login (username &amp; password)
                 </button>
               </form>
             ) : (

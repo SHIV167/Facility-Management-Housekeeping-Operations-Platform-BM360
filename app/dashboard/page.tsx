@@ -269,7 +269,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     fetch('/api/officials', {
       method: isEdit ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editingOfficial?.id, name: data.name, username: data.username, employeeId: data.employeeId, designation: data.designation, phone: data.phone, email: data.email, zones: zonesArr, status: data.status || 'Active' }),
+      body: JSON.stringify({ id: editingOfficial?.id, name: data.name, username: data.username, employeeId: data.employeeId, designation: data.designation, phone: data.phone, email: data.email, password: data.password || undefined, zones: zonesArr, status: data.status || 'Active' }),
     }).then((r) => r.json()).then((d) => {
       if (d.ok && d.official) {
         const mapped = mapOfficial(d.official)
@@ -711,7 +711,6 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                             Edit
                           </button>
                           <button onClick={() => { setEditingOfficial(official); setShowItpoForm(true) }} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">Edit Zones</button>
-                          <button onClick={() => window.location.href = `/official-dashboard?id=${official.id}`} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-md hover:bg-[#d7f0ea]">Dashboard</button>
                           <button onClick={() => handleToggleOfficial(official)} className="px-2 py-1 text-[12px] font-medium text-[#ef4444] hover:bg-red-50 rounded-md">{official.status === 'Active' ? 'Disable' : 'Enable'}</button>
                           <button onClick={() => handleDeleteOfficial(official)} title="Delete" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2]">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
