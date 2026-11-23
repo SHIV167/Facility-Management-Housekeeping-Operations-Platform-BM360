@@ -47,13 +47,24 @@ export async function POST(req: NextRequest) {
       'SELECT id, name, username, role FROM staff WHERE phone=$1 AND status=\'Active\' LIMIT 1',
       [mobile]
     ).catch(() => null)
-    const role = staff ? (staff.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff') : 'User'
-    await setSessionCookie(createSessionToken(staff?.username || mobile, role))
+    const role = staff ? (staff.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff') : null
+    if (!role) {
+      // Only registered agency staff or All-Campus-authorized mobiles may log in
+      const zoneAccess = await queryOne<{ access_mobiles: string }>(
+        `SELECT access_mobiles FROM zones WHERE access_mobiles <> ''`
+      ).catch(() => null)
+      const allowed = (zoneAccess?.access_mobiles || '').split(',').map((m) => m.trim()).filter(Boolean)
+      if (!allowed.includes(mobile)) {
+        return NextResponse.json({ ok: false, error: 'Mobile number not registered. Contact admin.' }, { status: 403 })
+      }
+    }
+    const finalRole = role || 'User'
+    await setSessionCookie(createSessionToken(staff?.username || mobile, finalRole))
     await queryOne(
       `INSERT INTO activity_log (actor, role, action, details) VALUES ($1,$2,'Login',$3)`,
-      [staff?.username || mobile, role, staff ? `${staff.name} OTP login` : 'OTP verified — logged into portal']
+      [staff?.username || mobile, finalRole, staff ? `${staff.name} OTP login` : 'OTP verified — logged into portal']
     ).catch(() => {})
-    return NextResponse.json({ ok: true, role, staffId: staff?.id, name: staff?.name })
+    return NextResponse.json({ ok: true, role: finalRole, staffId: staff?.id, name: staff?.name })
   }
 
   return NextResponse.json({ ok: false, error: 'Missing credentials' }, { status: 400 })

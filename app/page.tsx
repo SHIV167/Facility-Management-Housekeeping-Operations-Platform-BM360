@@ -52,7 +52,12 @@ export default function LoginPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mobile: mobileNumber, otp }),
         }).then((r) => r.json()).then((d) => {
-          const role = d?.role || 'User'
+          if (!d?.ok) {
+            localStorage.removeItem('isLoggedIn')
+            setError(d?.error || 'Login failed. Please try again.')
+            return
+          }
+          const role = d.role || 'User'
           localStorage.setItem('userRole', role)
           window.location.href = (role === 'Agency Supervisor' || role === 'Field Staff') ? '/agency-dashboard' : '/itpo-dashboard'
         }).catch(() => { window.location.href = '/itpo-dashboard' })
