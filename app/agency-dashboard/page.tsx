@@ -49,7 +49,7 @@ export default function AgencyDashboardPage() {
     }).catch(() => {})
     fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
-        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || agencyName, zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
+        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, agencyDbId: m.agency_id ?? null, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || agencyName, zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
         setStaffMembers(mapped)
       }
     }).catch(() => {})
@@ -176,17 +176,18 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     toast('Field Staff added', 'success')
     fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Field Staff', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
-  const filteredStaff = staffMembers.filter((m) => {
+  const agencyStaff = staffMembers.filter((m) => me.agencyId == null || m.agencyDbId == null || m.agencyDbId === me.agencyId)
+  const filteredStaff = agencyStaff.filter((m) => {
     const q = staffSearch.trim().toLowerCase()
     const matchQ = !q || [m.name, m.id, m.username, m.designation, m.phone, m.zones.join(' ')].some((v) => v.toLowerCase().includes(q))
     const matchRole = staffRoleFilter === 'All Roles' || m.role === staffRoleFilter
     const matchStatus = staffStatusFilter === 'All Status' || (staffStatusFilter === 'Active' ? m.status === 'Active' : m.status === 'Pending')
     return matchQ && matchRole && matchStatus
   })
-  const supCount = staffMembers.filter((m) => m.role === 'Supervisor').length
-  const fieldCount = staffMembers.filter((m) => m.role === 'Field Staff').length
-  const activeCount = staffMembers.filter((m) => m.status === 'Active').length
-  const pendingCount = staffMembers.filter((m) => m.status === 'Pending').length
+  const supCount = agencyStaff.filter((m) => m.role === 'Supervisor').length
+  const fieldCount = agencyStaff.filter((m) => m.role === 'Field Staff').length
+  const activeCount = agencyStaff.filter((m) => m.status === 'Active').length
+  const pendingCount = agencyStaff.filter((m) => m.status === 'Pending').length
   return (
     
       <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
