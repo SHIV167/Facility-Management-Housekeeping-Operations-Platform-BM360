@@ -44,6 +44,19 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
     fetch('/api/agencies').then((r) => r.json()).then((d) => {
       if (d.ok && d.agencies && d.agencies.length) setAgencies(d.agencies.map((a) => ({ id: a.id, name: a.name, contactPerson: a.contact_person || '', phone: a.phone || '', email: a.email || '', address: a.address || '', services: a.services || [], zones: a.zones || [], status: a.status || 'Active', employeeCount: a.employee_count || 0, joinedDate: a.joined_date || '' })))
     }).catch(() => {})
+    fetch('/api/officials').then((r) => r.json()).then((d) => {
+      if (d.ok && d.officials && d.officials.length) {
+        setOfficials(d.officials.map((o: any) => ({
+          id: o.id, name: o.name,
+          initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+          username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
+          phone: o.phone || '', email: o.email || '',
+          zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+          zonesList: Array.isArray(o.zones) ? o.zones : [],
+          status: o.status || 'Active',
+        })))
+      }
+    }).catch(() => {})
   }, [])
 const [zoneFormOpen, setZoneFormOpen] = useState(false)
 const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
@@ -80,7 +93,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
   const t = translations[language]
 
-  const officials = [
+  const [officials, setOfficials] = useState([
     {
       id: 1,
       name: 'Mr. Premjit Lal',
@@ -117,7 +130,8 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       zones: 'Hall 6-10',
       status: 'Inactive'
     }
-  ]
+  ])
+  const [editingOfficial, setEditingOfficial] = useState<any>(null)
 
   const complaints = [
     {
@@ -237,6 +251,49 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       logActivity('System Admin', 'Admin', 'Agency Deleted', 'Agency ID ' + id)
       toast('Agency deleted', 'success')
     }
+  }
+
+  const mapOfficial = (o: any) => ({
+    id: o.id, name: o.name,
+    initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+    username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
+    phone: o.phone || '', email: o.email || '',
+    zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+    zonesList: Array.isArray(o.zones) ? o.zones : [],
+    status: o.status || 'Active',
+  })
+
+  const handleSaveOfficial = (data: any) => {
+    const isEdit = !!editingOfficial
+    const zonesArr = (data.zonesList && data.zonesList.length ? data.zonesList : String(data.zones || '').split(',').map((z: string) => z.trim()).filter(Boolean))
+    fetch('/api/officials', {
+      method: isEdit ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editingOfficial?.id, name: data.name, username: data.username, employeeId: data.employeeId, designation: data.designation, phone: data.phone, email: data.email, zones: zonesArr, status: data.status || 'Active' }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok && d.official) {
+        const mapped = mapOfficial(d.official)
+        setOfficials((prev) => isEdit ? prev.map((x) => (x.id === mapped.id ? mapped : x)) : [...prev, mapped])
+        toast(isEdit ? 'ITPO official updated' : 'ITPO official created', 'success')
+        logActivity('System Admin', 'Admin', isEdit ? 'ITPO Official Updated' : 'ITPO Official Created', data.name)
+      }
+    }).catch(() => toast('Failed to save official', 'error'))
+    setEditingOfficial(null)
+  }
+
+  const handleToggleOfficial = (official: any) => {
+    const newStatus = official.status === 'Active' ? 'Inactive' : 'Active'
+    fetch('/api/officials', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: official.id, name: official.name, username: official.username, employeeId: official.employeeId, designation: official.designation, phone: official.phone, email: official.email, zones: official.zonesList || [], status: newStatus }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok) {
+        setOfficials((prev) => prev.map((x) => (x.id === official.id ? { ...x, status: newStatus } : x)))
+        toast(`Official ${newStatus === 'Active' ? 'activated' : 'disabled'}`, newStatus === 'Active' ? 'success' : 'warning')
+        logActivity('System Admin', 'Admin', newStatus === 'Active' ? 'ITPO Official Activated' : 'ITPO Official Disabled', official.name)
+      }
+    }).catch(() => toast('Failed to update official', 'error'))
   }
 
   const staffOptions: StaffOption[] = [
@@ -519,7 +576,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   </svg>
                   Export to Excel
                 </button>
-                <button onClick={() => setShowItpoForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm">
+                <button onClick={() => { setEditingOfficial(null); setShowItpoForm(true) }} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#2563eb] rounded-lg hover:bg-[#1d4ed8] shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
@@ -637,13 +694,13 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">
+                          <button onClick={() => { setEditingOfficial(official); setShowItpoForm(true) }} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                             Edit
                           </button>
-                          <button className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">Edit Zones</button>
+                          <button onClick={() => { setEditingOfficial(official); setShowItpoForm(true) }} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-md hover:bg-[#fafbfc]">Edit Zones</button>
                           <button onClick={() => window.location.href = `/official-dashboard?id=${official.id}`} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-md hover:bg-[#d7f0ea]">Dashboard</button>
-                          <button className="px-2 py-1 text-[12px] font-medium text-[#ef4444] hover:bg-red-50 rounded-md">Disable</button>
+                          <button onClick={() => handleToggleOfficial(official)} className="px-2 py-1 text-[12px] font-medium text-[#ef4444] hover:bg-red-50 rounded-md">{official.status === 'Active' ? 'Disable' : 'Enable'}</button>
                         </div>
                       </td>
                     </tr>
@@ -1997,7 +2054,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           {renderContent()}
         </main>
       </div>
-      <ItpoOfficialFormModal open={showItpoForm} onClose={() => setShowItpoForm(false)} />
+      <ItpoOfficialFormModal open={showItpoForm} onClose={() => { setShowItpoForm(false); setEditingOfficial(null) }} editing={editingOfficial} onSave={handleSaveOfficial} />
       <ZoneFormModal
         open={zoneFormOpen}
         onClose={() => setZoneFormOpen(false)}

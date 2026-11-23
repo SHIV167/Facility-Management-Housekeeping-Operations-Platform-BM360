@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { translations, Language } from '@/lib/translations'
 import { logActivity } from '@/lib/activity'
 import { useToast } from '@/components/Toast'
@@ -8,31 +8,43 @@ import { useToast } from '@/components/Toast'
 type Props = {
   open: boolean
   onClose: () => void
+  editing?: any
+  onSave?: (data: any) => void
 }
 
-export default function ItpoOfficialFormModal({ open, onClose }: Props) {
+const emptyForm = {
+  name: '', username: '', employeeId: '', designation: '',
+  phone: '', email: '', zones: '', status: 'Active',
+}
+
+export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }: Props) {
   const { toast } = useToast()
   const [language, setLanguage] = useState<Language>('en')
   const t = translations[language]
 
-  const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    employeeId: '',
-    designation: '',
-    phone: '',
-    email: '',
-    zones: '',
-    status: 'Active'
-  })
+  const [formData, setFormData] = useState(emptyForm)
+
+  useEffect(() => {
+    if (open) {
+      setFormData(editing ? {
+        name: editing.name || '', username: editing.username || '', employeeId: editing.employeeId || editing.employee_id || '',
+        designation: editing.designation || '', phone: editing.phone || '', email: editing.email || '',
+        zones: editing.zonesList ? editing.zonesList.join(', ') : (editing.zones || ''), status: editing.status || 'Active',
+      } : emptyForm)
+    }
+  }, [open, editing])
 
   if (!open) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    logActivity('System Admin', 'Admin', 'ITPO Official Saved', `${formData.name || 'New official'} · ${formData.designation || ''}`.trim())
-    toast(t.successfullySaved)
+    if (!formData.name.trim()) { toast('Official name is required', 'error'); return }
+    if (onSave) {
+      onSave(formData)
+    } else {
+      logActivity('System Admin', 'Admin', 'ITPO Official Saved', `${formData.name || 'New official'} · ${formData.designation || ''}`.trim())
+      toast(t.successfullySaved)
+    }
     onClose()
   }
 
