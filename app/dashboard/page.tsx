@@ -587,10 +587,10 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
             <div className="grid grid-cols-4 gap-3 mb-3">
               {[
-                { label: 'TOTAL ITPO OFFICIALS', value: '124', iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]', icon: 'shield' },
-                { label: 'CAMPUS-WIDE (ALL ZONES)', value: '72', iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]', icon: 'globe' },
-                { label: 'ZONE-SPECIFIC TAGGED', value: '52', iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]', icon: 'pin' },
-                { label: 'ACTIVE ACCOUNTS', value: '122', iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]', icon: 'check' },
+                { label: 'TOTAL ITPO OFFICIALS', value: String(officials.length), iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]', icon: 'shield' },
+                { label: 'CAMPUS-WIDE (ALL ZONES)', value: String(officials.filter((o) => o.zones.includes('All Zones')).length), iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]', icon: 'globe' },
+                { label: 'ZONE-SPECIFIC TAGGED', value: String(officials.filter((o) => !o.zones.includes('All Zones')).length), iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]', icon: 'pin' },
+                { label: 'ACTIVE ACCOUNTS', value: String(officials.filter((o) => o.status === 'Active').length), iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]', icon: 'check' },
               ].map((card) => (
                 <div key={card.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <div>
