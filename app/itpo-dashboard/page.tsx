@@ -27,7 +27,7 @@ export default function ITPODashboardPage() {
     router.push('/')
   }
 
-  const officials = [
+  const [officials, setOfficials] = useState<any[]>([
     {
       id: 1,
       name: 'Mr. Premjit Lal',
@@ -98,7 +98,28 @@ export default function ITPODashboardPage() {
       resolutionRate: 92,
       avgResponseTime: 6.2
     }
-  ]
+  ])
+
+  useEffect(() => {
+    fetch('/api/officials').then((r) => r.json()).then((d) => {
+      if (d.ok && d.officials && d.officials.length) {
+        setOfficials(d.officials.map((o: any) => ({
+          id: o.id,
+          name: o.name,
+          initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+          username: o.username || '',
+          employeeId: o.employee_id || '',
+          designation: o.designation || '',
+          zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+          status: o.status || 'Active',
+          assignedComplaints: 0,
+          resolvedComplaints: 0,
+          resolutionRate: 0,
+          avgResponseTime: 0,
+        })))
+      }
+    }).catch(() => {})
+  }, [])
 
   const recentActivities = [
     { id: 1, action: 'Complaint Resolved', official: 'Mr. Premjit Lal', complaintId: '#156', timestamp: '2 minutes ago', type: 'success' },
