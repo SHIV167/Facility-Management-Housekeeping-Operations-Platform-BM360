@@ -1425,15 +1425,15 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">TOTAL STAFF</p>
-                <p className="text-[28px] font-semibold text-[#111827]">256</p>
+                <p className="text-[28px] font-semibold text-[#111827]">{employees.length}</p>
               </div>
               <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">ACTIVE ON DUTY</p>
-                <p className="text-3xl font-bold text-green-600">198</p>
+                <p className="text-3xl font-bold text-green-600">{employees.filter((e) => e.status === 'Active').length}</p>
               </div>
               <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280] mb-1">ON LEAVE</p>
-                <p className="text-3xl font-bold text-orange-600">58</p>
+                <p className="text-3xl font-bold text-orange-600">{employees.filter((e) => e.status !== 'Active').length}</p>
               </div>
             </div>
                         {/* Daily Attendance */}
@@ -1546,60 +1546,40 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f3f4f6]">
-                  <tr className="hover:bg-[#fafbfc]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#e6f7f4] rounded-full flex items-center justify-center">
-                          <span className="text-[#0f766e] font-semibold text-sm">RS</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Ramesh Singh</p>
-                          <p className="text-xs text-[#6b7280]">ID: ST-001</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Soni Facility Management</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Hall 1-5</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Morning (6AM - 2PM)</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">
-                        On Duty
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
-                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-[#fafbfc]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-semibold text-sm">SG</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Suresh Gupta</p>
-                          <p className="text-xs text-[#6b7280]">ID: ST-002</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">BLUSPRING ENTERPRISES LTD.</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Hall 6-10</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Evening (2PM - 10PM)</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fff7ed] text-[#ea580c]">
-                        On Leave
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
-                        <button className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
-                      </div>
-                    </td>
-                  </tr>
+                  {employees.map((emp) => {
+                    const ag = agencies.find((a) => a.id === emp.agencyId)
+                    const onDuty = emp.status === 'Active'
+                    const initials = emp.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                    return (
+                      <tr key={emp.id} className="hover:bg-[#fafbfc]">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${onDuty ? 'bg-[#e6f7f4]' : 'bg-[#fff7ed]'}`}>
+                              <span className={`${onDuty ? 'text-[#0f766e]' : 'text-[#ea580c]'} font-semibold text-sm`}>{initials}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{emp.name}</p>
+                              <p className="text-xs text-[#6b7280]">ID: ST-{String(emp.id).padStart(3, '0')} • {emp.role}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{ag?.name || '—'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{emp.zone}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{emp.shift}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${onDuty ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                            {onDuty ? 'On Duty' : 'On Leave'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleDeleteEmployee(emp.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {employees.length === 0 && <tr><td colSpan={6} className="px-6 py-10 text-center text-[13px] text-[#9ca3af]">No staff records in database yet.</td></tr>}
                 </tbody>
               </table>
             </div>
