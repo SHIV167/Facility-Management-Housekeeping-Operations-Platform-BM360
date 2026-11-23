@@ -45,6 +45,11 @@ export default function LoginPage() {
     setTimeout(() => {
       setLoading(false)
       if (otp === STATIC_OTP) {
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobile: mobileNumber, otp }),
+        }).catch(() => {})
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
         logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
@@ -72,15 +77,25 @@ export default function LoginPage() {
     setError('')
     if (username.trim().toLowerCase() === 'admin' && password === 'BM360@123') {
       setLoading(true)
-      setTimeout(() => {
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      }).then((r) => r.json()).then((d) => {
         setLoading(false)
-        localStorage.setItem('isLoggedIn', 'true')
-        localStorage.setItem('userRole', 'Admin')
-        localStorage.setItem('mobileNumber', 'admin')
-        localStorage.removeItem('bm360_assigned_zone')
-        logActivity('admin', 'Admin', 'Login', 'Admin login via username/password')
-        window.location.href = '/dashboard'
-      }, 800)
+        if (d.ok) {
+          localStorage.setItem('isLoggedIn', 'true')
+          localStorage.setItem('userRole', 'Admin')
+          localStorage.setItem('mobileNumber', 'admin')
+          localStorage.removeItem('bm360_assigned_zone')
+          window.location.href = '/dashboard'
+        } else {
+          setError(d.error || 'Invalid username or password')
+        }
+      }).catch(() => {
+        setLoading(false)
+        setError('Login service unavailable')
+      })
     } else {
       setError('Invalid username or password')
     }
