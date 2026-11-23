@@ -26,7 +26,22 @@ export default function AgencyDashboardPage() {
     if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Campus' : z)
   }, [])
   useEffect(() => {
-    fetch('/api/auth/me').then((r) => r.json()).then((d) => { if (d?.user?.role) setSessionRole(d.user.role) }).catch(() => {})
+    fetch('/api/auth/me').then((r) => r.json()).then((d) => {
+      if (d?.user?.role) setSessionRole(d.user.role)
+      const uid = d?.user?.uid || ''
+      const phone = localStorage.getItem('mobileNumber') || ''
+      fetch('/api/staff').then((r) => r.json()).then((sd) => {
+        if (sd.ok && sd.staff) {
+          const s = sd.staff.find((x: any) => x.username === uid || x.phone === uid || x.phone === phone)
+          if (s) {
+            const roleLabel = s.designation === 'Agency Manager' ? 'Agency Manager' : s.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff'
+            setMe({ name: s.name, role: roleLabel, agency: s.agency_name || '', agencyId: s.agency_id ?? null })
+          } else if (d?.user?.name) {
+            setMe({ name: d.user.name, role: d.user.role || '', agency: '', agencyId: null })
+          }
+        }
+      }).catch(() => {})
+    }).catch(() => {})
   }, [])
   useEffect(() => {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
@@ -34,7 +49,7 @@ export default function AgencyDashboardPage() {
     }).catch(() => {})
     fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
-        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || 'Soni Facility Management', zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
+        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || agencyName, zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
         setStaffMembers(mapped)
       }
     }).catch(() => {})
@@ -49,6 +64,7 @@ const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'staff'
 const [userRole, setUserRole] = useState<'manager' | 'supervisor'>('manager')
 const [sessionRole, setSessionRole] = useState('')
 const isAdminViewer = sessionRole === 'Admin'
+const [me, setMe] = useState<{ name: string; role: string; agency: string; agencyId: number | null }>({ name: '', role: '', agency: '', agencyId: null })
 const [staffSearch, setStaffSearch] = useState('')
 const [staffRoleFilter, setStaffRoleFilter] = useState('All Roles')
 const [staffStatusFilter, setStaffStatusFilter] = useState('All Status')
@@ -68,12 +84,12 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
   const handleComplaintStatus = (id: number, status: 'PENDING' | 'COMPLETED') => {
     const now = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    const by = 'Laxman Lal (Agency Manager)'
+    const by = displayName + ' (' + displayRole + ')'
     const action = status === 'COMPLETED' ? 'Complaint Closed / Completed' : 'Complaint Reopened'
-    fetch('/api/complaints', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, actor: by, role: 'Agency Manager' }) }).catch(() => {})
+    fetch('/api/complaints', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, actor: by, role: displayRole }) }).catch(() => {})
     setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status, completionTime: status === 'COMPLETED' ? `Completed on ${now}` : undefined } : c)))
     setComplaintHistory((prev) => ({ ...prev, [id]: [...(prev[id] || []), { action, timestamp: now, by }] }))
-    logActivity('Laxman Lal', 'Agency Manager', action, `Complaint #${id}`)
+    logActivity(displayName, displayRole, action, `Complaint #${id}`)
     toast(status === 'COMPLETED' ? `Complaint #${id} closed successfully` : `Complaint #${id} reopened`, status === 'COMPLETED' ? 'success' : 'info')
   }
 
@@ -112,13 +128,16 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record),
     }).catch(() => {})
-    logActivity('Laxman Lal', 'Agency Manager', 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
+    logActivity(displayName, displayRole, 'Attendance Marked', record.staffName + ' · ' + record.timestamp)
 
     toast('Attendance marked', 'success')
   }
   const [staffMembers, setStaffMembers] = useState<any[]>([])
 
   const isManager = userRole === 'manager' || sessionRole === 'Admin'
+  const displayName = me.name || 'User'
+  const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
+  const agencyName = me.agency || 'Agency'
 
   const handleAddSupervisor = (data: SupervisorFormData) => {
     setStaffMembers((prev) => [{
@@ -128,15 +147,15 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       designation: data.designation,
       username: data.username,
       phone: data.mobile,
-      agency: 'Soni Facility Management',
+      agency: agencyName,
       zones: [data.zone],
       shift: 'No Shift',
       status: 'Pending',
     }, ...prev])
-    logActivity('Laxman Lal', 'Agency Manager', 'Supervisor Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+    logActivity(displayName, displayRole, 'Supervisor Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
 
     toast('Supervisor added', 'success')
-    fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Supervisor', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
+    fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Supervisor', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: me.agencyId ?? 1 }) }).catch(() => {})
   }
 
   const handleAddFieldStaff = (data: FieldStaffFormData) => {
@@ -147,12 +166,12 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       designation: data.designation,
       username: data.username,
       phone: data.mobile,
-      agency: 'Soni Facility Management',
+      agency: agencyName,
       zones: [data.zone],
       shift: 'No Shift',
       status: 'Pending',
     }, ...prev])
-    logActivity('Laxman Lal', 'Agency Manager', 'Field Staff Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+    logActivity(displayName, displayRole, 'Field Staff Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
 
     toast('Field Staff added', 'success')
     fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Field Staff', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
@@ -189,7 +208,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block text-[13px] font-semibold leading-tight">Soni Facility Management</span>
+              <span className="block text-[13px] font-semibold leading-tight">{agencyName}</span>
               <span className="block text-[10px] text-[#9ec3d0] leading-tight mt-0.5">BM360 · Agency Portal</span>
             </span>
           </div>
@@ -234,8 +253,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold leading-tight truncate">Laxman Lal</p>
-            <p className="text-[11px] text-[#9ec3d0] leading-tight">Agency Manager</p>
+            <p className="text-[13px] font-semibold leading-tight truncate">{displayName}</p>
+            <p className="text-[11px] text-[#9ec3d0] leading-tight">{displayRole}</p>
           </div>
           <button onClick={handleLogout} className="text-[#9ec3d0] hover:text-white transition-colors" title="Logout">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -289,8 +308,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               </button>
               <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">LL</div>
               <div className="leading-tight">
-                <p className="text-[12.5px] font-semibold text-[#111827]">Laxman Lal</p>
-                <p className="text-[11px] text-[#6b7280]">Agency Manager</p>
+                <p className="text-[12.5px] font-semibold text-[#111827]">{displayName}</p>
+                <p className="text-[11px] text-[#6b7280]">{displayRole}</p>
               </div>
             </div>
           </div>
@@ -425,7 +444,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
                                 )}
                               </button>
-                              {isManager && m.status === 'Pending' && <button onClick={() => { fetch('/api/staff', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.dbId, name: m.name, role: m.role, designation: m.designation, username: m.username, phone: m.phone, employeeId: m.id, zones: m.zones, shift: m.shift, status: 'Active', agencyId: 1 }) }).then(() => { setStaffMembers((prev) => prev.map((x) => x.dbId === m.dbId ? { ...x, status: 'Active' } : x)); logActivity(m.username, 'Agency Manager', 'Staff Activated', m.name) }) }} className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
+                              {isManager && m.status === 'Pending' && <button onClick={() => { fetch('/api/staff', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.dbId, name: m.name, role: m.role, designation: m.designation, username: m.username, phone: m.phone, employeeId: m.id, zones: m.zones, shift: m.shift, status: 'Active', agencyId: 1 }) }).then(() => { setStaffMembers((prev) => prev.map((x) => x.dbId === m.dbId ? { ...x, status: 'Active' } : x)); logActivity(m.username, displayRole, 'Staff Activated', m.name) }) }} className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
                             </div>
                           </td>
                         </tr>
@@ -454,7 +473,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 </div>
                 <div>
-                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Good Afternoon, Laxman Lal</h1>
+                  <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">Good Afternoon, {displayName}</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#e6f7f4] text-[#0f766e]">Agency Manager</span>
                     <span className="text-[#9ca3af]">•</span>
@@ -613,7 +632,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                   className="h-9 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151]"
                 >
                   <option>All Agencies</option>
-                  <option>Soni Facility Management</option>
+                  <option>{agencyName}</option>
                   <option>BLUSPRING ENTERPRISES LTD.</option>
                 </select>
               </div>
@@ -668,7 +687,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                       <td className="px-4 py-3.5">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' : complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{complaint.priority || 'HIGH'}</span>
                       </td>
-                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.agency && complaint.agency !== '—' ? complaint.agency : 'Soni Facility Management'}</td>
+                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.agency && complaint.agency && complaint.agency !== '—' ? complaint.agency : agencyName}</td>
                       <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.dueDate && complaint.dueDate !== '—' ? complaint.dueDate : '—'}</td>
                       <td className="px-4 py-3.5">
                         <button onClick={(e) => { e.stopPropagation(); setSelectedComplaintId(complaint.id) }} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-semibold text-white bg-[#0e4c5e] rounded-md hover:bg-[#0b3c4a]">
@@ -771,18 +790,18 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         open={zoneModalOpen}
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
-        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('Laxman Lal', 'Agency Manager', 'Zone Switched', z); toast('Zone switched to ' + z, 'info') }}
+        onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Campus' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity(displayName, displayRole, 'Zone Switched', z); toast('Zone switched to ' + z, 'info') }}
       />
       <AddSupervisorModal
         open={supervisorFormOpen}
         onClose={() => setSupervisorFormOpen(false)}
-        agencyName="Soni Facility Management"
+        agencyName={agencyName}
         onSubmit={handleAddSupervisor}
       />
       <AddFieldStaffModal
         open={fieldStaffFormOpen}
         onClose={() => setFieldStaffFormOpen(false)}
-        agencyName="Soni Facility Management"
+        agencyName={agencyName}
         supervisors={staffMembers.filter((m) => m.role === 'Supervisor').map((m) => ({ name: m.name, username: m.username }))}
         onSubmit={handleAddFieldStaff}
       />
