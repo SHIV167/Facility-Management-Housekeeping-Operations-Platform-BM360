@@ -3,6 +3,7 @@
 
 import { translations, Language } from '@/lib/translations'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
+import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
 import ZoneFormModal from '@/components/ZoneFormModal'
 import { defaultZones, ZoneRecord } from '@/lib/zones'
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [headerSearch, setHeaderSearch] = useState('')
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
+  const [inspectComplaint, setInspectComplaint] = useState<any>(null)
 const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
   useEffect(() => {
     try { const raw = localStorage.getItem('bm360_zones'); if (raw) setZones(JSON.parse(raw)) } catch {}
@@ -525,57 +527,88 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
 
-      case 'complaint-register':
+      case 'complaint-register': {
+        const total = complaints.length
+        const pendingCount = complaints.filter((c) => c.status === 'PENDING').length
+        const completedCount = complaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
         return (
           <div>
-            <div className="mb-6">
-              <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Complaint Register</h1>
-              <p className="text-[13px] text-[#6b7280]">View and manage all complaints across Bharat Mandapam</p>
+            <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937]">Complaint Register</h1>
+                <p className="text-[13px] text-[#6b7280] mt-0.5">{total} complaints · Bharat Mandapam operations</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setCurrentView('complaint-register')} className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Refresh
+                </button>
+                <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  Export CSV
+                </button>
+              </div>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">ID</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Title</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Priority</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Location</th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase">Agency</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f3f4f6]">
-                  {complaints.map((complaint) => (
-                    <tr key={complaint.id} className="hover:bg-[#fafbfc]">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">#{complaint.id}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{complaint.title}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.status === 'COMPLETED' ? 'bg-[#e8f8ef] text-[#16a34a]' :
-                          complaint.status === 'PENDING' ? 'bg-[#fff7ed] text-[#ea580c]' :
-                          'bg-[#eef2ff] text-[#4f46e5]'
-                        }`}>
-                          {complaint.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' :
-                          complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' :
-                          'bg-[#f3f4f6] text-[#6b7280]'
-                        }`}>
-                          {complaint.priority}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{complaint.location}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{complaint.agency}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { label: 'Total', value: total, cls: 'text-[#111827]' },
+                { label: 'Pending', value: pendingCount, cls: 'text-[#ea580c]' },
+                { label: 'Completed', value: completedCount, cls: 'text-[#16a34a]' },
+              ].map((s) => (
+                <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{s.label.toUpperCase()}</p>
+                  <p className={`text-[24px] font-bold mt-1 ${s.cls}`}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              {complaints.map((c) => {
+                const done = c.status === 'COMPLETED' || c.status === 'RESOLVED'
+                return (
+                  <div key={c.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+                    <div className="flex items-start gap-4 p-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                          <span className="text-[13px] font-bold text-[#111827]">#{c.id}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${c.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' : c.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{c.priority || 'MEDIUM'}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${done ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>{done ? 'Completed' : c.status}</span>
+                        </div>
+                        <p className="text-[14px] font-semibold text-[#111827] leading-snug">{c.title}</p>
+                        <p className="text-[12px] text-[#6b7280] mt-1">{c.location} · {c.service} · {c.agency}</p>
+                        <p className="text-[11px] text-[#9ca3af] mt-1">{c.date} · Assigned: {c.assignedTo}</p>
+                      </div>
+                      <button onClick={() => setInspectComplaint(c)} className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        Inspect
+                      </button>
+                    </div>
+                    {/* Workflow strip */}
+                    <div className="flex items-center gap-0 border-t border-[#eef1f4] bg-[#fafbfc] px-4 py-2.5">
+                      {[
+                        { label: 'ITPO', sub: 'Before', cls: 'bg-[#eef2ff] text-[#4f46e5]' },
+                        { label: 'Agency', sub: 'After', cls: 'bg-[#e6f7f4] text-[#0f766e]' },
+                      ].map((w, i) => (
+                        <div key={w.label} className="flex items-center">
+                          {i > 0 && <svg className="w-4 h-4 text-[#cbd5e1] mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-semibold ${w.cls}`}>
+                            {w.label} · {w.sub}
+                          </span>
+                        </div>
+                      ))}
+                      <span className="ml-auto text-[11px] text-[#9ca3af]">{done ? `Completed · ${c.dueDate}` : `Due: ${c.dueDate}`}</span>
+                    </div>
+                  </div>
+                )
+              })}
+              {complaints.length === 0 && (
+                <div className="bg-white rounded-xl border border-[#e8edf2] p-12 text-center text-[13px] text-[#9ca3af]">No complaints found.</div>
+              )}
             </div>
           </div>
         )
+      }
 
       case 'itpo-officials':
         return (
@@ -2127,6 +2160,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         onClose={() => setZoneModalOpen(false)}
         currentZone={operationalZone}
         onConfirm={(zone) => { const z = zone === 'All Campus Zones (Entire Complex)' ? 'All Zones (Entire Complex)' : zone; setOperationalZone(z); setZoneModalOpen(false); logActivity('System Admin', 'Admin', 'Zone Switched', z) }}
+      />
+      <ComplaintDetailsModal
+        open={inspectComplaint != null}
+        onClose={() => setInspectComplaint(null)}
+        complaint={inspectComplaint}
       />
     </div>
   )
