@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!admin || !(await bcrypt.compare(String(b.password || ''), admin.password_hash))) {
       // Fall through — may be an ITPO official login
       const official = await queryOne<{ id: number; name: string; username: string; password_hash: string }>(
-        'SELECT id, name, username, password_hash FROM itpo_officials WHERE lower(username)=lower($1) AND status=\'Active\'',
+        'SELECT id, name, username, password_hash FROM itpo_officials WHERE (lower(username)=lower($1) OR lower(email)=lower($1)) AND status=\'Active\'',
         [String(b.username).trim()]
       )
       if (official && official.password_hash && await bcrypt.compare(String(b.password || ''), official.password_hash)) {
