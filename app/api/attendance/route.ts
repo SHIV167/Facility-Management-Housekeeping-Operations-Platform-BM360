@@ -54,6 +54,16 @@ export async function POST(req: NextRequest) {
 
     fs.appendFileSync(CSV_PATH, row)
 
+    // also persist to PostgreSQL attendance table
+    try {
+      const { query } = await import('@/lib/db')
+      const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
+      await query(
+        `INSERT INTO attendance (staff_name, zone, gps_lat, gps_lng, photo_url, marked_by) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [staffName, zone || '', gpsParts[0] || null, gpsParts[1] || null, photoFile || null, 'Portal User']
+      )
+    } catch (dbErr) { console.error('attendance db insert failed', dbErr) }
+
     return NextResponse.json({ success: true, photoFile })
   } catch (err) {
     console.error('attendance save failed', err)

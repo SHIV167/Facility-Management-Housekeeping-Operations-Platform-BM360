@@ -254,6 +254,13 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     setEmployees([...employees, ...items.map((it, i) => ({ ...it, id: base + i + 1, agencyId: selectedAgencyId, status: 'Active' as const }))])
     setAgencies(agencies.map((a) => (a.id === selectedAgencyId ? { ...a, employeeCount: a.employeeCount + items.length } : a)))
     logActivity('System Admin', 'Admin', 'Employees Imported', items.length + ' employee(s) added')
+    items.forEach((it) => {
+      fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agencyId: selectedAgencyId, name: it.name, role: 'Field Staff', designation: it.role || 'Field Staff', phone: it.phone || '', zones: it.zone ? [it.zone] : [], shift: it.shift || 'No Shift', status: 'Active' }),
+      }).catch(() => {})
+    })
   }
 
   const handleDeleteEmployee = (id: number) => {
@@ -1701,6 +1708,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   useEffect(() => {
     setQrRecords(loadQrRecords())
     setQrOrigin(window.location.origin)
+    fetch('/api/qrcodes').then((r) => r.json()).then((d) => {
+      if (d.ok && d.codes && d.codes.length) {
+        setQrRecords(d.codes.map((c: any) => ({ id: String(c.id), title: c.title, type: c.type === 'custom' ? 'custom' : 'complaint', zone: c.zone || undefined, url: c.url || undefined, fgColor: c.fg_color || '#0b3c4a', bgColor: c.bg_color || '#ffffff', size: c.size || 220, status: c.status === 'Inactive' ? 'Inactive' : 'Active', createdAt: new Date(c.created_at).toLocaleDateString('en-IN') })))
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -1747,17 +1759,27 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
   const handleSaveQr = (record: QrRecord) => {
     logActivity('System Admin', 'Admin', editingQr ? 'QR Updated' : 'QR Created', record.title)
-    persistQr(editingQr ? qrRecords.map((r) => (r.id === record.id ? record : r)) : [...qrRecords, record])
+    const body = { id: editingQr && /^\d+$/.test(record.id) ? Number(record.id) : undefined, title: record.title, type: record.type, zone: record.zone, url: record.url, fgColor: record.fgColor, bgColor: record.bgColor, size: record.size, status: record.status }
+    fetch('/api/qrcodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).then((d) => {
+      if (d.ok && d.code && !editingQr) persistQr([...qrRecords, { ...record, id: String(d.code.id) }])
+      else persistQr(editingQr ? qrRecords.map((r) => (r.id === record.id ? record : r)) : [...qrRecords, record])
+    }).catch(() => persistQr(editingQr ? qrRecords.map((r) => (r.id === record.id ? record : r)) : [...qrRecords, record]))
     setEditingQr(null)
   }
 
   const handleDeleteQr = (id: string) => {
-    if (window.confirm('Delete this QR code?')) { persistQr(qrRecords.filter((r) => r.id !== id)); logActivity('System Admin', 'Admin', 'QR Deleted', id) }
+    if (window.confirm('Delete this QR code?')) {
+      if (/^\d+$/.test(id)) fetch('/api/qrcodes', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id) }) }).catch(() => {})
+      persistQr(qrRecords.filter((r) => r.id !== id)); logActivity('System Admin', 'Admin', 'QR Deleted', id)
+    }
   }
 
   const handleToggleQr = (id: string) => {
     const rec = qrRecords.find((r) => r.id === id)
-    if (rec) logActivity('System Admin', 'Admin', rec.status === 'Active' ? 'QR Deactivated' : 'QR Activated', rec.title)
+    if (rec) {
+      logActivity('System Admin', 'Admin', rec.status === 'Active' ? 'QR Deactivated' : 'QR Activated', rec.title)
+      if (/^\d+$/.test(id)) fetch('/api/qrcodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: Number(id), title: rec.title, type: rec.type, zone: rec.zone, url: rec.url, fgColor: rec.fgColor, bgColor: rec.bgColor, size: rec.size, status: rec.status === 'Active' ? 'Inactive' : 'Active' }) }).catch(() => {})
+    }
     persistQr(qrRecords.map((r) => (r.id === id ? { ...r, status: r.status === 'Active' ? 'Inactive' : 'Active' } : r)))
   }
 

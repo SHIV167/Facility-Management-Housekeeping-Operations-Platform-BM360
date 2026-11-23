@@ -150,6 +150,19 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    fetch('/api/complaints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        complaintType: selectedService,
+        zone: allZones ? 'All Zones' : selectedZone,
+        subArea,
+        description: complaintDetails,
+        reportedBy: 'Agency',
+        name: 'Agency Manager',
+        mobile: '—',
+      }),
+    }).catch(() => {})
     alert('Complaint registered successfully!')
     logActivity('Agency Manager', 'Agency', 'Complaint Registered', `New complaint submitted via portal`)
     onClose()
