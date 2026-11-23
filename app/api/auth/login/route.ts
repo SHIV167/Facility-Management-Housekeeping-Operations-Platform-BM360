@@ -26,20 +26,6 @@ export async function POST(req: NextRequest) {
         ).catch(() => {})
         return NextResponse.json({ ok: true, role: 'ITPO Official', officialId: official.id, name: official.name })
       }
-      // Agency staff / supervisor login
-      const staff = await queryOne<{ id: number; name: string; username: string; role: string; password_hash: string }>(
-        'SELECT id, name, username, role, password_hash FROM staff WHERE (lower(username)=lower($1) OR phone=$1) AND status<>\'Inactive\'',
-        [String(b.username).trim()]
-      )
-      if (staff && staff.password_hash && await bcrypt.compare(String(b.password || ''), staff.password_hash)) {
-        const role = staff.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff'
-        await setSessionCookie(createSessionToken(staff.username, role))
-        await queryOne(
-          `INSERT INTO activity_log (actor, role, action, details) VALUES ($1,$2,'Login',$3)`,
-          [staff.username, role, `${staff.name} logged in`]
-        ).catch(() => {})
-        return NextResponse.json({ ok: true, role, staffId: staff.id, name: staff.name })
-      }
       return NextResponse.json({ ok: false, error: 'Invalid username or password' }, { status: 401 })
     }
     await setSessionCookie(createSessionToken(admin.username, admin.role))
@@ -56,13 +42,18 @@ export async function POST(req: NextRequest) {
     if (b.otp !== '123456') {
       return NextResponse.json({ ok: false, error: 'Invalid OTP' }, { status: 401 })
     }
-    const role = 'User'
-    await setSessionCookie(createSessionToken(mobile, role))
+    // Agency staff/supervisors authenticate by registered mobile number
+    const staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
+      'SELECT id, name, username, role FROM staff WHERE phone=$1 AND status=\'Active\' LIMIT 1',
+      [mobile]
+    ).catch(() => null)
+    const role = staff ? (staff.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff') : 'User'
+    await setSessionCookie(createSessionToken(staff?.username || mobile, role))
     await queryOne(
-      `INSERT INTO activity_log (actor, role, action, details) VALUES ($1,$2,'Login','OTP verified — logged into portal')`,
-      [mobile, role]
+      `INSERT INTO activity_log (actor, role, action, details) VALUES ($1,$2,'Login',$3)`,
+      [staff?.username || mobile, role, staff ? `${staff.name} OTP login` : 'OTP verified — logged into portal']
     ).catch(() => {})
-    return NextResponse.json({ ok: true, role })
+    return NextResponse.json({ ok: true, role, staffId: staff?.id, name: staff?.name })
   }
 
   return NextResponse.json({ ok: false, error: 'Missing credentials' }, { status: 400 })

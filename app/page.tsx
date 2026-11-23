@@ -51,7 +51,11 @@ export default function LoginPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mobile: mobileNumber, otp }),
-        }).catch(() => {})
+        }).then((r) => r.json()).then((d) => {
+          const role = d?.role || 'User'
+          localStorage.setItem('userRole', role)
+          window.location.href = (role === 'Agency Supervisor' || role === 'Field Staff') ? '/agency-dashboard' : '/itpo-dashboard'
+        }).catch(() => { window.location.href = '/itpo-dashboard' })
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
         logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
@@ -67,7 +71,6 @@ export default function LoginPage() {
             localStorage.removeItem('bm360_assigned_zone')
           }
         } catch {}
-        window.location.href = '/dashboard'
       } else {
         setError('Invalid OTP. Please try again.')
       }
@@ -419,7 +422,7 @@ export default function LoginPage() {
                 </button>
 
                 <button type="button" onClick={() => { setAdminMode(true); setError('') }} className="w-full text-sm text-[#0f766e] font-semibold hover:underline">
-                  Staff login (username &amp; password)
+                  Admin / ITPO Official login (username &amp; password)
                 </button>
               </form>
             ) : (
