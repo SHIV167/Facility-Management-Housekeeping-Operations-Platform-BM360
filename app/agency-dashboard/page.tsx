@@ -634,7 +634,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#eef1f4]">
-                    {['PHOTO', 'ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'ASSIGNED AGENCY', 'DUE DATE'].map((h) => (
+                    {['PHOTO', 'ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'STATUS', 'PRIORITY', 'ASSIGNED AGENCY', 'DUE DATE', 'ACTION'].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -673,8 +673,20 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                         <p className="text-[11.5px] text-[#9ca3af]">{complaint.campus}</p>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.service}</td>
-                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.agency}</td>
-                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.dueDate}</td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${complaint.status === 'COMPLETED' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>{complaint.status}</span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${complaint.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' : complaint.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{complaint.priority || 'HIGH'}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.agency && complaint.agency !== '—' ? complaint.agency : 'Soni Facility Management'}</td>
+                      <td className="px-4 py-3.5 text-[13px] text-[#374151]">{complaint.dueDate && complaint.dueDate !== '—' ? complaint.dueDate : '—'}</td>
+                      <td className="px-4 py-3.5">
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedComplaintId(complaint.id) }} className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-semibold text-white bg-[#0e4c5e] rounded-md hover:bg-[#0b3c4a]">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          Inspect
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
