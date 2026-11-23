@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { ZONE_NAMES as ZONES, ALL_ZONES_LABEL as ALL_ZONES } from '@/lib/zones'
+import { useState, useMemo, useEffect } from 'react'
+import { ZONE_NAMES as FALLBACK_ZONES, ALL_ZONES_LABEL as ALL_ZONES } from '@/lib/zones'
 
 
 interface ZoneSelectModalProps {
@@ -14,12 +14,23 @@ interface ZoneSelectModalProps {
 export default function ZoneSelectModal({ open, onClose, currentZone, onConfirm }: ZoneSelectModalProps) {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
+  const [zones, setZones] = useState<string[]>(FALLBACK_ZONES)
+
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/zones').then((r) => r.json()).then((d) => {
+      if (d.ok && d.zones?.length) {
+        const names = d.zones.map((z: any) => z.name).filter(Boolean)
+        if (names.length) setZones(names)
+      }
+    }).catch(() => {})
+  }, [open])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return ZONES
-    return ZONES.filter((z) => z.toLowerCase().includes(q))
-  }, [search])
+    if (!q) return zones
+    return zones.filter((z) => z.toLowerCase().includes(q))
+  }, [search, zones])
 
   if (!open) return null
 
@@ -90,7 +101,7 @@ export default function ZoneSelectModal({ open, onClose, currentZone, onConfirm 
               className="w-full h-10 pl-9 pr-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#1b8f84]/20 focus:border-[#1b8f84]"
             />
           </div>
-          <p className="text-[11.5px] text-[#9ca3af] mt-1.5">{filtered.length + 1} of {ZONES.length + 1} zones</p>
+          <p className="text-[11.5px] text-[#9ca3af] mt-1.5">{filtered.length + 1} of {zones.length + 1} zones</p>
         </div>
 
         {/* Zone list */}
