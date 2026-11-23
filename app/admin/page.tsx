@@ -409,7 +409,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
               {([
-                { label: 'TOTAL EMPLOYEES', value: String(agency.employeeCount), iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]' },
+                { label: 'TOTAL EMPLOYEES', value: String(agencyEmployees.length), iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]' },
                 { label: 'ACTIVE STAFF', value: String(activeEmp), iconBg: 'bg-[#e8f8ef]', iconColor: 'text-[#16a34a]' },
                 { label: 'ZONES COVERED', value: String(agency.zones.length), iconBg: 'bg-[#e6f7f4]', iconColor: 'text-[#0f766e]' },
                 { label: 'COMPLAINTS HANDLED', value: String(agencyComplaints.length), iconBg: 'bg-[#fff7ed]', iconColor: 'text-[#ea580c]' },
