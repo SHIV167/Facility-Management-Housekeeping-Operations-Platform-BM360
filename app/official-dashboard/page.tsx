@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DocumentTitle from '@/components/DocumentTitle'
+import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 
 const fallbackOfficials = [
   { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
@@ -22,6 +23,7 @@ function OfficialDashboard() {
 
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'zones' | 'reports'>('overview')
+  const [showComplaintForm, setShowComplaintForm] = useState(false)
 
   useEffect(() => {
     fetch('/api/officials').then((r) => r.json()).then((d) => {
@@ -37,6 +39,10 @@ function OfficialDashboard() {
         })))
       }
     }).catch(() => {})
+    loadComplaints()
+  }, [])
+
+  const loadComplaints = () => {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
       if (d.ok && d.complaints) {
         setAllComplaints(d.complaints.map((c: any) => ({
@@ -53,7 +59,7 @@ function OfficialDashboard() {
         })))
       }
     }).catch(() => {})
-  }, [])
+  }
 
   const isAllZones = official.zonesList?.includes('All Zones (Entire Complex)') || official.zones.includes('All Zones')
   const myComplaints = allComplaints.filter((c) =>
@@ -165,6 +171,10 @@ function OfficialDashboard() {
             <span className="text-[#111827] font-semibold">ITPO Official Dashboard</span>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
+              New Complaint
+            </button>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
@@ -394,6 +404,7 @@ function OfficialDashboard() {
           )}
         </main>
       </div>
+      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={loadComplaints} />
     </div>
   )
 }
