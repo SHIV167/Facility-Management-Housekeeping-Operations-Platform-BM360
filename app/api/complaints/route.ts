@@ -1,64 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { query, queryOne } from '@/lib/db'
 
-const DATA_DIR = join(process.cwd(), 'data')
-const CSV_PATH = join(DATA_DIR, 'complaints.csv')
-const LOG_PATH = join(DATA_DIR, 'activity_log.csv')
-const HEADER = 'id,complaint_type,zone,sub_area,description,reported_by,name,mobile,created_at,status\n'
-const LOG_HEADER = 'id,timestamp,actor,role,action,details\n'
-
-function ensureCsv() {
-  mkdirSync(DATA_DIR, { recursive: true })
-  if (!existsSync(CSV_PATH)) appendFileSync(CSV_PATH, HEADER)
+export async function GET(req: NextRequest) {
+  const status = new URL(req.url).searchParams.get('status')
+  const zone = new URL(req.url).searchParams.get('zone')
+  let sql = `SELECT c.*, a.name AS agency_name, o.name AS official_name FROM complaints c
+             LEFT JOIN agencies a ON a.id=c.agency_id LEFT JOIN itpo_officials o ON o.id=c.assigned_official_id`
+  const conds: string[] = [], params: any[] = []
+  if (status) { params.push(status); conds.push(`c.status=$${params.length}`) }
+  if (zone) { params.push(zone); conds.push(`c.zone=$${params.length}`) }
+  if (conds.length) sql += ' WHERE ' + conds.join(' AND ')
+  sql += ' ORDER BY c.id DESC'
+  const rows = await query(sql, params)
+  return NextResponse.json({ ok: true, complaints: rows })
 }
-
-const esc = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { complaintType, zone, subArea, description, reportedBy, name, mobile } = body ?? {}
-    if (!name || !mobile) {
-      return NextResponse.json({ ok: false, error: 'Name and mobile are required' }, { status: 400 })
-    }
-    ensureCsv()
-    const rows = readFileSync(CSV_PATH, 'utf8').trim().split('\n').slice(1)
-    const id = rows.length + 1
-    const createdAt = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    const line = [
-      id,
-      esc(complaintType || 'General'),
-      esc(zone || ''),
-      esc(subArea || ''),
-      esc(description || ''),
-      esc(reportedBy || 'Citizen'),
-      esc(name),
-      esc(mobile),
-      esc(createdAt),
-      'Submitted',
-    ].join(',') + '\n'
-    appendFileSync(CSV_PATH, line)
-    if (!existsSync(LOG_PATH)) appendFileSync(LOG_PATH, LOG_HEADER)
-    const logRows = readFileSync(LOG_PATH, 'utf8').trim().split('\n').slice(1)
-    appendFileSync(LOG_PATH, [
-      logRows.length + 1,
-      `"${createdAt}"`,
-      esc(name),
-      '"Citizen"',
-      '"Complaint Submitted"',
-      esc(`CMP-${String(id).padStart(4, '0')} · ${complaintType || 'General'} · ${zone || 'No zone'} · ${subArea || ''}`),
-    ].join(',') + '\n')
-    return NextResponse.json({ ok: true, id: `CMP-${String(id).padStart(4, '0')}` })
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: 'Failed to save complaint' }, { status: 500 })
-  }
+  const b = await req.json()
+  const pub = await queryOne<{ next: string }>(
+    `SELECT 'CMP-' || lpad((COALESCE(MAX(id),0)+1)::text, 4, '0') AS next FROM complaints`
+  )
+  const rows = await query(
+    `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING') RETURNING *`,
+    [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', b.reportedBy || b.reported_by || 'Citizen', b.name || b.reporter_name || '', b.mobile || b.reporter_mobile || '']
+  )
+  const c = rows[0]
+  await query(
+    `INSERT INTO complaint_updates (complaint_id, action, actor, role, details) VALUES ($1,'Complaint Submitted',$2,'Citizen',$3)`,
+    [c.id, b.name || 'Citizen', `Complaint ${c.public_id} registered`]
+  )
+  await query(
+    `INSERT INTO activity_log (actor, role, action, entity_type, entity_id, details) VALUES ($1,'Citizen','Complaint Submitted','complaint',$2,$3)`,
+    [b.name || 'Citizen', String(c.id), `${c.public_id} · ${c.complaint_type} · ${c.zone}`]
+  )
+  return NextResponse.json({ ok: true, id: c.public_id, complaint: c })
 }
 
-export async function GET() {
-  ensureCsv()
-  const csv = readFileSync(CSV_PATH, 'utf8')
-  return new NextResponse(csv, {
-    headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="complaints.csv"' },
-  })
+export async function PATCH(req: NextRequest) {
+  const b = await req.json()
+  const status = b.status
+  const actor = b.actor || 'System'
+  const role = b.role || 'System'
+  const complaintId = Number(b.id || b.complaintId)
+  const rows = await query(
+    `UPDATE complaints SET status=$2, resolved_at=CASE WHEN $2 IN ('COMPLETED','RESOLVED') THEN now() ELSE resolved_at END, resolved_by=CASE WHEN $2 IN ('COMPLETED','RESOLVED') THEN $3 ELSE resolved_by END, updated_at=now() WHERE id=$1 RETURNING *`,
+    [complaintId, status, actor]
+  )
+  if (!rows[0]) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 })
+  const action = status === 'COMPLETED' || status === 'RESOLVED' ? 'Complaint Closed / Completed' : 'Complaint Reopened'
+  await query(
+    `INSERT INTO complaint_updates (complaint_id, action, actor, role, details) VALUES ($1,$2,$3,$4,$5)`,
+    [complaintId, action, actor, role, `Status → ${status}`]
+  )
+  await query(
+    `INSERT INTO activity_log (actor, role, action, entity_type, entity_id, details) VALUES ($1,$2,$3,'complaint',$4,$5)`,
+    [actor, role, action, String(complaintId), `Complaint #${complaintId} → ${status}`]
+  )
+  return NextResponse.json({ ok: true, complaint: rows[0] })
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  await query('DELETE FROM complaints WHERE id=$1', [Number(id)])
+  return NextResponse.json({ ok: true })
 }

@@ -23,6 +23,17 @@ export default function AgencyDashboardPage() {
     const z = localStorage.getItem('bm360_assigned_zone')
     if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Campus' : z)
   }, [])
+  useEffect(() => {
+    fetch('/api/complaints').then((r) => r.json()).then((d) => {
+      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', campus: 'Bharat Mandapam', service: c.complaint_type || 'General', agency: c.agency_name || '—', dueDate: c.due_date || '—', photo: null })))
+    }).catch(() => {})
+    fetch('/api/staff?role=Supervisor').then((r) => r.json()).then((d) => {
+      if (d.ok && d.staff && d.staff.length) {
+        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || 'Soni Facility Management', zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
+        setStaffMembers((prev) => { const merged = prev.slice(); mapped.forEach((m) => { if (!merged.some((x) => x.username && x.username === m.username)) merged.push(m) }); return merged })
+      }
+    }).catch(() => {})
+  }, [])
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [overviewTab, setOverviewTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
@@ -118,6 +129,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     const now = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     const by = 'Laxman Lal (Agency Manager)'
     const action = status === 'COMPLETED' ? 'Complaint Closed / Completed' : 'Complaint Reopened'
+    fetch('/api/complaints', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, actor: by, role: 'Agency Manager' }) }).catch(() => {})
     setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, status, completionTime: status === 'COMPLETED' ? `Completed on ${now}` : undefined } : c)))
     setComplaintHistory((prev) => ({ ...prev, [id]: [...(prev[id] || []), { action, timestamp: now, by }] }))
     logActivity('Laxman Lal', 'Agency Manager', action, `Complaint #${id}`)
@@ -194,6 +206,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       status: 'Pending',
     }, ...prev])
     logActivity('Laxman Lal', 'Agency Manager', 'Supervisor Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+    fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Supervisor', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
 
   const handleAddFieldStaff = (data: FieldStaffFormData) => {
@@ -210,6 +223,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       status: 'Pending',
     }, ...prev])
     logActivity('Laxman Lal', 'Agency Manager', 'Field Staff Added', `${data.fullName} · ${data.designation} · ${data.zone}`)
+    fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Field Staff', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
   const filteredStaff = staffMembers.filter((m) => {
     const q = staffSearch.trim().toLowerCase()

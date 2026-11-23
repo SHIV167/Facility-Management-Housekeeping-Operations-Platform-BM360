@@ -21,6 +21,7 @@
     "autoprefixer": "^10.6.2",
     "html5-qrcode": "^2.3.8",
     "next": "^16.4.6",
+    "pg": "^8.23.1",
     "postcss": "^8.5.33",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
@@ -29,6 +30,7 @@
     "typescript": "^7.0.2"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6"
   }
 }

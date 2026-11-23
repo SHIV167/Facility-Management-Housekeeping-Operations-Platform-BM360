@@ -1,61 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
-import { join } from 'path'
-
-const DATA_DIR = join(process.cwd(), 'data')
-const CSV_PATH = join(DATA_DIR, 'activity_log.csv')
-const HEADER = 'id,timestamp,actor,role,action,details\n'
-
-function ensureCsv() {
-  mkdirSync(DATA_DIR, { recursive: true })
-  if (!existsSync(CSV_PATH)) appendFileSync(CSV_PATH, HEADER)
-}
-
-const esc = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`
-
-export async function POST(req: NextRequest) {
-  try {
-    const { actor, role, action, details } = await req.json()
-    if (!action) return NextResponse.json({ ok: false }, { status: 400 })
-    ensureCsv()
-    const rows = readFileSync(CSV_PATH, 'utf8').trim().split('\n').slice(1)
-    const id = rows.length + 1
-    const timestamp = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
-    appendFileSync(CSV_PATH, [id, esc(timestamp), esc(actor || 'System'), esc(role || 'System'), esc(action), esc(details || '')].join(',') + '\n')
-    return NextResponse.json({ ok: true, id })
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 500 })
-  }
-}
-
-function parseCsv(text: string) {
-  const rows: string[][] = []
-  let cur: string[] = [], field = '', inQ = false
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i]
-    if (inQ) {
-      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++ } else inQ = false }
-      else field += c
-    } else if (c === '"') inQ = true
-    else if (c === ',') { cur.push(field); field = '' }
-    else if (c === '\n') { cur.push(field); rows.push(cur); cur = []; field = '' }
-    else if (c !== '\r') field += c
-  }
-  if (field || cur.length) { cur.push(field); rows.push(cur) }
-  return rows
-}
+import { query } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
-  ensureCsv()
-  const csv = readFileSync(CSV_PATH, 'utf8')
   if (new URL(req.url).searchParams.get('download') === 'csv') {
-    return new NextResponse(csv, {
-      headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="activity_log.csv"' },
-    })
+    const rows = await query('SELECT * FROM activity_log ORDER BY id')
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const csv = 'id,timestamp,actor,role,action,details\n' + rows.map((r: any) =>
+      [r.id, esc(r.created_at), esc(r.actor), esc(r.role), esc(r.action), esc(r.details)].join(',')
+    ).join('\n')
+    return new NextResponse(csv, { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="activity_log.csv"' } })
   }
-  const [header, ...rows] = parseCsv(csv)
-  const logs = rows.filter((r) => r.length > 1).map((r) => ({
-    id: Number(r[0]), timestamp: r[1], actor: r[2], role: r[3], action: r[4], details: r[5] || '',
-  }))
-  return NextResponse.json({ ok: true, logs })
+  const rows = await query('SELECT * FROM activity_log ORDER BY id DESC LIMIT 500')
+  return NextResponse.json({ ok: true, logs: rows.map((r: any) => ({ id: r.id, timestamp: new Date(r.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }), actor: r.actor, role: r.role, action: r.action, details: r.details })) })
+}
+
+export async function POST(req: NextRequest) {
+  const b = await req.json()
+  if (!b.action) return NextResponse.json({ ok: false }, { status: 400 })
+  const rows = await query(
+    `INSERT INTO activity_log (actor, role, action, entity_type, entity_id, details) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+    [b.actor || 'System', b.role || 'System', b.action, b.entityType || b.entity_type || '', b.entityId || b.entity_id || '', b.details || '']
+  )
+  return NextResponse.json({ ok: true, id: rows[0].id })
 }

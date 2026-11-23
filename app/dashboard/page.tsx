@@ -35,6 +35,14 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
     try { const raw = localStorage.getItem('bm360_zones'); if (raw) setZones(JSON.parse(raw)) } catch {}
   }, [])
   useEffect(() => { try { localStorage.setItem('bm360_zones', JSON.stringify(zones)) } catch {} }, [zones])
+  useEffect(() => {
+    fetch('/api/zones').then((r) => r.json()).then((d) => {
+      if (d.ok && d.zones && d.zones.length) setZones(d.zones.map((z) => ({ id: z.id, name: z.name, area: z.area || '—', manager: z.manager || 'Unassigned', status: z.status || 'Active', accessMobile: z.access_mobiles || undefined })))
+    }).catch(() => {})
+    fetch('/api/agencies').then((r) => r.json()).then((d) => {
+      if (d.ok && d.agencies && d.agencies.length) setAgencies(d.agencies.map((a) => ({ id: a.id, name: a.name, contactPerson: a.contact_person || '', phone: a.phone || '', email: a.email || '', address: a.address || '', services: a.services || [], zones: a.zones || [], status: a.status || 'Active', employeeCount: a.employee_count || 0, joinedDate: a.joined_date || '' })))
+    }).catch(() => {})
+  }, [])
 const [zoneFormOpen, setZoneFormOpen] = useState(false)
 const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
 const [zoneSearch, setZoneSearch] = useState('')
@@ -183,16 +191,18 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
   const handleSaveZone = (data: Omit<ZoneRecord, 'id'> & { id?: number }) => {
     if (data.id) {
+      fetch('/api/zones', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).catch(() => {})
       setZones(zones.map((z) => (z.id === data.id ? { ...z, ...data } : z)))
       logActivity('System Admin', 'Admin', 'Zone Updated', data.name)
     } else {
-      setZones([...zones, { ...data, id: Math.max(...zones.map((z) => z.id), 0) + 1 }])
+      fetch('/api/zones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => { if (d.ok) setZones((prev) => [...prev, { ...data, id: d.zone.id, accessMobile: d.zone.access_mobiles || data.accessMobile }]) }).catch(() => setZones([...zones, { ...data, id: Math.max(...zones.map((z) => z.id), 0) + 1 }]))
       logActivity('System Admin', 'Admin', 'Zone Created', data.name)
     }
   }
 
   const handleDeleteZone = (id: number) => {
     if (window.confirm('Are you sure you want to delete this zone?')) {
+      fetch('/api/zones', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
       setZones(zones.filter((z) => z.id !== id))
       logActivity('System Admin', 'Admin', 'Zone Deleted', 'Zone ID ' + id)
     }
@@ -204,16 +214,18 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
   const handleSaveAgency = (data: Omit<AgencyRecord, 'id'> & { id?: number }) => {
     if (data.id) {
+      fetch('/api/agencies', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).catch(() => {})
       setAgencies(agencies.map((a) => (a.id === data.id ? { ...a, ...data } : a)))
       logActivity('System Admin', 'Admin', 'Agency Updated', data.name)
     } else {
-      setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }])
+      fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => { if (d.ok) setAgencies((prev) => [...prev, { ...data, id: d.agency.id }]) }).catch(() => setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }]))
       logActivity('System Admin', 'Admin', 'Agency Created', data.name)
     }
   }
 
   const handleDeleteAgency = (id: number) => {
     if (window.confirm('Are you sure you want to delete this agency?')) {
+      fetch('/api/agencies', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
       setAgencies(agencies.filter((a) => a.id !== id))
       logActivity('System Admin', 'Admin', 'Agency Deleted', 'Agency ID ' + id)
     }
