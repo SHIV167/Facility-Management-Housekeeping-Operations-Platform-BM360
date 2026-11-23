@@ -577,15 +577,29 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 return (
                   <div key={c.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
                     <div className="flex items-start gap-4 p-4">
+                      {c.photo && (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#e8edf2] shrink-0 hidden sm:block">
+                          <img src={c.photo} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                          <span className="text-[13px] font-bold text-[#111827]">#{c.id}</span>
+                          <span className="text-[13px] font-bold text-[#111827]">#{c.publicId || c.id}</span>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${c.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' : c.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{c.priority || 'MEDIUM'}</span>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${done ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>{done ? 'Completed' : c.status}</span>
                         </div>
                         <p className="text-[14px] font-semibold text-[#111827] leading-snug">{c.title}</p>
-                        <p className="text-[12px] text-[#6b7280] mt-1">{c.location} · {c.service} · {c.agency}</p>
-                        <p className="text-[11px] text-[#9ca3af] mt-1">{c.date} · Assigned: {c.assignedTo}</p>
+                        {c.description && <p className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{c.description}</p>}
+                        <p className="text-[12px] text-[#6b7280] mt-1">{c.location}{c.subArea ? ` · Sub Area: ${c.subArea}` : ''} · {c.service}</p>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#f3f4f6] text-[11px] font-semibold text-[#374151]">
+                            <span className="w-4 h-4 rounded-full bg-[#0e4c5e] text-white text-[8px] font-bold flex items-center justify-center">{(c.agency || 'A').trim().charAt(0)}</span>
+                            {c.agency}
+                          </span>
+                          {done && <span className="text-[11px] text-[#16a34a] font-medium">{c.completionTime || 'Completed'} {c.dueDate && c.dueDate !== '—' ? `· Due ${c.dueDate}` : ''}</span>}
+                          {!done && <span className="text-[11px] text-[#9ca3af]">Due: {c.dueDate}</span>}
+                        </div>
+                        <p className="text-[11px] text-[#9ca3af] mt-1.5">{c.date} · Reported by {c.reportedBy || c.assignedTo} ({c.reporterRole || 'ITPO Official'})</p>
                       </div>
                       <button onClick={() => setInspectComplaint(c)} className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
