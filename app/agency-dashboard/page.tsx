@@ -56,73 +56,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     router.push('/')
   }
 
-  const [complaints, setComplaints] = useState([
-    {
-      id: 54,
-      date: 'Nov 17 10:42 AM',
-      title: 'URGENT Housekeeping Work During Fair',
-      status: 'COMPLETED',
-      completionTime: 'Completed in 3 min - 27 min early',
-      location: 'Hall 14 - Outside Hall 14',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'BLUSPRING ENTERPRISES LTD.',
-      dueDate: '11:12 AM Nov 17',
-      photo: null
-    },
-    {
-      id: 53,
-      date: 'Nov 17 09:30 AM',
-      title: 'Please don\'t keep like this... premises should be clean',
-      status: 'COMPLETED',
-      completionTime: 'Completed in 11 hr 18 min - 10 hr 18 min late',
-      location: 'Open Area, NTA (parking)',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'Soni Facility Management',
-      dueDate: '11:12 PM Nov 16',
-      photo: null
-    },
-    {
-      id: 52,
-      date: 'Nov 16 08:15 PM',
-      title: 'test test',
-      status: 'PENDING',
-      completionTime: '3 min past SLA',
-      location: 'GF H4',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'Soni Facility Management',
-      dueDate: '08:12 PM Nov 16',
-      photo: null
-    },
-    {
-      id: 51,
-      date: 'Nov 16 02:30 PM',
-      title: 'Female washroom cleaning required',
-      status: 'COMPLETED',
-      completionTime: 'Completed in 45 min - on time',
-      location: 'Female Washroom',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'BLUSPRING ENTERPRISES LTD.',
-      dueDate: '03:15 PM Nov 16',
-      photo: null
-    },
-    {
-      id: 50,
-      date: 'Nov 16 11:00 AM',
-      title: 'Water spillage in corridor',
-      status: 'COMPLETED',
-      completionTime: 'Completed in 20 min - 10 min early',
-      location: 'Corridor - Hall 5',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'Soni Facility Management',
-      dueDate: '11:30 AM Nov 16',
-      photo: null
-    }
-  ])
+  const [complaints, setComplaints] = useState<any[]>([])
 
   const [complaintHistory, setComplaintHistory] = useState<Record<number, { action: string; timestamp: string; by: string }[]>>({})
   const [selectedComplaintId, setSelectedComplaintId] = useState<number | null>(null)

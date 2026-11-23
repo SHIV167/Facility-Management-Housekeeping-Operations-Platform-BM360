@@ -160,47 +160,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   ])
   const [editingOfficial, setEditingOfficial] = useState<any>(null)
 
-  const [complaints, setComplaints] = useState([
-    {
-      id: 54,
-      date: 'Nov 17 10:42 AM',
-      title: 'URGENT Housekeeping Work During Fair',
-      status: 'COMPLETED',
-      priority: 'HIGH',
-      location: 'Hall 14 - Outside Hall 14',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'BLUSPRING ENTERPRISES LTD.',
-      dueDate: '11:12 AM Nov 17',
-      assignedTo: 'Mr. Premjit Lal'
-    },
-    {
-      id: 53,
-      date: 'Nov 17 09:30 AM',
-      title: 'Please don\'t keep like this... premises should be clean',
-      status: 'PENDING',
-      priority: 'URGENT',
-      location: 'Open Area, NTA (parking)',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'Soni Facility Management',
-      dueDate: '11:12 PM Nov 16',
-      assignedTo: 'Mrs. Sunita Sharma'
-    },
-    {
-      id: 52,
-      date: 'Nov 16 08:15 PM',
-      title: 'Female washroom cleaning required',
-      status: 'RESOLVED',
-      priority: 'MEDIUM',
-      location: 'GF H4',
-      campus: 'Bharat Mandapam',
-      service: 'Housekeeping Operations',
-      agency: 'Soni Facility Management',
-      dueDate: '08:12 PM Nov 16',
-      assignedTo: 'Mr. Rajesh Kumar'
-    }
-  ])
+  const [complaints, setComplaints] = useState<any[]>([])
 
 
   const areas = [
