@@ -21,6 +21,7 @@ function OfficialDashboard() {
   const official = officials.find((o) => o.id === officialId) ?? officials[0]
 
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
+  const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'zones' | 'reports'>('overview')
 
   useEffect(() => {
     fetch('/api/officials').then((r) => r.json()).then((d) => {
@@ -113,9 +114,9 @@ function OfficialDashboard() {
           <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">MY WORKSPACE</p>
           <nav className="space-y-0.5">
             {navItems.map((item) => {
-              const active = item.id === 'overview'
+              const active = item.id === activeView
               return (
-                <button key={item.id} className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'}`}>
+                <button key={item.id} onClick={() => setActiveView(item.id as typeof activeView)} className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'}`}>
                   <NavIcon name={item.icon} />
                   <span className="flex-1 leading-tight">{item.label}</span>
                   {item.badge && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#e11d48] text-white text-[10px] font-bold flex items-center justify-center">{item.badge}</span>}
@@ -197,6 +198,8 @@ function OfficialDashboard() {
             </div>
           </div>
 
+          {activeView === 'overview' && (
+          <>
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             {[
@@ -274,6 +277,121 @@ function OfficialDashboard() {
               </div>
             </div>
           </div>
+          </>
+          )}
+
+          {activeView === 'complaints' && (
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#111827]">My Complaints</h3>
+                  <p className="text-[12px] text-[#9ca3af] mt-0.5">{myComplaints.length} complaints assigned to you</p>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#eef1f4]">
+                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS'].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myComplaints.map((c) => (
+                      <tr key={c.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
+                        <td className="px-4 py-3">
+                          <p className="text-[13px] font-semibold text-[#111827]">#{c.publicId || c.id}</p>
+                          <p className="text-[11px] text-[#9ca3af]">{c.date}</p>
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-[#111827] max-w-[260px] truncate">{c.title}</td>
+                        <td className="px-4 py-3 text-[13px] text-[#374151]">{c.location}</td>
+                        <td className="px-4 py-3 text-[13px] text-[#374151]">{c.service}</td>
+                        <td className="px-4 py-3 text-[13px] text-[#374151]">{c.dueDate}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusPill(c.status)}`}>{c.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {myComplaints.length === 0 && (
+                      <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeView === 'zones' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {zoneList.map((z) => {
+                const zoneComplaints = isAllZones ? myComplaints.filter((c) => c.zone === z || c.location?.includes(z)) : myComplaints.filter((c) => c.zone === z || c.location?.includes(z))
+                const zResolved = zoneComplaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
+                return (
+                  <div key={z} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-5">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-[#e6f7f4] flex items-center justify-center">
+                        <svg className="w-4.5 h-4.5 w-5 h-5 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-[#111827] truncate">{z}</p>
+                        <p className="text-[11px] text-[#9ca3af]">{zoneComplaints.length} complaints</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg bg-[#f8fafc] py-2"><p className="text-[16px] font-bold text-[#111827]">{zoneComplaints.length}</p><p className="text-[10px] text-[#6b7280]">Total</p></div>
+                      <div className="rounded-lg bg-[#fff7ed] py-2"><p className="text-[16px] font-bold text-[#ea580c]">{zoneComplaints.length - zResolved}</p><p className="text-[10px] text-[#6b7280]">Pending</p></div>
+                      <div className="rounded-lg bg-[#e8f8ef] py-2"><p className="text-[16px] font-bold text-[#16a34a]">{zResolved}</p><p className="text-[10px] text-[#6b7280]">Resolved</p></div>
+                    </div>
+                  </div>
+                )
+              })}
+              {zoneList.length === 0 && (
+                <div className="col-span-full bg-white rounded-xl border border-[#e8edf2] p-10 text-center text-[13px] text-[#9ca3af]">No zones tagged to this official.</div>
+              )}
+            </div>
+          )}
+
+          {activeView === 'reports' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  { label: 'TOTAL COMPLAINTS', value: myComplaints.length, cls: 'text-[#4f46e5] bg-[#eef2ff]' },
+                  { label: 'RESOLVED', value: resolved, cls: 'text-[#16a34a] bg-[#e8f8ef]' },
+                  { label: 'PENDING', value: pending, cls: 'text-[#ea580c] bg-[#fff7ed]' },
+                  { label: 'RESOLUTION RATE', value: myComplaints.length ? Math.round((resolved / myComplaints.length) * 100) + '%' : '—', cls: 'text-[#0f766e] bg-[#e6f7f4]' },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-4">
+                    <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{s.label}</p>
+                    <p className={`text-[26px] font-bold mt-1.5 inline-block px-3 py-1 rounded-lg ${s.cls}`}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-[#eef1f4]">
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Complaint Status Breakdown</h3>
+                </div>
+                <div className="p-5 space-y-3">
+                  {(['PENDING', 'IN_PROGRESS', 'COMPLETED'] as const).map((st) => {
+                    const count = myComplaints.filter((c) => c.status === st).length
+                    const pct = myComplaints.length ? Math.round((count / myComplaints.length) * 100) : 0
+                    return (
+                      <div key={st}>
+                        <div className="flex justify-between text-[12.5px] mb-1">
+                          <span className="font-medium text-[#374151]">{st.replace('_', ' ')}</span>
+                          <span className="text-[#6b7280]">{count} ({pct}%)</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
+                          <div className={`h-full rounded-full ${st === 'COMPLETED' ? 'bg-[#16a34a]' : st === 'PENDING' ? 'bg-[#ea580c]' : 'bg-[#4f46e5]'}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {myComplaints.length === 0 && <p className="text-[13px] text-[#9ca3af] text-center py-6">No complaint data for reports yet.</p>}
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
