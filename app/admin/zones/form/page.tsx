@@ -24,7 +24,7 @@ export default function ZoneFormPage() {
     console.log('Form submitted:', formData)
     logActivity('System Admin', 'Admin', 'Zone Saved', 'Master data form submitted')
     toast(language === 'en' ? t.successfullySaved : t.successfullySaved)
-    router.push('/dashboard')
+    router.push('/admin')
   }
 
   return (
@@ -32,7 +32,7 @@ export default function ZoneFormPage() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => router.push('/dashboard')} className="text-gray-500 hover:text-gray-700">
+            <button onClick={() => router.push('/admin')} className="text-gray-500 hover:text-gray-700">
               {t.bm360}
             </button>
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@ export default function ZoneFormPage() {
             </div>
             <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
               <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">{t.save}</button>
-              <button type="button" onClick={() => router.push('/dashboard')} className="px-6 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">{t.cancel}</button>
+              <button type="button" onClick={() => router.push('/admin')} className="px-6 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">{t.cancel}</button>
             </div>
           </form>
         </div>

@@ -27,6 +27,7 @@ export async function middleware(req: NextRequest) {
   // Public routes
   if (
     pathname === '/' ||
+    pathname === '/login' ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/raise-complaint') ||
     pathname.startsWith('/qr-codes') ||
@@ -47,7 +48,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Admin area — Admin role only
-  if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     if (session.role !== 'Admin') {
       const url = req.nextUrl.clone()
       url.pathname = '/itpo-dashboard'

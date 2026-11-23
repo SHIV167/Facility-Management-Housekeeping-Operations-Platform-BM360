@@ -150,7 +150,7 @@ function OfficialDashboard() {
             <p className="text-[13px] font-semibold leading-tight truncate">{official.name}</p>
             <p className="text-[11px] text-[#9ec3d0] leading-tight">{official.designation} • ITPO</p>
           </div>
-          <button onClick={() => router.push('/dashboard')} className="text-[#9ec3d0] hover:text-white transition-colors" title="Back to Admin">
+          <button onClick={() => router.push('/admin')} className="text-[#9ec3d0] hover:text-white transition-colors" title="Back to Admin">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           </button>
         </div>

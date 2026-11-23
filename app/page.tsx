@@ -102,7 +102,7 @@ export default function LoginPage() {
         localStorage.removeItem('bm360_assigned_zone')
         window.location.href = d.role === 'ITPO Official'
           ? `/official-dashboard?id=${d.officialId}`
-          : d.role === 'Admin' ? '/dashboard' : '/agency-dashboard'
+          : d.role === 'Admin' ? '/admin' : '/agency-dashboard'
       } else {
         setError(d.error || 'Invalid username or password')
       }

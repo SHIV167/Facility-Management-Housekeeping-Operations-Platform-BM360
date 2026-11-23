@@ -988,7 +988,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <p className="text-[13px] text-[#6b7280]">{t.zonesDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/zones/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
+              <button onClick={() => window.location.href = '/admin/zones/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -1041,7 +1041,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <p className="text-[13px] text-[#6b7280]">{t.areasDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/areas/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
+              <button onClick={() => window.location.href = '/admin/areas/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -1092,7 +1092,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <p className="text-[13px] text-[#6b7280]">{t.categoriesDescription}</p>
             </div>
             <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => window.location.href = '/dashboard/categories/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
+              <button onClick={() => window.location.href = '/admin/categories/form'} className="flex items-center gap-2 px-4 py-2 bg-[#0e4c5e] text-white rounded-lg text-[13px] font-semibold hover:bg-[#0b3c4a]">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -1293,7 +1293,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Areas</h3>
-                  <button onClick={() => window.location.href = '/dashboard/areas/form'} className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">+ Add Area</button>
+                  <button onClick={() => window.location.href = '/admin/areas/form'} className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">+ Add Area</button>
                 </div>
                 <div className="space-y-3">
                   {areas.map((area) => (
