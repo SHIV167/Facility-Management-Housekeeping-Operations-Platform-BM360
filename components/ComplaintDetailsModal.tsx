@@ -83,8 +83,21 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Title */}
-          <h3 className="text-[18px] font-semibold text-[#111827] leading-snug">{complaint.title}</h3>
+          {/* Title + priority/SLA */}
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <h3 className="text-[18px] font-semibold text-[#111827] leading-snug flex-1 min-w-0">{complaint.title}</h3>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] text-[11.5px] font-semibold shrink-0">
+              {(complaint as any).priority === 'URGENT' ? 'Urgent' : (complaint as any).priority === 'HIGH' ? 'High' : 'Normal'} Priority · 30 Min SLA
+            </span>
+          </div>
+
+          {/* Work instructions */}
+          {(complaint as any).description && (
+            <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
+              <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#b45309] uppercase mb-1">Work Instructions &amp; Details</p>
+              <p className="text-[13px] text-[#78350f] leading-relaxed">{(complaint as any).description}</p>
+            </div>
+          )}
 
           {/* Status banner */}
           <div className={`rounded-xl border p-4 ${isCompleted ? 'bg-[#e8f8ef] border-[#b7e4c7]' : 'bg-[#fff7ed] border-[#fed7aa]'}`}>
@@ -112,10 +125,12 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               { label: 'FACILITY / CAMPUS', value: complaint.campus || 'Bharat Mandapam' },
               { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: complaint.campus || 'Bharat Mandapam' },
               { label: 'ASSIGNED AGENCY', value: complaint.agency || 'Soni Facility Management' },
-              { label: 'REPORTED / CREATED BY', value: 'Brij Lal', sub: 'ITPO Official' },
+              { label: 'REPORTED / CREATED BY', value: (complaint as any).reportedBy || 'Brij Lal', sub: (complaint as any).reporterRole || 'ITPO Official' },
+              { label: 'ACTIVITY CATALOG ITEM', value: complaint.service || 'Housekeeping Operations' },
+              { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
               { label: 'DUE DATE', value: complaint.dueDate || '—' },
               { label: 'CREATED AT', value: complaint.date || '—' },
-              { label: 'RESOLVED AT', value: isCompleted ? (complaint.date || '—') : '—' },
+              { label: 'RESOLVED AT', value: isCompleted ? ((complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (complaint.date || '—')) : '—' },
             ].map((item) => (
               <div key={item.label} className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
                 <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{item.label}</p>
@@ -147,10 +162,14 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                   <span className="text-[12px] text-[#9ca3af]">{selectedPhoto + 1}/{photos.length}</span>
                 </div>
               </div>
-              <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2]">
-                <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
+                {(complaint as any).photo ? (
+                  <img src={(complaint as any).photo} alt="Evidence" className="w-full h-full object-cover" />
+                ) : (
+                  <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                )}
               </div>
               <div className="border-t border-[#eef1f4] pt-3 mt-3 space-y-1">
                 <p className="text-[11.5px] text-[#9ca3af]">Filename: {photo.filename}</p>
@@ -239,7 +258,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               </button>
             )}
             <button
-              onClick={() => toast('Photo download functionality')}
+              onClick={() => { const p = (complaint as any).photo; if (p) { const a = document.createElement('a'); a.href = p; a.download = `complaint_${complaint.id}.jpg`; a.click() } else toast('No photo attached to this complaint') }}
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#e5e7eb] bg-white text-[#374151] rounded-lg text-[13px] font-medium hover:bg-[#f3f5f8] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

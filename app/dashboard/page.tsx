@@ -65,14 +65,22 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
           id: c.id,
           date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
           title: c.title || (c.description || '').slice(0, 60) || 'Complaint',
+          description: c.description || '',
           status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : c.status === 'PENDING' ? 'PENDING' : c.status,
-          priority: 'MEDIUM',
+          priority: c.priority || 'HIGH',
           location: c.sub_area ? `${c.zone} - ${c.sub_area}` : c.zone || '—',
+          subArea: c.sub_area || '',
           campus: 'Bharat Mandapam',
           service: c.service || c.complaint_type || 'General',
           agency: c.agency_name || 'Unassigned',
           dueDate: c.due_date || '—',
           assignedTo: c.official_name || c.reporter_name || '—',
+          reportedBy: c.reporter_name || 'Citizen',
+          reporterRole: c.reported_by || 'ITPO Official',
+          publicId: c.public_id,
+          photo: c.photo_url || null,
+          createdAt: c.created_at,
+          resolvedAt: c.resolved_at,
         })))
       }
     }).catch(() => {})
