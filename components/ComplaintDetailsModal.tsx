@@ -123,11 +123,10 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
             {[
               { label: 'SERVICE CLASSIFICATION', value: complaint.service || 'Housekeeping Operations' },
               { label: 'FACILITY / CAMPUS', value: complaint.campus || 'Bharat Mandapam' },
-              { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: complaint.campus || 'Bharat Mandapam' },
+              { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
               { label: 'ASSIGNED AGENCY', value: complaint.agency || 'Soni Facility Management' },
               { label: 'REPORTED / CREATED BY', value: (complaint as any).reportedBy || 'Brij Lal', sub: (complaint as any).reporterRole || 'ITPO Official' },
               { label: 'ACTIVITY CATALOG ITEM', value: complaint.service || 'Housekeeping Operations' },
-              { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
               { label: 'DUE DATE', value: complaint.dueDate || '—' },
               { label: 'CREATED AT', value: complaint.date || '—' },
               { label: 'RESOLVED AT', value: isCompleted ? ((complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (complaint.date || '—')) : '—' },
