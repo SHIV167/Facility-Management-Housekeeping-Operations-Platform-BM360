@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const [currentView, setCurrentView] = useState<ViewType>('itpo-officials')
   const [language, setLanguage] = useState<Language>('en')
-  const [searchQuery, setSearchQuery] = useState('Mr. Premjit Lal')
+  const [searchQuery, setSearchQuery] = useState('')
   const [filterZone, setFilterZone] = useState('All Zone Tagging Scopes')
   const [statusFilter, setStatusFilter] = useState('Active Only')
   const [opsOpen, setOpsOpen] = useState(true)
