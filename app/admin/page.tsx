@@ -46,6 +46,17 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
     fetch('/api/agencies').then((r) => r.json()).then((d) => {
       if (d.ok && d.agencies && d.agencies.length) setAgencies(d.agencies.map((a) => ({ id: a.id, name: a.name, contactPerson: a.contact_person || '', phone: a.phone || '', email: a.email || '', address: a.address || '', services: a.services || [], zones: a.zones || [], status: a.status || 'Active', employeeCount: a.employee_count || 0, joinedDate: a.joined_date || '' })))
     }).catch(() => {})
+    fetch('/api/staff').then((r) => r.json()).then((d) => {
+      if (d.ok && d.staff && d.staff.length) {
+        setEmployees(d.staff.map((s: any) => ({
+          id: s.id, agencyId: s.agency_id,
+          name: s.name, role: s.role || 'Field Staff', phone: s.phone || '',
+          zone: Array.isArray(s.zones) && s.zones.length ? s.zones[0] : '—',
+          shift: s.shift || 'No Shift',
+          status: s.status === 'Active' ? 'Active' : 'Inactive',
+        })))
+      }
+    }).catch(() => {})
     fetch('/api/officials').then((r) => r.json()).then((d) => {
       if (d.ok && d.officials && d.officials.length) {
         setOfficials(d.officials.map((o: any) => ({
@@ -107,7 +118,7 @@ const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
 const [agencyFormOpen, setAgencyFormOpen] = useState(false)
 const [editingAgency, setEditingAgency] = useState<AgencyRecord | null>(null)
 const [agencySearch, setAgencySearch] = useState('')
-const [employees, setEmployees] = useState<EmployeeRecord[]>(defaultEmployees)
+const [employees, setEmployees] = useState<EmployeeRecord[]>([])
 const [selectedAgencyId, setSelectedAgencyId] = useState<number | null>(null)
 const [importOpen, setImportOpen] = useState(false)
 const [employeeSearch, setEmployeeSearch] = useState('')
@@ -337,6 +348,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       setEmployees(employees.filter((e) => e.id !== id))
       logActivity('System Admin', 'Admin', 'Employee Deleted', emp.name)
       toast('Employee deleted', 'success')
+      fetch('/api/staff', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
       setAgencies(agencies.map((a) => (a.id === emp.agencyId ? { ...a, employeeCount: Math.max(a.employeeCount - 1, 0) } : a)))
     }
   }
