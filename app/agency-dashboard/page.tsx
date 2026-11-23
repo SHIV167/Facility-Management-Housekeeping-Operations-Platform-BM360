@@ -26,6 +26,9 @@ export default function AgencyDashboardPage() {
     if (z) setOperationalZone(z === 'All Campus Zones (Entire Complex)' ? 'All Campus' : z)
   }, [])
   useEffect(() => {
+    fetch('/api/auth/me').then((r) => r.json()).then((d) => { if (d?.user?.role) setSessionRole(d.user.role) }).catch(() => {})
+  }, [])
+  useEffect(() => {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
       if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, resolvedAt: c.resolved_at, zone: c.zone })))
     }).catch(() => {})
@@ -44,6 +47,8 @@ const [attendanceOpen, setAttendanceOpen] = useState(false)
 const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
 const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'staff' | 'reports'>('overview')
 const [userRole, setUserRole] = useState<'manager' | 'supervisor'>('manager')
+const [sessionRole, setSessionRole] = useState('')
+const isAdminViewer = sessionRole === 'Admin'
 const [staffSearch, setStaffSearch] = useState('')
 const [staffRoleFilter, setStaffRoleFilter] = useState('All Roles')
 const [staffStatusFilter, setStaffStatusFilter] = useState('All Status')
@@ -113,7 +118,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   }
   const [staffMembers, setStaffMembers] = useState<any[]>([])
 
-  const isManager = userRole === 'manager'
+  const isManager = userRole === 'manager' && !isAdminViewer
 
   const handleAddSupervisor = (data: SupervisorFormData) => {
     setStaffMembers((prev) => [{
