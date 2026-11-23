@@ -118,7 +118,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   }
   const [staffMembers, setStaffMembers] = useState<any[]>([])
 
-  const isManager = userRole === 'manager' && !isAdminViewer
+  const isManager = userRole === 'manager' || sessionRole === 'Admin'
 
   const handleAddSupervisor = (data: SupervisorFormData) => {
     setStaffMembers((prev) => [{
