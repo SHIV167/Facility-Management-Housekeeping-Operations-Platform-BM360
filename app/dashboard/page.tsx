@@ -96,6 +96,8 @@ const [qrStatusFilter, setQrStatusFilter] = useState('All Status')
 const [qrThumbs, setQrThumbs] = useState<Record<string, string>>({})
 const [qrOrigin, setQrOrigin] = useState('')
 const [activityLogs, setActivityLogs] = useState<ActivityRecord[]>([])
+const [logPage, setLogPage] = useState(1)
+const [logPageSize, setLogPageSize] = useState(10)
 const [attRecords, setAttRecords] = useState<AttendanceRow[]>([])
 const [attSearch, setAttSearch] = useState('')
 const [editingAtt, setEditingAtt] = useState<AttendanceRow | null>(null)
@@ -1756,6 +1758,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           return matchQ && matchA
         })
         const actionColor = (a: string) => a.includes('Deleted') ? 'bg-[#fef2f2] text-[#dc2626]' : a.includes('Created') || a.includes('Marked') || a.includes('Imported') ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#eef2ff] text-[#4f46e5]'
+        const totalPages = Math.max(1, Math.ceil(filteredLogs.length / logPageSize))
+        const safePage = Math.min(logPage, totalPages)
+        const pagedLogs = filteredLogs.slice((safePage - 1) * logPageSize, safePage * logPageSize)
         return (
           <div>
             <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
@@ -1797,7 +1802,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     {['TIME', 'USER', 'ROLE', 'ACTION', 'DETAILS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>)}
                   </tr></thead>
                   <tbody>
-                    {filteredLogs.map((l) => (
+                    {pagedLogs.map((l) => (
                       <tr key={l.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
                         <td className="px-4 py-3 text-[12px] text-[#6b7280] whitespace-nowrap">{l.timestamp}</td>
                         <td className="px-4 py-3"><div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-[#0e4c5e] text-white text-[9px] font-bold flex items-center justify-center">{l.actor.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}</div><span className="text-[12.5px] font-semibold text-[#111827]">{l.actor}</span></div></td>
@@ -1809,6 +1814,21 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     {filteredLogs.length === 0 && <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No activity recorded yet. Actions like zone edits, attendance marks and QR changes will appear here.</td></tr>}
                   </tbody>
                 </table>
+              </div>
+              <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between flex-wrap gap-2">
+                <p className="text-[12.5px] text-[#9ca3af]">Showing {filteredLogs.length ? (safePage - 1) * logPageSize + 1 : 0}–{Math.min(safePage * logPageSize, filteredLogs.length)} of {filteredLogs.length} events</p>
+                <div className="flex items-center gap-3">
+                  <select value={logPageSize} onChange={(e) => { setLogPageSize(Number(e.target.value)); setLogPage(1) }} className="h-8 px-2 bg-white border border-[#e5e7eb] rounded-lg text-[12.5px] text-[#374151]">
+                    {[10, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
+                  </select>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setLogPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1} className="p-1.5 rounded hover:bg-[#f3f5f8] text-[#9ca3af] disabled:opacity-40">‹</button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 7).map((p) => (
+                      <button key={p} onClick={() => setLogPage(p)} className={`w-7 h-7 rounded-md text-[12.5px] font-medium ${p === safePage ? 'bg-[#0e4c5e] text-white' : 'text-[#6b7280] hover:bg-[#f3f5f8]'}`}>{p}</button>
+                    ))}
+                    <button onClick={() => setLogPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages} className="p-1.5 rounded hover:bg-[#f3f5f8] text-[#9ca3af] disabled:opacity-40">›</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -63,7 +63,6 @@ export default function LoginPage() {
         }).catch(() => { window.location.href = '/itpo-dashboard' })
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
-        logActivity(mobileNumber, 'User', 'Login', 'OTP verified — logged into portal')
         try {
           const zones = JSON.parse(localStorage.getItem('bm360_zones') || '[]')
           const allArea = zones.find((z: { id?: number; name?: string }) => z.id === 0 || z.name === 'All Campus Zones (Entire Complex)')
