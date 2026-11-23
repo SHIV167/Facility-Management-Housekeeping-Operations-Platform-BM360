@@ -85,32 +85,32 @@ export default function LoginPage() {
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (username.trim().toLowerCase() === 'admin' && password === 'BM360@123') {
-      setLoading(true)
-      fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
-      }).then((r) => r.json()).then((d) => {
-        setLoading(false)
-        if (d.ok) {
-          localStorage.setItem('isLoggedIn', 'true')
-          localStorage.setItem('userRole', d.role || 'Admin')
-          localStorage.setItem('mobileNumber', username.trim())
-          localStorage.removeItem('bm360_assigned_zone')
-          window.location.href = d.role === 'ITPO Official'
-            ? `/official-dashboard?id=${d.officialId}`
-            : d.role === 'Admin' ? '/dashboard' : '/agency-dashboard'
-        } else {
-          setError(d.error || 'Invalid username or password')
-        }
-      }).catch(() => {
-        setLoading(false)
-        setError('Login service unavailable')
-      })
-    } else {
-      setError('Invalid username or password')
+    if (!username.trim() || !password) {
+      setError('Please enter username and password')
+      return
     }
+    setLoading(true)
+    fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username.trim(), password }),
+    }).then((r) => r.json()).then((d) => {
+      setLoading(false)
+      if (d.ok) {
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('userRole', d.role || 'Admin')
+        localStorage.setItem('mobileNumber', username.trim())
+        localStorage.removeItem('bm360_assigned_zone')
+        window.location.href = d.role === 'ITPO Official'
+          ? `/official-dashboard?id=${d.officialId}`
+          : d.role === 'Admin' ? '/dashboard' : '/agency-dashboard'
+      } else {
+        setError(d.error || 'Invalid username or password')
+      }
+    }).catch(() => {
+      setLoading(false)
+      setError('Login service unavailable')
+    })
   }
 
   const handleResendOtp = () => {
