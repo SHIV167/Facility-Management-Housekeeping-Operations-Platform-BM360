@@ -20,10 +20,13 @@ export async function POST(req: NextRequest) {
   const pub = await queryOne<{ next: string }>(
     `SELECT 'CMP-' || lpad((COALESCE(MAX(id),0)+1)::text, 4, '0') AS next FROM complaints`
   )
+  const ctype = String(b.complaintType || b.complaint_type || b.service || '').toLowerCase()
+  const slaMin = ctype.includes('urgent') ? 30 : 60
+  const due = new Date(Date.now() + slaMin * 60000).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
   const rows = await query(
-    `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING') RETURNING *`,
-    [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', b.reportedBy || b.reported_by || 'Citizen', b.name || b.reporter_name || '', b.mobile || b.reporter_mobile || '']
+    `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status, due_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11) RETURNING *`,
+    [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', b.reportedBy || b.reported_by || 'Citizen', b.name || b.reporter_name || '', b.mobile || b.reporter_mobile || '', due]
   )
   const c = rows[0]
   await query(
