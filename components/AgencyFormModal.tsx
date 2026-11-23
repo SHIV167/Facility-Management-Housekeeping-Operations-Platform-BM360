@@ -5,10 +5,12 @@ import type { AgencyRecord } from '@/lib/agencies'
 import { SERVICE_OPTIONS } from '@/lib/agencies'
 import { ZONE_NAMES } from '@/lib/zones'
 
+interface StaffEntry { name: string; phone: string }
+
 interface AgencyFormModalProps {
   open: boolean
   onClose: () => void
-  onSave: (agency: Omit<AgencyRecord, 'id'> & { id?: number }) => void
+  onSave: (agency: Omit<AgencyRecord, 'id'> & { id?: number; staff?: { name: string; role: string; designation: string; phone: string }[] }) => void
   agency: AgencyRecord | null
 }
 
@@ -24,6 +26,13 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
   const [zones, setZones] = useState<string[]>([])
   const [services, setServices] = useState<string[]>([])
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active')
+  const [managerName, setManagerName] = useState('')
+  const [managerPhone, setManagerPhone] = useState('')
+  const [supervisors, setSupervisors] = useState<StaffEntry[]>([{ name: '', phone: '' }])
+  const [fieldStaff, setFieldStaff] = useState<StaffEntry[]>([{ name: '', phone: '' }])
+  const [errors, setErrors] = useState<string[]>([])
+
+  const phoneOk = (p: string) => p === '' || /^\d{10}$/.test(p)
 
   useEffect(() => {
     if (open) {
@@ -35,6 +44,11 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
       setZones(agency?.zones ?? [])
       setServices(agency?.services ?? [])
       setStatus(agency?.status ?? 'Active')
+      setManagerName('')
+      setManagerPhone('')
+      setSupervisors([{ name: '', phone: '' }])
+      setFieldStaff([{ name: '', phone: '' }])
+      setErrors([])
     }
   }, [open, agency])
 
@@ -46,6 +60,26 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const errs: string[] = []
+    if (managerName.trim() && !phoneOk(managerPhone)) errs.push('Manager phone must be 10 digits')
+    if (managerPhone.trim() && !managerName.trim()) errs.push('Manager name required when phone is set')
+    supervisors.forEach((s, i) => {
+      if (s.name.trim() && !phoneOk(s.phone)) errs.push(`Supervisor ${i + 1} phone must be 10 digits`)
+      if (!s.name.trim() && s.phone.trim()) errs.push(`Supervisor ${i + 1} name required`)
+    })
+    fieldStaff.forEach((s, i) => {
+      if (s.name.trim() && !phoneOk(s.phone)) errs.push(`Field staff ${i + 1} phone must be 10 digits`)
+      if (!s.name.trim() && s.phone.trim()) errs.push(`Field staff ${i + 1} name required`)
+    })
+    if (phone.trim() && !phoneOk(phone)) errs.push('Agency phone must be 10 digits')
+    if (errs.length) { setErrors(errs); return }
+    setErrors([])
+
+    const staff = [
+      ...(managerName.trim() ? [{ name: managerName.trim(), role: 'Supervisor', designation: 'Agency Manager', phone: managerPhone.trim() }] : []),
+      ...supervisors.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Supervisor', designation: 'Housekeeping Supervisor', phone: s.phone.trim() })),
+      ...fieldStaff.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Field Staff', designation: 'Housekeeping Field Staff', phone: s.phone.trim() })),
+    ]
     onSave({
       id: agency?.id,
       name: name.trim() || 'Unnamed Agency',
@@ -58,9 +92,28 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
             joinedDate: agency?.joinedDate ?? '—',
             services: services.length ? services : ['Housekeeping'],
       status,
+      staff,
     })
     onClose()
   }
+
+  const staffRow = (label: string, list: StaffEntry[], setList: (v: StaffEntry[]) => void, placeholder: string) => (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <div className="space-y-2">
+        {list.map((s, i) => (
+          <div key={i} className="flex gap-2">
+            <input type="text" value={s.name} onChange={(e) => setList(list.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder={placeholder} className={inputCls} />
+            <input type="tel" value={s.phone} onChange={(e) => setList(list.map((x, j) => j === i ? { ...x, phone: e.target.value.replace(/\D/g, '').slice(0, 10) } : x))} placeholder="10-digit mobile" className={`${inputCls} w-36`} />
+            {list.length > 1 && (
+              <button type="button" onClick={() => setList(list.filter((_, j) => j !== i))} className="px-2 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg text-[16px] font-bold">×</button>
+            )}
+          </div>
+        ))}
+        <button type="button" onClick={() => setList([...list, { name: '', phone: '' }])} className="text-[12px] font-semibold text-[#0f766e] hover:underline">+ Add {label.toLowerCase()}</button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
@@ -150,6 +203,28 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
               })}
             </div>
           </div>
+          <div className="border-t border-[#eef1f4] pt-4">
+            <p className="text-[12px] font-bold tracking-[0.05em] text-[#9ca3af] uppercase mb-3">Agency Team (login via mobile OTP)</p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Manager Name</label>
+                  <input type="text" value={managerName} onChange={(e) => setManagerName(e.target.value)} placeholder="Agency manager" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Manager Mobile</label>
+                  <input type="tel" value={managerPhone} onChange={(e) => setManagerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile" className={inputCls} />
+                </div>
+              </div>
+              {staffRow('Supervisors', supervisors, setSupervisors, 'Supervisor name')}
+              {staffRow('Field Staff', fieldStaff, setFieldStaff, 'Staff name')}
+            </div>
+          </div>
+          {errors.length > 0 && (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-lg px-3 py-2.5 space-y-1">
+              {errors.map((er) => <p key={er} className="text-[12px] text-[#dc2626]">• {er}</p>)}
+            </div>
+          )}
           <div>
             <label className={labelCls}>Status</label>
             <div className="flex gap-2">

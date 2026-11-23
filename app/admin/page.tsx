@@ -231,14 +231,33 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     [a.name, a.contactPerson, a.phone, a.email].some((v) => v.toLowerCase().includes(agencySearch.trim().toLowerCase()))
   )
 
-  const handleSaveAgency = (data: Omit<AgencyRecord, 'id'> & { id?: number }) => {
+  const handleSaveAgency = (data: Omit<AgencyRecord, 'id'> & { id?: number; staff?: { name: string; role: string; designation: string; phone: string }[] }) => {
+    const postStaff = (agencyId: number) => {
+      ;(data.staff || []).forEach((s) => {
+        fetch('/api/staff', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agencyId, name: s.name, role: s.role, designation: s.designation, phone: s.phone, zones: data.zones || [], shift: 'No Shift', status: 'Active' }),
+        }).catch(() => {})
+      })
+      if ((data.staff || []).length) logActivity('System Admin', 'Admin', 'Staff Created', `${data.staff!.length} staff added for ${data.name}`)
+    }
     if (data.id) {
       fetch('/api/agencies', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).catch(() => {})
       setAgencies(agencies.map((a) => (a.id === data.id ? { ...a, ...data } : a)))
+      postStaff(data.id)
       logActivity('System Admin', 'Admin', 'Agency Updated', data.name)
       toast('Agency updated', 'success')
     } else {
-      fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => { if (d.ok) setAgencies((prev) => [...prev, { ...data, id: d.agency.id }]) }).catch(() => setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }]))
+      fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => {
+        if (d.ok) {
+          const newId = d.agency.id
+          setAgencies((prev) => [...prev, { ...data, id: newId }])
+          postStaff(newId)
+        } else {
+          setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }])
+        }
+      }).catch(() => setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }]))
       logActivity('System Admin', 'Admin', 'Agency Created', data.name)
       toast('Agency created', 'success')
     }
