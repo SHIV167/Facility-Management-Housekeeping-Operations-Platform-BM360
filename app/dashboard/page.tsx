@@ -57,6 +57,23 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
         })))
       }
     }).catch(() => {})
+    fetch('/api/complaints').then((r) => r.json()).then((d) => {
+      if (d.ok && d.complaints && d.complaints.length) {
+        setComplaints(d.complaints.map((c: any) => ({
+          id: c.id,
+          date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          title: c.title || (c.description || '').slice(0, 60) || 'Complaint',
+          status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : c.status === 'PENDING' ? 'PENDING' : c.status,
+          priority: 'MEDIUM',
+          location: c.sub_area ? `${c.zone} - ${c.sub_area}` : c.zone || '—',
+          campus: 'Bharat Mandapam',
+          service: c.service || c.complaint_type || 'General',
+          agency: c.agency_name || 'Unassigned',
+          dueDate: c.due_date || '—',
+          assignedTo: c.official_name || c.reporter_name || '—',
+        })))
+      }
+    }).catch(() => {})
   }, [])
 const [zoneFormOpen, setZoneFormOpen] = useState(false)
 const [editingZone, setEditingZone] = useState<ZoneRecord | null>(null)
@@ -133,7 +150,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   ])
   const [editingOfficial, setEditingOfficial] = useState<any>(null)
 
-  const complaints = [
+  const [complaints, setComplaints] = useState([
     {
       id: 54,
       date: 'Nov 17 10:42 AM',
@@ -173,7 +190,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       dueDate: '08:12 PM Nov 16',
       assignedTo: 'Mr. Rajesh Kumar'
     }
-  ]
+  ])
 
 
   const areas = [
