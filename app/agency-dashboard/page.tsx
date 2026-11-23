@@ -620,7 +620,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab('all')} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'all' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">TOTAL COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">54</p>
+                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{complaints.length}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#eef2ff] text-[#4f46e5] flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -629,8 +629,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab((prev) => (prev === 'pending' ? 'all' : 'pending'))} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'pending' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">PENDING COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#ea580c] leading-none mt-1.5">3</p>
-                  <p className="text-[11px] text-[#e11d48] mt-1">3 past SLA</p>
+                  <p className="text-[28px] font-semibold text-[#ea580c] leading-none mt-1.5">{complaints.filter((c) => c.status === 'PENDING').length}</p>
+                  <p className="text-[11px] text-[#e11d48] mt-1">Past SLA</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#fff7ed] text-[#ea580c] flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -639,7 +639,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab((prev) => (prev === 'completed' ? 'all' : 'completed'))} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'completed' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">COMPLETED COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#16a34a] leading-none mt-1.5">51</p>
+                  <p className="text-[28px] font-semibold text-[#16a34a] leading-none mt-1.5">{complaints.filter((c) => c.status === 'COMPLETED').length}</p>
                   <p className="text-[11px] text-[#9ca3af] mt-1">Resolved</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#e8f8ef] text-[#16a34a] flex items-center justify-center">
@@ -652,6 +652,21 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           )}
 
           {(activeView === 'overview' || activeView === 'complaints') && (
+          <>
+          {activeView === 'complaints' && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { label: 'TOTAL COMPLAINTS', value: complaints.length, cls: 'text-[#111827]' },
+                { label: 'PENDING', value: complaints.filter((c) => c.status === 'PENDING').length, cls: 'text-[#ea580c]' },
+                { label: 'COMPLETED', value: complaints.filter((c) => c.status === 'COMPLETED').length, cls: 'text-[#16a34a]' },
+              ].map((s) => (
+                <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+                  <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{s.label}</p>
+                  <p className={`text-[26px] font-bold mt-1 ${s.cls}`}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
             <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
               <div>
@@ -763,6 +778,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               </div>
             </div>
           </div>
+          </>
           )}
 
           {activeView === 'reports' && (
