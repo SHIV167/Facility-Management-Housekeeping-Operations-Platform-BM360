@@ -1,30 +1,63 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DocumentTitle from '@/components/DocumentTitle'
 
-const officials = [
-  { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', status: 'Active' },
-  { id: 2, name: 'Mrs. Sunita Sharma', initials: 'SS', username: '@sunitasharma', employeeId: '9124', designation: 'Manager', phone: '9868217058', email: 'sunita@itpo.gov.in', zones: 'Hall 1-5', status: 'Active' },
-  { id: 3, name: 'Mr. Rajesh Kumar', initials: 'RK', username: '@rajeshkumar', employeeId: '9125', designation: 'Supervisor', phone: '9868217059', email: 'rajesh@itpo.gov.in', zones: 'Hall 6-10', status: 'Inactive' },
+const fallbackOfficials = [
+  { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
+  { id: 2, name: 'Mrs. Sunita Sharma', initials: 'SS', username: '@sunitasharma', employeeId: '9124', designation: 'Manager', phone: '9868217058', email: 'sunita@itpo.gov.in', zones: 'Hall 1-5', zonesList: ['Hall 1-5'], status: 'Active' },
+  { id: 3, name: 'Mr. Rajesh Kumar', initials: 'RK', username: '@rajeshkumar', employeeId: '9125', designation: 'Supervisor', phone: '9868217059', email: 'rajesh@itpo.gov.in', zones: 'Hall 6-10', zonesList: ['Hall 6-10'], status: 'Inactive' },
 ]
 
-const allComplaints = [
-  { id: 54, date: 'Nov 17 10:42 AM', title: 'URGENT Housekeeping Work During Fair', status: 'COMPLETED', location: 'Hall 14 - Outside Hall 14', service: 'Housekeeping Operations', dueDate: '11:12 AM Nov 17', assignedTo: 'Mr. Premjit Lal' },
-  { id: 53, date: 'Nov 17 09:30 AM', title: "Please don't keep like this... premises should be clean", status: 'PENDING', location: 'Open Area, NTA (parking)', service: 'Housekeeping Operations', dueDate: '11:12 PM Nov 16', assignedTo: 'Mrs. Sunita Sharma' },
-  { id: 52, date: 'Nov 16 08:15 PM', title: 'Female washroom cleaning required', status: 'RESOLVED', location: 'GF H4', service: 'Housekeeping Operations', dueDate: '08:12 PM Nov 16', assignedTo: 'Mr. Rajesh Kumar' },
-]
+const fallbackComplaints: any[] = []
 
 function OfficialDashboard() {
   const router = useRouter()
   const params = useSearchParams()
   const officialId = Number(params.get('id') ?? '1')
+  const [officials, setOfficials] = useState(fallbackOfficials)
+  const [allComplaints, setAllComplaints] = useState<any[]>(fallbackComplaints)
   const official = officials.find((o) => o.id === officialId) ?? officials[0]
 
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
 
-  const myComplaints = allComplaints.filter((c) => c.assignedTo === official.name)
+  useEffect(() => {
+    fetch('/api/officials').then((r) => r.json()).then((d) => {
+      if (d.ok && d.officials?.length) {
+        setOfficials(d.officials.map((o: any) => ({
+          id: o.id, name: o.name,
+          initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+          username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
+          phone: o.phone || '', email: o.email || '',
+          zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+          zonesList: Array.isArray(o.zones) ? o.zones : [],
+          status: o.status || 'Active',
+        })))
+      }
+    }).catch(() => {})
+    fetch('/api/complaints').then((r) => r.json()).then((d) => {
+      if (d.ok && d.complaints) {
+        setAllComplaints(d.complaints.map((c: any) => ({
+          id: c.id, publicId: c.public_id,
+          date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          title: c.title || (c.description || '').slice(0, 60) || 'Complaint',
+          status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : c.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'PENDING',
+          location: c.sub_area ? `${c.zone} - ${c.sub_area}` : c.zone || '—',
+          service: c.service || c.complaint_type || 'General',
+          dueDate: c.due_date || '—',
+          assignedTo: c.official_name || '',
+          assignedOfficialId: c.assigned_official_id,
+          zone: c.zone,
+        })))
+      }
+    }).catch(() => {})
+  }, [])
+
+  const isAllZones = official.zonesList?.includes('All Zones (Entire Complex)') || official.zones.includes('All Zones')
+  const myComplaints = allComplaints.filter((c) =>
+    c.assignedOfficialId === official.id || c.assignedTo === official.name || (isAllZones && c.zone) || (!isAllZones && official.zonesList?.some((z: string) => c.zone === z || c.zone?.includes(z)))
+  )
   const resolved = myComplaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
   const pending = myComplaints.filter((c) => c.status === 'PENDING').length
   const zoneList = official.zones === 'All Zones (Entire Complex)' ? ['All Campus Zones (Entire Complex)'] : official.zones.split(',').map((z) => z.trim())
