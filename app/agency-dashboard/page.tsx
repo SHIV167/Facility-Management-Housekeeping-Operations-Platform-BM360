@@ -29,10 +29,10 @@ export default function AgencyDashboardPage() {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
       if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, resolvedAt: c.resolved_at, zone: c.zone })))
     }).catch(() => {})
-    fetch('/api/staff?role=Supervisor').then((r) => r.json()).then((d) => {
+    fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
-        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || 'Soni Facility Management', zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
-        setStaffMembers((prev) => { const merged = prev.slice(); mapped.forEach((m) => { if (!merged.some((x) => x.username && x.username === m.username)) merged.push(m) }); return merged })
+        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || 'Soni Facility Management', zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
+        setStaffMembers(mapped)
       }
     }).catch(() => {})
   }, [])
@@ -111,23 +111,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
     toast('Attendance marked', 'success')
   }
-  const [staffMembers, setStaffMembers] = useState([
-    { id: 'SFM-5078', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_927', phone: '9953655078', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-2854', name: 'Abhishek', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_abhishek_490', phone: '9599692854', agency: 'Soni Facility Management', zones: ['Z13_HALL_2_5_FIRST_FLOORS', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-5765', name: 'Ajay', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ajay_583', phone: '9572645765', agency: 'Soni Facility Management', zones: ['Z09_HALL_2_4', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'S-8585981877', name: 'AJENDER DHAKA', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ajenderdha_897', phone: '8585981877', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
-    { id: 'SFM-OH-01', name: 'Ajender Dhaka', role: 'Supervisor', designation: 'Operation Head', username: '@soni_ajenderdhaka', phone: '8585981877', agency: 'Soni Facility Management', zones: ['All Zones'], shift: 'No Shift', status: 'Active' },
-    { id: 'S-7303250081', name: 'AKASH', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_akash_667', phone: '7303250081', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 's-8178229001', name: 'AKASH KUMAR', role: 'Field Staff', designation: 'Housekeeping Field Staff', username: '@hk_akashkumar_140', phone: '8178229001', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-3596', name: 'Anil', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_anil_392', phone: '8130933596', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
-    { id: 'SFM-9115', name: 'Ankit', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ankit_933', phone: '9536389115', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'S-8273720470', name: 'ANKUR', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ankur_285', phone: '8273720470', agency: 'Soni Facility Management', zones: ['LOC-69D15C644867', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-4087', name: 'Arjun', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_arjun_209', phone: '7065644087', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-SUP-03', name: 'Arti', role: 'Supervisor', designation: 'Supervisor', username: '@soni_arti', phone: '7042963256', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'SFM-9185', name: 'Ashok', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_ashok_840', phone: '8860589185', agency: 'Soni Facility Management', zones: ['Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Pending' },
-    { id: 'SFM-6246', name: 'Daksh', role: 'Supervisor', designation: 'Housekeeping Supervisor', username: '@sup_daksh_648', phone: '8285246146', agency: 'Soni Facility Management', zones: ['LOC-C7D4DDDB2082', 'Z01_ADMIN_BUILDING'], shift: 'No Shift', status: 'Active' },
-    { id: 'TEST-AGENCY-HEAD', name: 'BM360 Test Agency Head', role: 'Supervisor', designation: 'Test Agency Head', username: '@test_agency_head', phone: '—', agency: 'Soni Facility Management', zones: ['Unassigned'], shift: 'No Shift', status: 'Active' },
-  ])
+  const [staffMembers, setStaffMembers] = useState<any[]>([])
 
   const isManager = userRole === 'manager'
 
@@ -436,7 +420,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
                                 )}
                               </button>
-                              {isManager && m.status === 'Pending' && <button className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
+                              {isManager && m.status === 'Pending' && <button onClick={() => { fetch('/api/staff', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.dbId, name: m.name, role: m.role, designation: m.designation, username: m.username, phone: m.phone, employeeId: m.id, zones: m.zones, shift: m.shift, status: 'Active', agencyId: 1 }) }).then(() => { setStaffMembers((prev) => prev.map((x) => x.dbId === m.dbId ? { ...x, status: 'Active' } : x)); logActivity(m.username, 'Agency Manager', 'Staff Activated', m.name) }) }} className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
                             </div>
                           </td>
                         </tr>
