@@ -10,6 +10,9 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [adminMode, setAdminMode] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
 
   const STATIC_OTP = '123456'
 
@@ -62,6 +65,25 @@ export default function LoginPage() {
         setError('Invalid OTP. Please try again.')
       }
     }, 1000)
+  }
+
+  const handleAdminSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (username.trim().toLowerCase() === 'admin' && password === 'BM360@123') {
+      setLoading(true)
+      setTimeout(() => {
+        setLoading(false)
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('userRole', 'Admin')
+        localStorage.setItem('mobileNumber', 'admin')
+        localStorage.removeItem('bm360_assigned_zone')
+        logActivity('admin', 'Admin', 'Login', 'Admin login via username/password')
+        window.location.href = '/dashboard'
+      }, 800)
+    } else {
+      setError('Invalid username or password')
+    }
   }
 
   const handleResendOtp = () => {
@@ -291,7 +313,44 @@ export default function LoginPage() {
             )}
 
             {/* Form */}
-            {step === 1 ? (
+            {step === 1 && adminMode ? (
+              <form onSubmit={handleAdminSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2.5">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="admin"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2.5">Password</label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+                <button type="button" onClick={() => { setAdminMode(false); setError('') }} className="w-full text-sm text-[#0f766e] font-semibold hover:underline">
+                  ← Back to mobile login
+                </button>
+              </form>
+            ) : step === 1 ? (
               <form onSubmit={handleStep1Submit} className="space-y-6">
                 {/* Mobile Number */}
                 <div>
@@ -338,6 +397,10 @@ export default function LoginPage() {
                       </svg>
                     </>
                   )}
+                </button>
+
+                <button type="button" onClick={() => { setAdminMode(true); setError('') }} className="w-full text-sm text-[#0f766e] font-semibold hover:underline">
+                  Admin login (username &amp; password)
                 </button>
               </form>
             ) : (
