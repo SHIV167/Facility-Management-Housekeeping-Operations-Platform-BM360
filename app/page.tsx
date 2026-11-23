@@ -90,7 +90,9 @@ export default function LoginPage() {
           localStorage.setItem('userRole', d.role || 'Admin')
           localStorage.setItem('mobileNumber', username.trim())
           localStorage.removeItem('bm360_assigned_zone')
-          window.location.href = d.role === 'ITPO Official' ? `/official-dashboard?id=${d.officialId}` : '/dashboard'
+          window.location.href = d.role === 'ITPO Official'
+            ? `/official-dashboard?id=${d.officialId}`
+            : d.role === 'Admin' ? '/dashboard' : '/agency-dashboard'
         } else {
           setError(d.error || 'Invalid username or password')
         }

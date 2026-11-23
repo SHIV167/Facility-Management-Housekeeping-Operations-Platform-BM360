@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import bcrypt from 'bcryptjs'
+import { query, queryOne } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const agencyId = new URL(req.url).searchParams.get('agency_id')
@@ -16,10 +17,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const b = await req.json()
+  const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
   const rows = await query(
-    `INSERT INTO staff (agency_id, name, role, designation, username, phone, employee_id, zones, reporting_supervisor_id, shift, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-    [b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending']
+    `INSERT INTO staff (agency_id, name, role, designation, username, phone, employee_id, zones, reporting_supervisor_id, shift, status, password_hash)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    [b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending', hash]
   )
   await query('UPDATE agencies SET employee_count = (SELECT count(*) FROM staff WHERE agency_id=$1) WHERE id=$1', [b.agencyId || b.agency_id])
   return NextResponse.json({ ok: true, staff: rows[0] })
@@ -27,6 +29,14 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
+  if (b.password) {
+    const hash = await bcrypt.hash(String(b.password), 10)
+    const rows = await query(
+      `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, password_hash=$13, updated_at=now() WHERE id=$1 RETURNING *`,
+      [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending', hash]
+    )
+    return NextResponse.json({ ok: true, staff: rows[0] })
+  }
   const rows = await query(
     `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, updated_at=now() WHERE id=$1 RETURNING *`,
     [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending']
