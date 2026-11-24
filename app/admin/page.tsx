@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const [editComplaint, setEditComplaint] = useState<any>(null)
+  const [complaintPage, setComplaintPage] = useState(1)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
 
@@ -554,6 +555,10 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const total = complaints.length
         const pendingCount = complaints.filter((c) => c.status === 'PENDING').length
         const completedCount = complaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
+        const PAGE_SIZE = 10
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+        const safePage = Math.min(Math.max(complaintPage, 1), totalPages)
+        const pagedComplaints = complaints.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
         return (
           <div>
             <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
@@ -591,7 +596,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
 
             <div className="space-y-3">
-              {complaints.map((c) => {
+              {pagedComplaints.map((c) => {
                 const done = c.status === 'COMPLETED' || c.status === 'RESOLVED'
                 return (
                   <div key={c.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
@@ -656,6 +661,19 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <div className="bg-white rounded-xl border border-[#e8edf2] p-12 text-center text-[13px] text-[#9ca3af]">No complaints found.</div>
               )}
             </div>
+
+            {total > PAGE_SIZE && (
+              <div className="mt-4 flex items-center justify-between gap-3 flex-wrap bg-white rounded-xl border border-[#e8edf2] px-4 py-3">
+                <p className="text-[12.5px] text-[#6b7280]">Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, total)} of {total} complaints</p>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setComplaintPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} className="px-3 py-1.5 text-[12.5px] font-medium rounded-lg border border-[#e5e7eb] bg-white text-[#374151] hover:bg-[#f8fafc] disabled:opacity-40">← Prev</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                    <button key={pg} onClick={() => setComplaintPage(pg)} className={`w-8 h-8 text-[12.5px] font-semibold rounded-lg ${pg === safePage ? 'bg-[#0e4c5e] text-white' : 'border border-[#e5e7eb] bg-white text-[#374151] hover:bg-[#f8fafc]'}`}>{pg}</button>
+                  ))}
+                  <button onClick={() => setComplaintPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="px-3 py-1.5 text-[12.5px] font-medium rounded-lg border border-[#e5e7eb] bg-white text-[#374151] hover:bg-[#f8fafc] disabled:opacity-40">Next →</button>
+                </div>
+              </div>
+            )}
           </div>
         )
       }
