@@ -121,13 +121,6 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
   }
 
-  const staffOptions: StaffOption[] = [
-    { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
-    { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
-    { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
-    { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
-  ]
-
   const handleMarkAttendance = (record: AttendanceRecord) => {
     setAttendanceRecords((prev) => [record, ...prev.filter((r) => r.staffId !== record.staffId)])
     fetch('/api/attendance', {
@@ -145,6 +138,20 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   const displayName = me.name || 'User'
   const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
   const agencyName = me.agency || 'Agency'
+  const staffOptions: StaffOption[] = staffMembers.length
+    ? [...staffMembers].sort((a, b) => (a.name === me.name ? -1 : b.name === me.name ? 1 : 0)).map((m, i) => ({
+        id: m.dbId || i + 1,
+        name: m.name,
+        zone: m.zones?.[0] || 'All Zones',
+        phone: m.phone || '',
+        agency: m.agency || agencyName,
+      }))
+    : [
+        { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
+        { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
+        { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
+        { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
+      ]
 
   // Load today's attendance from DB (survives refresh)
   useEffect(() => {
