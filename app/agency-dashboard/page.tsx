@@ -525,13 +525,20 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                     {attendanceRecords.length ? `${attendanceRecords.length} Marked Today` : 'Pending'}
                   </span>
                 </div>
-                <button
-                  onClick={() => setAttendanceOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea] shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
-                  Mark Attendance
-                </button>
+                {attendanceRecords.some((r) => r.staffName === me.name) ? (
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#16a34a] bg-[#e8f8ef] border border-[#b7e8c8] rounded-lg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Attendance Marked
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setAttendanceOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea] shadow-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
+                    Mark Attendance
+                  </button>
+                )}
                 <button
                   onClick={() => setShowComplaintForm(true)}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm"
