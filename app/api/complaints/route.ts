@@ -88,6 +88,20 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
   const complaintId = Number(b.id || b.complaintId)
+  // Append evidence photos to an existing complaint
+  if (b.addPhotos?.length) {
+    const cur = await queryOne<any>('SELECT photos, photo_url FROM complaints WHERE id=$1', [complaintId])
+    if (!cur) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 })
+    const existing: string[] = Array.isArray(cur.photos) ? cur.photos : (cur.photo_url ? [cur.photo_url] : [])
+    const added = savePhotos(b.addPhotos, String(complaintId))
+    const merged = [...existing, ...added]
+    await query('UPDATE complaints SET photos=$2, photo_url=COALESCE(photo_url,$3), updated_at=now() WHERE id=$1', [complaintId, JSON.stringify(merged), merged[0] || null]).catch(async () => {
+      await query('UPDATE complaints SET photo_url=$2 WHERE id=$1', [complaintId, merged[0] || null]).catch(() => {})
+    })
+    await query(`INSERT INTO complaint_updates (complaint_id, action, actor, role, details) VALUES ($1,'Photo Added',$2,$3,$4)`,
+      [complaintId, b.actor || 'Agency', b.role || 'Agency', `${added.length} evidence photo(s) uploaded`]).catch(() => {})
+    return NextResponse.json({ ok: true, photos: merged })
+  }
   // Full edit mode — update any provided fields
   if (b.edit) {
     const rows = await query(

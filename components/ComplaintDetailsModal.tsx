@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useToast } from '@/components/Toast'
 
 export interface ComplaintData {
@@ -34,6 +34,9 @@ interface ComplaintDetailsModalProps {
 export default function ComplaintDetailsModal({ open, onClose, complaint, history = [], onStatusChange }: ComplaintDetailsModalProps) {
   const { toast } = useToast()
   const [selectedPhoto, setSelectedPhoto] = useState(0)
+  const [extraPhotos, setExtraPhotos] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   if (!open || !complaint) return null
 
@@ -46,12 +49,45 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
     ? 'bg-[#fff7ed] text-[#ea580c]'
     : 'bg-[#f3f4f6] text-[#6b7280]'
 
-  const photos = [
-    { id: 1, label: 'ITPO Official (Before)', filename: `complaint_${complaint.id}_before.jpg`, uploadedBy: 'Brij Lal (ITPO Official)', uploadedAt: complaint.date || '—', size: '24.7 KB' },
-    { id: 2, label: 'Agency (After)', filename: `complaint_${complaint.id}_after.jpg`, uploadedBy: 'Field Staff', uploadedAt: complaint.completionTime || complaint.date || '—', size: '28.3 KB' },
-  ]
+  const dbPhotos: string[] = [...(((complaint as any).photos && Array.isArray((complaint as any).photos) ? (complaint as any).photos : [])), ...extraPhotos, (complaint as any).photo].filter(Boolean)
+  const photos = dbPhotos.length
+    ? dbPhotos.map((src, i) => ({ id: i + 1, src, label: i === 0 ? 'ITPO Official (Before)' : 'Agency Evidence', filename: String(src).split('file=')[1] || `photo_${i + 1}`, uploadedBy: i === 0 ? 'ITPO Official' : 'Agency Staff', uploadedAt: complaint.date || '—', size: '—' }))
+    : [{ id: 1, src: '', label: 'ITPO Official (Before)', filename: `complaint_${complaint.id}_before.jpg`, uploadedBy: 'Brij Lal (ITPO Official)', uploadedAt: complaint.date || '—', size: '—' }]
 
-  const photo = photos[selectedPhoto]
+  const photo = photos[Math.min(selectedPhoto, photos.length - 1)]
+
+  const uploadPhoto = (files: FileList | null) => {
+    if (!files?.length) return
+    const file = files[0]
+    if (!file.type.startsWith('image/')) { toast('Please select an image file', 'error'); return }
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const dataUrl = String(reader.result)
+      setUploading(true)
+      try {
+        const res = await fetch('/api/complaints', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: complaint.id, addPhotos: [dataUrl], actor: 'Agency', role: 'Agency' }),
+        })
+        const d = await res.json().catch(() => ({}))
+        if (!res.ok || !d.ok) { toast(d.error || 'Upload failed', 'error'); return }
+        setExtraPhotos((prev) => [...prev, ...(d.photos || []).slice(-1)])
+        setSelectedPhoto(photos.length)
+        toast('Photo uploaded successfully', 'success')
+      } catch { toast('Upload failed', 'error') } finally { setUploading(false) }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const markCompleted = () => {
+    if (dbPhotos.length === 0) {
+      toast('Photo is mandatory — upload site evidence before closing this complaint', 'error')
+      fileRef.current?.click()
+      return
+    }
+    onStatusChange?.('COMPLETED')
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
@@ -143,14 +179,16 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
           <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">Site Evidence Photos ({photos.length})</h4>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
               <button
-                onClick={() => toast('Photo upload functionality')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0e4c5e] hover:bg-[#0b3c4a] text-white text-[12px] font-semibold rounded-lg transition-colors"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0e4c5e] hover:bg-[#0b3c4a] text-white text-[12px] font-semibold rounded-lg transition-colors disabled:opacity-50"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                Upload Photo
+                {uploading ? 'Uploading...' : 'Upload Photo'}
               </button>
             </div>
 
@@ -162,8 +200,8 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                 </div>
               </div>
               <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
-                {(complaint as any).photo ? (
-                  <img src={(complaint as any).photo} alt="Evidence" className="w-full h-full object-cover" />
+                {photo.src ? (
+                  <img src={photo.src} alt="Evidence" className="w-full h-full object-cover" />
                 ) : (
                   <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -240,7 +278,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
           <div className="flex items-center gap-2">
             {onStatusChange && !isCompleted && (
               <button
-                onClick={() => onStatusChange('COMPLETED')}
+                onClick={markCompleted}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-[13px] font-semibold transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
