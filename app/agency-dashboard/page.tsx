@@ -452,17 +452,6 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                                   </button>
                                 </>
                               )}
-                              <button
-                                title="Copy Username"
-                                onClick={() => { navigator.clipboard?.writeText(m.username); setCopiedStaffId(m.id); setTimeout(() => setCopiedStaffId(null), 1500) }}
-                                className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors"
-                              >
-                                {copiedStaffId === m.id ? (
-                                  <svg className="w-3.5 h-3.5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                ) : (
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                                )}
-                              </button>
                               {isManager && m.status === 'Pending' && <button onClick={() => { fetch('/api/staff', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.dbId, name: m.name, role: m.role, designation: m.designation, username: m.username, phone: m.phone, employeeId: m.id, zones: m.zones, shift: m.shift, status: 'Active', agencyId: 1 }) }).then(() => { setStaffMembers((prev) => prev.map((x) => x.dbId === m.dbId ? { ...x, status: 'Active' } : x)); logActivity(m.username, displayRole, 'Staff Activated', m.name) }) }} className="px-2 py-1 text-[11.5px] font-medium text-[#16a34a] bg-[#e8f8ef] rounded-md hover:bg-[#d7f0ea]">Activate</button>}
                             </div>
                           </td>
