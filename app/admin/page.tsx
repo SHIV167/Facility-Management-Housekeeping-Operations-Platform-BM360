@@ -2265,7 +2265,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
       <DocumentTitle title="BM360 Admin Dashboard" />
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:h-screen md:self-start md:translate-x-0 md:w-[248px] md:shrink-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 md:w-[248px] md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
           <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
