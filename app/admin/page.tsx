@@ -1712,7 +1712,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
       case 'qr-manager': {
         const qrItems = [
-          ...defaultZones.map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto', system: true })),
+          ...zones.filter((z) => z.status !== 'Inactive').map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto', system: true })),
           ...qrRecords.map((r) => ({ ...r, system: false })),
         ]
         const q = qrSearch.trim().toLowerCase()
@@ -1793,7 +1793,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               ))}
               {filtered.length === 0 && <p className="col-span-full text-center text-[13px] text-[#9ca3af] py-10">No QR codes match your filters.</p>}
             </div>
-            <p className="text-[11px] text-[#9ca3af] mt-4">Zone QR codes are auto-generated from the Zones master list. Custom QR codes are saved in this browser until a database is connected.</p>
+            <p className="text-[11px] text-[#9ca3af] mt-4">Zone QR codes auto-generate from the live Zones master list (database). Custom QR codes persist in PostgreSQL via /api/qrcodes.</p>
           </div>
         )
       }
@@ -2088,7 +2088,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   useEffect(() => {
     if (!qrOrigin) return
     const items = [
-      ...defaultZones.map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto' })),
+      ...zones.filter((z) => z.status !== 'Inactive').map((z) => ({ id: `zone:${z.name}`, title: z.name, type: 'complaint' as const, zone: z.name, fgColor: '#0b3c4a', bgColor: '#ffffff', size: 220, status: 'Active' as const, createdAt: 'Auto' })),
       ...qrRecords,
     ]
     let cancelled = false
