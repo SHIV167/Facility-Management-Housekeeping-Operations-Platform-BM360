@@ -11,6 +11,7 @@ type Props = {
   onSuccess?: () => void
   source?: 'itpo' | 'agency' | 'citizen' | 'admin'
   officialId?: number
+  agencyId?: number | null
   reporterName?: string
 }
 
@@ -55,7 +56,7 @@ function parseScannedData(text: string) {
   return data
 }
 
-export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency', officialId, reporterName }: Props) {
+export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency', officialId, agencyId, reporterName }: Props) {
   const { toast } = useToast()
   const [photos, setPhotos] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -173,6 +174,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
           mobile: '—',
           photos,
           assignedOfficialId: officialId || null,
+          agencyId: agencyId || null,
         }),
       })
       const d = await res.json().catch(() => ({}))

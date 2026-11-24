@@ -160,7 +160,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               { label: 'SERVICE CLASSIFICATION', value: complaint.service || 'Housekeeping Operations' },
               { label: 'FACILITY / CAMPUS', value: complaint.campus || 'Bharat Mandapam' },
               { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
-              { label: 'ASSIGNED AGENCY', value: complaint.agency || 'Soni Facility Management' },
+              { label: 'ASSIGNED AGENCY', value: complaint.agency && complaint.agency !== '—' ? complaint.agency : 'Unassigned' },
               { label: 'REPORTED / CREATED BY', value: (complaint as any).reportedBy || 'Brij Lal', sub: (complaint as any).reporterRole || 'ITPO Official' },
               { label: 'ACTIVITY CATALOG ITEM', value: complaint.service || 'Housekeeping Operations' },
               { label: 'DUE DATE', value: complaint.dueDate || '—' },
