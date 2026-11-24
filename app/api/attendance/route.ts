@@ -40,6 +40,10 @@ export async function POST(req: NextRequest) {
         const safeName = `${staffId}_${Date.now()}.${ext}`
         fs.writeFileSync(path.join(PHOTOS_DIR, safeName), Buffer.from(matches[2], 'base64'))
         photoFile = `photos/${safeName}`
+        try {
+          const { query } = await import('@/lib/db')
+          await query(`INSERT INTO media_files (name, data, mime) VALUES ($1,$2,$3) ON CONFLICT (name) DO NOTHING`, [safeName, matches[2], `image/${ext === 'jpg' ? 'jpeg' : ext}`])
+        } catch {}
       }
     }
 

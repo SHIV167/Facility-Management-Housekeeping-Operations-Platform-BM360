@@ -13,7 +13,10 @@ function savePhotos(dataUrls: string[], tag: string): string[] {
     if (!m) return ''
     const ext = m[1] === 'jpeg' ? 'jpg' : m[1]
     const fname = `complaint_${tag}_${Date.now()}_${i}.${ext}`
-    fs.writeFileSync(path.join(PHOTOS_DIR, fname), Buffer.from(m[2], 'base64'))
+    const b64 = m[2]
+    fs.writeFileSync(path.join(PHOTOS_DIR, fname), Buffer.from(b64, 'base64'))
+    // persist to DB so photos survive Render redeploys (ephemeral disk)
+    query(`INSERT INTO media_files (name, data, mime) VALUES ($1,$2,$3) ON CONFLICT (name) DO NOTHING`, [fname, b64, `image/${ext === 'jpg' ? 'jpeg' : ext}`]).catch(() => {})
     return `/api/photo?file=${fname}`
   }).filter(Boolean)
 }
