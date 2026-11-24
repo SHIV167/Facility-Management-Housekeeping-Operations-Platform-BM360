@@ -9,6 +9,7 @@ type Props = {
   open: boolean
   onClose: () => void
   onSuccess?: () => void
+  source?: 'itpo' | 'agency' | 'citizen'
 }
 
 const ZONE_OPTIONS = [
@@ -52,8 +53,11 @@ function parseScannedData(text: string) {
   return data
 }
 
-export default function RegisterComplaintModal({ open, onClose, onSuccess }: Props) {
+export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency' }: Props) {
   const { toast } = useToast()
+  const [photos, setPhotos] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const [allZones, setAllZones] = useState(true)
   const [selectedZone, setSelectedZone] = useState('')
   const [subArea, setSubArea] = useState('')
@@ -160,9 +164,11 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
         zone: allZones ? 'All Zones' : selectedZone,
         subArea,
         description: complaintDetails,
-        reportedBy: 'Agency',
-        name: 'Agency Manager',
+        source,
+        reportedBy: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen',
+        name: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency Staff' : 'Citizen',
         mobile: '—',
+        photos,
       }),
     }).catch(() => {})
     toast('Complaint registered successfully!')
@@ -171,13 +177,18 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
     onSuccess?.()
   }
 
-  const handleTakePhoto = () => {
-    toast('Camera functionality - will be implemented with device camera API')
+  const addPhotoFiles = (files: FileList | null) => {
+    if (!files?.length) return
+    Array.from(files).slice(0, 6 - photos.length).forEach((file) => {
+      if (!file.type.startsWith('image/')) return
+      const reader = new FileReader()
+      reader.onload = () => setPhotos((prev) => [...prev, String(reader.result)])
+      reader.readAsDataURL(file)
+    })
   }
 
-  const handleAttachPhoto = () => {
-    toast('Photo upload functionality')
-  }
+  const handleAttachPhoto = () => fileInputRef.current?.click()
+  const handleTakePhoto = () => cameraInputRef.current?.click()
 
   const inputCls = "w-full h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#111827] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#1b8f84]/20 focus:border-[#1b8f84] transition-colors"
   const labelCls = "block text-[12.5px] font-semibold text-[#374151] mb-1.5"
@@ -334,29 +345,35 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess }: Pro
               {/* Attach Photo (Optional) */}
               <div className="mb-4">
                 <label className={labelCls}>Attach Photo (Optional)</label>
-                <div className="flex gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleAttachPhoto}
-                    className="flex items-center gap-2 px-3.5 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc] transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                <div className="flex gap-2.5 flex-wrap">
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addPhotoFiles(e.target.files); e.target.value = '' }} />
+                  <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { addPhotoFiles(e.target.files); e.target.value = '' }} />
+                  <button type="button" onClick={handleAttachPhoto} className="flex items-center gap-2 px-3.5 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc] transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Attach Photo
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleTakePhoto}
-                    className="flex items-center gap-2 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                  <button type="button" onClick={handleTakePhoto} className="flex items-center gap-2 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     Take Photo
                   </button>
+                  {photos.length < 6 && (
+                    <button type="button" onClick={handleAttachPhoto} title="Add another photo" className="w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-[#1b8f84] text-[#0f766e] hover:bg-[#e6f7f4] transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    </button>
+                  )}
                 </div>
+                {photos.length > 0 && (
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    {photos.map((p, i) => (
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-[#e8edf2] group">
+                        <img src={p} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => setPhotos(photos.filter((_, j) => j !== i))} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-semibold">{i + 1}</span>
+                      </div>
+                    ))}
+                    <p className="text-[11px] text-[#9ca3af] self-center">{photos.length} photo{photos.length > 1 ? 's' : ''} attached</p>
+                  </div>
+                )}
               </div>
 
               {/* Location and Direction */}

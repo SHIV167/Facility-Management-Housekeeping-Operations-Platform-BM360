@@ -779,7 +779,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           )}
         </main>
       </div>
-      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} />
+      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} source="agency" />
       <ComplaintDetailsModal
         open={activeComplaint != null}
         complaint={activeComplaint}
