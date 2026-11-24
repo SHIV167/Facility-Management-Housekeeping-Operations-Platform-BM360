@@ -144,7 +144,8 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
   }
 
   const availableStaff = staff.filter((s) => !markedIds.includes(s.id))
-  const detectedStaff = availableStaff[0] ?? null
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null)
+  const detectedStaff = availableStaff.find((s) => s.id === selectedStaffId) ?? availableStaff[0] ?? null
 
   const handleMark = () => {
     if (!detectedStaff) return
@@ -191,22 +192,24 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Auto-detected staff */}
-          <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#0e4c5e] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
-              {detectedStaff ? detectedStaff.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() : '—'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">Attendance For</p>
-              <p className="text-[13.5px] font-semibold text-[#111827] truncate">
-                {detectedStaff ? `${detectedStaff.name} · ${detectedStaff.zone}` : 'All staff marked today'}
-              </p>
-            </div>
+          {/* Staff selector */}
+          <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
+            <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase mb-2">Attendance For</p>
+            <select
+              value={detectedStaff?.id ?? ''}
+              onChange={(e) => setSelectedStaffId(Number(e.target.value))}
+              className="w-full h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#1b8f84]/20 focus:border-[#1b8f84]"
+            >
+              {availableStaff.length === 0 && <option value="">All staff marked today</option>}
+              {availableStaff.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} · {s.zone}{s.agency ? ` · ${s.agency}` : ''}</option>
+              ))}
+            </select>
             {detectedStaff && (
-              <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#e6f7f4] text-[#0f766e] text-[10.5px] font-semibold">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                Auto-detected
-              </span>
+              <p className="text-[11.5px] text-[#6b7280] mt-2 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                {detectedStaff.name} · {detectedStaff.zone}
+              </p>
             )}
           </div>
           {markedIds.length > 0 && availableStaff.length > 0 && (
