@@ -23,7 +23,7 @@ function csvEscape(v: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { staffId, staffName, zone, timestamp, gps, photo } = body ?? {}
+    const { staffId, staffName, zone, timestamp, gps, photo, mobile, agency, accuracy, remarks } = body ?? {}
 
     if (!staffId || !staffName || !timestamp) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
       const { query } = await import('@/lib/db')
       const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
       await query(
-        `INSERT INTO attendance (staff_id, staff_name, zone, gps_lat, gps_lng, photo_url, marked_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [Number(staffId) || null, staffName, zone || '', gpsParts[0] || null, gpsParts[1] || null, photoFile ? `/${photoFile}` : null, 'Portal User']
+        `INSERT INTO attendance (staff_id, staff_name, zone, gps_lat, gps_lng, photo_url, marked_by, mobile, agency, accuracy, remarks) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [Number(staffId) || null, staffName, zone || '', gpsParts[0] || null, gpsParts[1] || null, photoFile ? `/${photoFile}` : null, 'Portal User', mobile || '', agency || '', accuracy || '', remarks || 'Daily attendance check-in']
       )
     } catch (dbErr) { console.error('attendance db insert failed', dbErr) }
 
@@ -108,7 +108,7 @@ async function readDbRecords() {
   try {
     const { query } = await import('@/lib/db')
     const rows = await query<any>(
-      `SELECT id, staff_id, staff_name, zone, marked_at, gps_lat, gps_lng, photo_url, marked_by FROM attendance ORDER BY marked_at DESC`
+      `SELECT id, staff_id, staff_name, zone, marked_at, gps_lat, gps_lng, photo_url, marked_by, mobile, agency, accuracy, remarks FROM attendance ORDER BY marked_at DESC`
     )
     return rows.map((r: any) => ({
       id: r.id,
@@ -119,6 +119,10 @@ async function readDbRecords() {
       gps: r.gps_lat != null ? `${r.gps_lat},${r.gps_lng ?? ''}` : '',
       photoFile: r.photo_url ? String(r.photo_url).replace(/^\/+/, '') : '',
       markedBy: r.marked_by || '',
+      mobile: r.mobile || '',
+      agency: r.agency || '',
+      accuracy: r.accuracy || '',
+      remarks: r.remarks || '',
     }))
   } catch { return null }
 }

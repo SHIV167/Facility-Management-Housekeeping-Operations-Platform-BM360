@@ -65,7 +65,7 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
     fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
         setEmployees(d.staff.map((s: any) => ({
-          id: s.id, agencyId: s.agency_id,
+          id: s.id, agencyId: s.agency_id, agency: s.agency_name || '',
           name: s.name, role: s.role || 'Field Staff', phone: s.phone || '',
           zone: Array.isArray(s.zones) && s.zones.length ? s.zones[0] : '—',
           shift: s.shift || 'No Shift',
@@ -347,12 +347,14 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       }).catch(() => toast('Failed to delete official', 'error'))
   }
 
-  const staffOptions: StaffOption[] = [
-    { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
-    { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
-    { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
-    { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
-  ]
+  const staffOptions: StaffOption[] = employees.length
+    ? employees.map((e, i) => ({ id: i + 1, name: e.name, zone: e.zone !== '—' ? e.zone : 'All Zones', phone: e.phone, agency: (e as any).agency || '' }))
+    : [
+        { id: 1, name: 'Ramesh Singh', zone: 'Hall 1-5' },
+        { id: 2, name: 'Suresh Gupta', zone: 'Hall 6-10' },
+        { id: 3, name: 'Mahesh Verma', zone: 'Hall 11-14' },
+        { id: 4, name: 'Anil Sharma', zone: 'Parking Area' },
+      ]
 
   const handleMarkAttendance = (record: AttendanceRecord) => {
     setAttendanceRecords((prev) => [record, ...prev.filter((r) => r.staffId !== record.staffId)])
@@ -2008,21 +2010,35 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <table className="w-full">
                   <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                     <tr>
-                      {['#', 'STAFF', 'STAFF ID', 'ZONE', 'DATE & TIME', 'MARKED BY', 'GPS', 'PHOTO', 'ACTIONS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase whitespace-nowrap">{h}</th>)}
+                      {['S.NO', 'DATE', 'TIMESTAMP (IST)', 'STAFF', 'MOBILE', 'AGENCY', 'LATITUDE', 'LONGITUDE', 'ACCURACY', 'MAPS', 'REMARKS', 'PHOTO', 'ACTIONS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase whitespace-nowrap">{h}</th>)}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f3f4f6]">
-                    {filteredAtt.map((r) => {
+                    {filteredAtt.map((r, idx) => {
                       const ini = r.staffName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      const [lat, lng] = (r.gps || '').split(',').map((v) => v.trim())
+                      const dtParts = (r.dateTime || '').split(',')
+                      const mapUrl = lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : ''
                       return (
                         <tr key={r.id} className="hover:bg-[#fafbfc]">
-                          <td className="px-4 py-3 text-[12px] text-[#9ca3af] font-mono">#{r.id}</td>
+                          <td className="px-4 py-3 text-[12px] text-[#9ca3af] font-mono">{idx + 1}</td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{dtParts[0] || '—'}</td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{dtParts.slice(1).join(',').trim() || r.dateTime || '—'}</td>
                           <td className="px-4 py-3"><div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center">{ini}</div><p className="text-[13px] font-semibold text-[#111827]">{r.staffName}</p></div></td>
-                          <td className="px-4 py-3 text-[12px] text-[#6b7280] font-mono">{r.staffId || '—'}</td>
-                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.zone || '—'}</td>
-                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.dateTime}</td>
-                          <td className="px-4 py-3 text-[12px] text-[#6b7280]">{(r as any).markedBy || 'Portal User'}</td>
-                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{r.gps || '—'}</td>
+                          <td className="px-4 py-3 text-[12px] text-[#6b7280] font-mono whitespace-nowrap">{(r as any).mobile || '—'}</td>
+                          <td className="px-4 py-3 text-[12px] text-[#374151] whitespace-nowrap">{(r as any).agency || '—'}</td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{lat || '—'}</td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{lng || '—'}</td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{(r as any).accuracy ? `${(r as any).accuracy} m` : '—'}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {mapUrl ? (
+                              <a href={mapUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1d4ed8] hover:underline">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                Maps
+                              </a>
+                            ) : <span className="text-[11px] text-[#9ca3af]">—</span>}
+                          </td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] whitespace-nowrap">{(r as any).remarks || '—'}</td>
                           <td className="px-4 py-3">
                             {r.photoFile ? (
                               <a href={`/api/photo?f=${encodeURIComponent(r.photoFile)}`} target="_blank" rel="noreferrer" title="View / download photo">
@@ -2044,7 +2060,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </tr>
                       )
                     })}
-                    {filteredAtt.length === 0 && <tr><td colSpan={9} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">{attRecords.length ? 'No records match your search.' : 'No attendance records yet. Click "Mark Attendance" to add the first record.'}</td></tr>}
+                    {filteredAtt.length === 0 && <tr><td colSpan={13} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">{attRecords.length ? 'No records match your search.' : 'No attendance records yet. Click "Mark Attendance" to add the first record.'}</td></tr>}
                   </tbody>
                 </table>
               </div>

@@ -10,6 +10,11 @@ export interface AttendanceRow {
   dateTime: string
   gps: string
   photoFile: string
+  mobile?: string
+  agency?: string
+  accuracy?: string
+  remarks?: string
+  markedBy?: string
 }
 
 interface Props {

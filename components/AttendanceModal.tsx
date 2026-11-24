@@ -6,6 +6,8 @@ export interface StaffOption {
   id: number
   name: string
   zone: string
+  phone?: string
+  agency?: string
 }
 
 export interface AttendanceRecord {
@@ -15,6 +17,10 @@ export interface AttendanceRecord {
   timestamp: string
   gps: string | null
   photo: string | null
+  mobile?: string
+  agency?: string
+  accuracy?: string
+  remarks?: string
 }
 
 interface AttendanceModalProps {
@@ -126,6 +132,9 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
       timestamp: now.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       gps,
       photo,
+      mobile: detectedStaff.phone || '',
+      agency: detectedStaff.agency || '',
+      remarks: 'Daily attendance check-in',
     })
     onClose()
   }
