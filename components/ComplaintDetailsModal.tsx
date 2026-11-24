@@ -200,6 +200,20 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               { label: 'DUE DATE', value: complaint.dueDate || '—' },
               { label: 'CREATED AT', value: complaint.date || '—' },
               { label: 'RESOLVED AT', value: isCompleted ? ((complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (complaint.date || '—')) : '—' },
+              { label: 'RESOLUTION TIME', value: (() => {
+                const created = (complaint as any).createdAt ? new Date((complaint as any).createdAt).getTime() : NaN
+                const resolved = (complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).getTime() : NaN
+                if (!isCompleted || isNaN(created) || isNaN(resolved)) return isCompleted ? '—' : 'In progress'
+                const mins = Math.max(0, Math.round((resolved - created) / 60000))
+                const dur = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins} min`
+                if (!isNaN(dueMs)) {
+                  const diff = Math.round((dueMs - resolved) / 60000)
+                  if (diff > 0) return `Completed in ${dur} · ${diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : `${diff} min`} early`
+                  if (diff < 0) return `Completed in ${dur} · ${Math.abs(diff) >= 60 ? `${Math.floor(Math.abs(diff) / 60)}h ${Math.abs(diff) % 60}m` : `${Math.abs(diff)} min`} late`
+                  return `Completed in ${dur} · on time`
+                }
+                return `Completed in ${dur}`
+              })(), sub: isCompleted ? undefined : 'Timer running against due date' },
             ].map((item) => (
               <div key={item.label} className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
                 <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{item.label}</p>
