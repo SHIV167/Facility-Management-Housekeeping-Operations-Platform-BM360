@@ -1239,7 +1239,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage operational zones and specific areas within Bharat Mandapam.</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-[#0f766e]">12</span>
+                  <span className="text-2xl font-bold text-[#0f766e]">{zones.length}</span>
                   <span className="text-sm text-[#6b7280]">Zones</span>
                 </div>
               </div>
@@ -1254,7 +1254,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage housekeeping and facility management agencies.</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-green-600">8</span>
+                  <span className="text-2xl font-bold text-green-600">{agencies.length}</span>
                   <span className="text-sm text-[#6b7280]">Agencies</span>
                 </div>
               </div>
@@ -1269,7 +1269,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage ITPO officials and their operational jurisdictions.</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-purple-600">124</span>
+                  <span className="text-2xl font-bold text-purple-600">{officials.length}</span>
                   <span className="text-sm text-[#6b7280]">Officials</span>
                 </div>
               </div>
@@ -1284,7 +1284,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage field staff and their assignments.</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-orange-600">256</span>
+                  <span className="text-2xl font-bold text-orange-600">{employees.length}</span>
                   <span className="text-sm text-[#6b7280]">Staff</span>
                 </div>
               </div>
