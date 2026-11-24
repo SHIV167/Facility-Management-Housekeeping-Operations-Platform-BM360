@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 interface Toast { id: number; message: string; type: ToastType }
@@ -8,7 +8,7 @@ interface Toast { id: number; message: string; type: ToastType }
 const ToastCtx = createContext<{ toast: (message: string, type?: ToastType) => void }>({ toast: () => {} })
 export const useToast = () => useContext(ToastCtx)
 
-const styles: Record<ToastType, { bar: string; icon: JSX.Element; label: string }> = {
+const styles: Record<ToastType, { bar: string; icon: ReactNode; label: string }> = {
   success: {
     bar: 'border-l-[#16a34a]',
     label: 'Success',

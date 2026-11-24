@@ -20,7 +20,7 @@ import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories'
 
 export default function DashboardPage() {
   const { toast } = useToast()
@@ -1680,7 +1680,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         ]
         const q = qrSearch.trim().toLowerCase()
         const filtered = qrItems.filter((item) => {
-          const matchQ = !q || [item.title, item.zone || '', item.url || '', item.type].some((v) => String(v).toLowerCase().includes(q))
+          const matchQ = !q || [item.title, item.zone || '', (item as any).url || '', item.type].some((v) => String(v).toLowerCase().includes(q))
           const matchS = qrStatusFilter === 'All Status' || item.status === qrStatusFilter
           return matchQ && matchS
         })
@@ -1946,6 +1946,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     agencies: 'Agencies',
     'itpo-officials': 'ITPO Officials',
     'field-staff': 'Field Staff',
+    zones: 'Zones',
+    areas: 'Areas',
+    categories: 'Categories',
     'qr-manager': 'QR Manager',
     'activity-logs': 'Activity Logs',
     'escalation-settings': 'Escalation Settings',

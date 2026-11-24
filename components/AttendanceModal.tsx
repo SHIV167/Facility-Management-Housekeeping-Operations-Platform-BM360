@@ -21,6 +21,7 @@ interface AttendanceModalProps {
   open: boolean
   onClose: () => void
   staff: StaffOption[]
+  markedIds?: number[]
   onMark: (record: AttendanceRecord) => void
 }
 
