@@ -87,10 +87,26 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
+  const complaintId = Number(b.id || b.complaintId)
+  // Full edit mode — update any provided fields
+  if (b.edit) {
+    const rows = await query(
+      `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9, updated_at=now() WHERE id=$1 RETURNING *`,
+      [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING']
+    ).catch(async () => {
+      return query(
+        `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9 WHERE id=$1 RETURNING *`,
+        [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING']
+      )
+    })
+    if (!rows[0]) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 })
+    await query(`INSERT INTO activity_log (actor, role, action, entity_type, entity_id, details) VALUES ($1,$2,'Complaint Updated','complaint',$3,$4)`,
+      [b.actor || 'Admin', b.role || 'Admin', String(complaintId), `${rows[0].public_id} edited`]).catch(() => {})
+    return NextResponse.json({ ok: true, complaint: rows[0] })
+  }
   const status = b.status
   const actor = b.actor || 'System'
   const role = b.role || 'System'
-  const complaintId = Number(b.id || b.complaintId)
   let rows: any[] = []
   try {
     rows = await query(
