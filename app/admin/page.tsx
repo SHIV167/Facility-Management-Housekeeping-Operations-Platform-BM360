@@ -22,7 +22,7 @@ import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports' | 'attendance'
 
 export default function DashboardPage() {
   const { toast } = useToast()
@@ -1950,6 +1950,108 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
       }
+      case 'attendance': {
+        const todayStr = new Date().toDateString()
+        const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
+        const attWithPhoto = attRecords.filter((r) => r.photoFile).length
+        const filteredAtt = attRecords.filter((r) => !attSearch || [r.staffName, r.staffId, r.zone, r.dateTime, r.gps, r.markedBy || ''].some((v) => String(v).toLowerCase().includes(attSearch.toLowerCase())))
+        return (
+          <div>
+            <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937]">Attendance Management</h1>
+                <p className="text-[13px] text-[#6b7280] mt-0.5">{attRecords.length} records · marked via portal with photo &amp; GPS</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={refreshAttRecords} className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Refresh
+                </button>
+                <a href="/api/attendance" className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Download CSV
+                </a>
+                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Mark Attendance
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+              {[
+                { label: 'Total Records', value: attRecords.length, cls: 'text-[#111827]', sub: 'All saved attendance' },
+                { label: 'Today', value: attToday, cls: 'text-[#16a34a]', sub: 'Marked today' },
+                { label: 'With Photo', value: attWithPhoto, cls: 'text-[#1d4ed8]', sub: 'Evidence attached' },
+                { label: 'Staff Covered', value: new Set(attRecords.map((r) => r.staffName)).size, cls: 'text-[#7c3aed]', sub: 'Unique staff' },
+              ].map((s) => (
+                <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] p-5">
+                  <p className="text-[11px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{s.label}</p>
+                  <p className={`text-[26px] font-bold mt-1 ${s.cls}`}>{s.value}</p>
+                  <p className="text-[11.5px] text-[#9ca3af] mt-0.5">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Attendance Records</h3>
+                  <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredAtt.length} record{filteredAtt.length === 1 ? '' : 's'} · PostgreSQL attendance table</p>
+                </div>
+                <div className="relative">
+                  <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <input type="text" value={attSearch} onChange={(e) => setAttSearch(e.target.value)} placeholder="Search staff, zone, date..." className="h-9 pl-9 pr-3 w-64 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
+                    <tr>
+                      {['#', 'STAFF', 'STAFF ID', 'ZONE', 'DATE & TIME', 'MARKED BY', 'GPS', 'PHOTO', 'ACTIONS'].map((h) => <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] uppercase whitespace-nowrap">{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f3f4f6]">
+                    {filteredAtt.map((r) => {
+                      const ini = r.staffName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                      return (
+                        <tr key={r.id} className="hover:bg-[#fafbfc]">
+                          <td className="px-4 py-3 text-[12px] text-[#9ca3af] font-mono">#{r.id}</td>
+                          <td className="px-4 py-3"><div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center">{ini}</div><p className="text-[13px] font-semibold text-[#111827]">{r.staffName}</p></div></td>
+                          <td className="px-4 py-3 text-[12px] text-[#6b7280] font-mono">{r.staffId || '—'}</td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.zone || '—'}</td>
+                          <td className="px-4 py-3 text-[12.5px] text-[#374151] whitespace-nowrap">{r.dateTime}</td>
+                          <td className="px-4 py-3 text-[12px] text-[#6b7280]">{(r as any).markedBy || 'Portal User'}</td>
+                          <td className="px-4 py-3 text-[11.5px] text-[#6b7280] font-mono whitespace-nowrap">{r.gps || '—'}</td>
+                          <td className="px-4 py-3">
+                            {r.photoFile ? (
+                              <a href={`/api/photo?f=${encodeURIComponent(r.photoFile)}`} target="_blank" rel="noreferrer" title="View / download photo">
+                                <img src={`/api/photo?f=${encodeURIComponent(r.photoFile)}`} alt="" className="w-9 h-9 rounded-lg object-cover border border-[#e8edf2] hover:opacity-80" />
+                              </a>
+                            ) : <span className="text-[11px] text-[#9ca3af]">—</span>}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1">
+                              {r.photoFile && (
+                                <a href={`/api/photo?f=${encodeURIComponent(r.photoFile)}&download=1`} download title="Download photo" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#b7e4d4] bg-white text-[#0f766e] hover:bg-[#e6f7f4]">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+                              )}
+                              <button onClick={() => setEditingAtt(r)} title="Edit record" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                              <button onClick={() => handleDeleteAtt(r.id)} title="Delete record" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {filteredAtt.length === 0 && <tr><td colSpan={9} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">{attRecords.length ? 'No records match your search.' : 'No attendance records yet. Click "Mark Attendance" to add the first record.'}</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      }
       default:
         return <div>Page not found</div>
     }
@@ -1992,7 +2094,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   const refreshAttRecords = () => {
     fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => { if (d.ok) setAttRecords(d.records) }).catch(() => {})
   }
-  useEffect(() => { if (currentView === 'field-staff' || currentView === 'reports') refreshAttRecords() }, [currentView])
+  useEffect(() => { if (currentView === 'field-staff' || currentView === 'reports' || currentView === 'attendance') refreshAttRecords() }, [currentView])
 
   const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string }) => {
     await fetch('/api/attendance', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...data }) }).catch(() => {})
@@ -2052,6 +2154,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     'itpo-officials': 'ITPO Officials',
     'field-staff': 'Field Staff',
     reports: 'Reports',
+    attendance: 'Attendance',
     zones: 'Zones',
     areas: 'Areas',
     categories: 'Categories',
@@ -2079,6 +2182,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     { id: 'agencies', label: 'Agencies', icon: 'building' },
     { id: 'itpo-officials', label: 'ITPO Officials', icon: 'badge' },
     { id: 'field-staff', label: 'Field Staff', icon: 'users' },
+    { id: 'attendance', label: 'Attendance', icon: 'clock' },
     { id: 'reports', label: 'Reports', icon: 'chart' },
     { id: 'qr-manager', label: 'QR Manager', icon: 'qr' },
     { id: 'activity-logs', label: 'Activity Logs', icon: 'log' },
