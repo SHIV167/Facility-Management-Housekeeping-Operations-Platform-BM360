@@ -9,7 +9,7 @@ type Props = {
   open: boolean
   onClose: () => void
   onSuccess?: () => void
-  source?: 'itpo' | 'agency' | 'citizen'
+  source?: 'itpo' | 'agency' | 'citizen' | 'admin'
   officialId?: number
   reporterName?: string
 }
@@ -168,8 +168,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
           subArea,
           description: complaintDetails,
           source,
-          reportedBy: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen',
-          name: reporterName || (source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency Staff' : 'Citizen'),
+          reportedBy: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen',
+          name: reporterName || (source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency Staff' : source === 'admin' ? 'System Admin' : 'Citizen'),
           mobile: '—',
           photos,
           assignedOfficialId: officialId || null,

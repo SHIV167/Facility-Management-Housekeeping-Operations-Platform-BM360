@@ -5,6 +5,7 @@ import { translations, Language } from '@/lib/translations'
 import ItpoOfficialFormModal from '@/components/ItpoOfficialFormModal'
 import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import ComplaintEditModal from '@/components/ComplaintEditModal'
+import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 import ZoneSelectModal from '@/components/ZoneSelectModal'
 import ZoneFormModal from '@/components/ZoneFormModal'
 import { defaultZones, ZoneRecord } from '@/lib/zones'
@@ -36,6 +37,18 @@ export default function DashboardPage() {
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const [editComplaint, setEditComplaint] = useState<any>(null)
+  const [showComplaintForm, setShowComplaintForm] = useState(false)
+
+  const deleteComplaint = (id: number) => {
+    if (!window.confirm('Delete this complaint permanently?')) return
+    fetch('/api/complaints', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok) { logActivity('System Admin', 'Admin', 'Complaint Deleted', `Complaint #${id} removed`); loadComplaints() }
+    }).catch(() => {})
+  }
 const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
   useEffect(() => {
     try { const raw = localStorage.getItem('bm360_zones'); if (raw) setZones(JSON.parse(raw)) } catch {}
@@ -546,6 +559,10 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <p className="text-[13px] text-[#6b7280] mt-0.5">{total} complaints · Bharat Mandapam operations</p>
               </div>
               <div className="flex items-center gap-2">
+                <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  New Complaint
+                </button>
                 <button onClick={() => setCurrentView('complaint-register')} className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Refresh
@@ -608,6 +625,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         <button onClick={() => setInspectComplaint(c)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                           Inspect
+                        </button>
+                        <button onClick={() => deleteComplaint(c.id)} title="Delete complaint" className="p-2 text-[#dc2626] bg-[#fef2f2] border border-[#fecaca] rounded-lg hover:bg-[#fee2e2]">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
                     </div>
@@ -2200,6 +2220,13 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         complaint={editComplaint}
         zones={zones.map((z) => z.name)}
         onSaved={() => { loadComplaints(); setEditComplaint(null) }}
+      />
+      <RegisterComplaintModal
+        open={showComplaintForm}
+        onClose={() => setShowComplaintForm(false)}
+        onSuccess={loadComplaints}
+        source="admin"
+        reporterName="System Admin"
       />
     </div>
   )

@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
   const slaMin = ctype.includes('urgent') ? 30 : 60
   const due = new Date(Date.now() + slaMin * 60000).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
   const source = String(b.source || b.reportedBy || b.reported_by || 'Citizen')
-  const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen'
-  const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : 'Citizen')
+  const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
+  const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : reporterRole === 'Admin' ? 'System Admin' : 'Citizen')
   // Save uploaded photos first so we can tag files with the complaint id
   const photoPaths = savePhotos(Array.isArray(b.photos) ? b.photos : (b.photo ? [b.photo] : []), 'pending')
   const assignedOfficialId = b.assignedOfficialId || b.assigned_official_id || null
