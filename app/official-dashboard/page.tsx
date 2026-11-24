@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DocumentTitle from '@/components/DocumentTitle'
 import RegisterComplaintModal from '@/components/RegisterComplaintModal'
+import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
+import { useToast } from '@/components/Toast'
 
 const fallbackOfficials = [
   { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
@@ -24,6 +26,31 @@ function OfficialDashboard() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'zones' | 'reports'>('overview')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
+  const [inspectComplaint, setInspectComplaint] = useState<any>(null)
+  const { toast } = useToast()
+
+  const updateComplaintStatus = (id: number, status: string) => {
+    fetch('/api/complaints', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status, actor: official.name, role: 'ITPO Official' }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok) { toast(status === 'COMPLETED' ? 'Complaint marked completed' : 'Complaint reopened', 'success'); loadComplaints() }
+      else toast(d.error || 'Update failed', 'error')
+    }).catch(() => toast('Update failed', 'error'))
+  }
+
+  const deleteComplaint = (id: number) => {
+    if (!window.confirm('Delete this complaint permanently?')) return
+    fetch('/api/complaints', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    }).then((r) => r.json()).then((d) => {
+      if (d.ok) { toast('Complaint deleted', 'success'); loadComplaints() }
+      else toast('Delete failed', 'error')
+    }).catch(() => toast('Delete failed', 'error'))
+  }
 
   useEffect(() => {
     fetch('/api/officials').then((r) => r.json()).then((d) => {
@@ -302,7 +329,7 @@ function OfficialDashboard() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#eef1f4]">
-                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS'].map((h) => (
+                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -321,10 +348,21 @@ function OfficialDashboard() {
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusPill(c.status)}`}>{c.status}</span>
                         </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => setInspectComplaint(c)} className="px-2.5 py-1 text-[11.5px] font-semibold text-white bg-[#0e4c5e] rounded-md hover:bg-[#0b3c4a]">Inspect</button>
+                            <button onClick={() => updateComplaintStatus(c.id, c.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED')} className={`px-2.5 py-1 text-[11.5px] font-semibold rounded-md ${c.status === 'COMPLETED' ? 'border border-[#fed7aa] text-[#c2410c] bg-[#fff7ed] hover:bg-[#ffedd5]' : 'bg-[#16a34a] text-white hover:bg-[#15803d]'}`}>
+                              {c.status === 'COMPLETED' ? 'Reopen' : 'Complete'}
+                            </button>
+                            <button onClick={() => deleteComplaint(c.id)} className="p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-md" title="Delete">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                     {myComplaints.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
+                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -405,6 +443,12 @@ function OfficialDashboard() {
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={loadComplaints} />
+      <ComplaintDetailsModal
+        open={inspectComplaint != null}
+        onClose={() => setInspectComplaint(null)}
+        complaint={inspectComplaint}
+        onStatusChange={(status) => { if (inspectComplaint) { updateComplaintStatus(inspectComplaint.id, status); setInspectComplaint(null) } }}
+      />
     </div>
   )
 }
