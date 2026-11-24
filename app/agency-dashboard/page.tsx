@@ -9,6 +9,7 @@ import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/Att
 import AddSupervisorModal, { SupervisorFormData } from '@/components/AddSupervisorModal'
 import AddFieldStaffModal, { FieldStaffFormData } from '@/components/AddFieldStaffModal'
 import { logActivity } from '@/lib/activity'
+import { translations } from '@/lib/translations'
 import DocumentTitle from '@/components/DocumentTitle'
 import { useToast } from '@/components/Toast'
 
@@ -102,11 +103,12 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     overviewTab === 'all' ? true : overviewTab === 'pending' ? c.status === 'PENDING' : c.status === 'COMPLETED'
   )
 
+  const t = translations[language]
   const navItems = [
-    { id: 'overview', label: 'Overview', icon: 'grid' },
-    { id: 'complaints', label: 'All Complaints', icon: 'clipboard', badge: '3' },
-    { id: 'staff', label: 'Field Staff', icon: 'users' },
-    { id: 'reports', label: 'Reports', icon: 'chart' },
+    { id: 'overview', label: language === 'hi' ? 'अवलोकन' : 'Overview', icon: 'grid' },
+    { id: 'complaints', label: t.allComplaintsTitle, icon: 'clipboard', badge: '3' },
+    { id: 'staff', label: t.fieldStaff, icon: 'users' },
+    { id: 'reports', label: t.reports, icon: 'chart' },
   ]
 
   const NavIcon = ({ name }: { name: string }) => {

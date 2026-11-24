@@ -6,6 +6,7 @@ import DocumentTitle from '@/components/DocumentTitle'
 import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import { useToast } from '@/components/Toast'
+import { translations } from '@/lib/translations'
 
 const fallbackOfficials = [
   { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
@@ -110,11 +111,12 @@ function OfficialDashboard() {
       ? 'bg-[#fff7ed] text-[#ea580c]'
       : 'bg-[#eef2ff] text-[#4f46e5]'
 
+  const t = translations[language]
   const navItems = [
-    { id: 'overview', label: 'My Overview', icon: 'grid' },
-    { id: 'complaints', label: 'My Complaints', icon: 'clipboard', badge: String(myComplaints.length) },
-    { id: 'zones', label: 'My Zones', icon: 'pin' },
-    { id: 'reports', label: 'My Reports', icon: 'chart' },
+    { id: 'overview', label: t.myOverview, icon: 'grid' },
+    { id: 'complaints', label: t.myComplaints, icon: 'clipboard', badge: String(myComplaints.length) },
+    { id: 'zones', label: t.myZones, icon: 'pin' },
+    { id: 'reports', label: t.myReports, icon: 'chart' },
   ]
 
   const NavIcon = ({ name }: { name: string }) => {
@@ -211,7 +213,7 @@ function OfficialDashboard() {
           <div className="flex items-center gap-3">
             <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
-              New Complaint
+              {t.newComplaint}
             </button>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
