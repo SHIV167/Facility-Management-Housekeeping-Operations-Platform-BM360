@@ -74,7 +74,9 @@ const [supervisorFormOpen, setSupervisorFormOpen] = useState(false)
 const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
   const handleLogout = () => {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('userRole')
     router.push('/')
   }
 
@@ -278,7 +280,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
+        <header className="sticky top-0 z-30 h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-[13px] text-[#6b7280] min-w-0">
             <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -290,6 +292,9 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           </div>
 
           <div className="flex items-center gap-3">
+            <button onClick={handleLogout} title="Logout" className="p-2 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors">
+              <svg className="w-4.5 h-4.5 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>

@@ -17,6 +17,12 @@ const fallbackComplaints: any[] = []
 
 function OfficialDashboard() {
   const router = useRouter()
+  const handleLogout = () => {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('userRole')
+    router.push('/')
+  }
   const params = useSearchParams()
   const officialId = Number(params.get('id') ?? '1')
   const [officials, setOfficials] = useState(fallbackOfficials)
@@ -192,7 +198,7 @@ function OfficialDashboard() {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
+        <header className="sticky top-0 z-30 h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-[13px] text-[#6b7280] min-w-0">
             <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -203,6 +209,9 @@ function OfficialDashboard() {
             <span className="text-[#111827] font-semibold truncate">ITPO Official Dashboard</span>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={handleLogout} title="Logout" className="p-2 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
             <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
               New Complaint
