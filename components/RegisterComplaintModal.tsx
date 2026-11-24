@@ -10,6 +10,8 @@ type Props = {
   onClose: () => void
   onSuccess?: () => void
   source?: 'itpo' | 'agency' | 'citizen'
+  officialId?: number
+  reporterName?: string
 }
 
 const ZONE_OPTIONS = [
@@ -53,7 +55,7 @@ function parseScannedData(text: string) {
   return data
 }
 
-export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency' }: Props) {
+export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency', officialId, reporterName }: Props) {
   const { toast } = useToast()
   const [photos, setPhotos] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -154,27 +156,37 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
 
   if (!open) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    fetch('/api/complaints', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        complaintType: selectedService,
-        zone: allZones ? 'All Zones' : selectedZone,
-        subArea,
-        description: complaintDetails,
-        source,
-        reportedBy: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen',
-        name: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency Staff' : 'Citizen',
-        mobile: '—',
-        photos,
-      }),
-    }).catch(() => {})
-    toast('Complaint registered successfully!')
-    logActivity('Agency Manager', 'Agency', 'Complaint Registered', `New complaint submitted via portal`)
-    onClose()
-    onSuccess?.()
+    try {
+      const res = await fetch('/api/complaints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          complaintType: selectedService,
+          zone: allZones ? 'All Zones' : selectedZone,
+          subArea,
+          description: complaintDetails,
+          source,
+          reportedBy: source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen',
+          name: reporterName || (source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency Staff' : 'Citizen'),
+          mobile: '—',
+          photos,
+          assignedOfficialId: officialId || null,
+        }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok || !d.ok) {
+        toast(d.error || 'Failed to register complaint. Please try again.', 'error')
+        return
+      }
+      toast(`Complaint ${d.id || ''} registered successfully!`, 'success')
+      logActivity(reporterName || 'Portal User', source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : 'Citizen', 'Complaint Registered', `${d.id || ''} · ${selectedService} · ${allZones ? 'All Zones' : selectedZone}`)
+      onClose()
+      onSuccess?.()
+    } catch {
+      toast('Network error — complaint not saved. Please try again.', 'error')
+    }
   }
 
   const addPhotoFiles = (files: FileList | null) => {

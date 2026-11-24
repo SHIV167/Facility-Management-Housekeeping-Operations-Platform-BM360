@@ -45,10 +45,11 @@ export async function POST(req: NextRequest) {
   const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : 'Citizen')
   // Save uploaded photos first so we can tag files with the complaint id
   const photoPaths = savePhotos(Array.isArray(b.photos) ? b.photos : (b.photo ? [b.photo] : []), 'pending')
+  const assignedOfficialId = b.assignedOfficialId || b.assigned_official_id || null
   const rows = await query(
-    `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status, due_date, photo_url, photos)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11,$12,$13) RETURNING *`,
-    [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', reporterRole, reporterName, b.mobile || b.reporter_mobile || '', due, photoPaths[0] || null, JSON.stringify(photoPaths)]
+    `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status, due_date, photo_url, photos, assigned_official_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11,$12,$13,$14) RETURNING *`,
+    [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', reporterRole, reporterName, b.mobile || b.reporter_mobile || '', due, photoPaths[0] || null, JSON.stringify(photoPaths), assignedOfficialId]
   )
   const c = rows[0]
   // Rename saved files with the real complaint id for traceability

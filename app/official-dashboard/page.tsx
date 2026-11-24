@@ -445,7 +445,7 @@ function OfficialDashboard() {
           )}
         </main>
       </div>
-      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={loadComplaints} source="itpo" />
+      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={loadComplaints} source="itpo" officialId={official.id} reporterName={official.name} />
       <ComplaintDetailsModal
         open={inspectComplaint != null}
         onClose={() => setInspectComplaint(null)}
