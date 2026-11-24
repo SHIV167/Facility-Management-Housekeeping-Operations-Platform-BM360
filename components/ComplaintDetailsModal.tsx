@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useToast } from '@/components/Toast'
 
 export interface ComplaintData {
@@ -37,6 +37,29 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
   const [extraPhotos, setExtraPhotos] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [now, setNow] = useState(Date.now())
+  const breachedRef = useRef(false)
+
+  const dueRaw = (complaint as any)?.dueDate || (complaint as any)?.due_date || ''
+  const dueMs = dueRaw ? new Date(dueRaw).getTime() : NaN
+  const hasDue = !isNaN(dueMs)
+  const remaining = hasDue ? dueMs - now : null
+  const statusDone = complaint?.status === 'COMPLETED' || complaint?.status === 'RESOLVED'
+  const breached = hasDue && remaining !== null && remaining <= 0 && !statusDone
+
+  useEffect(() => {
+    if (!open) return
+    breachedRef.current = false
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [open, complaint?.id])
+
+  useEffect(() => {
+    if (breached && !breachedRef.current) {
+      breachedRef.current = true
+      toast(`SLA BREACHED — ${complaint?.title || 'complaint'} response window ended`, 'error')
+    }
+  }, [breached])
 
   if (!open || !complaint) return null
 
@@ -122,9 +145,19 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
           {/* Title + priority/SLA */}
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <h3 className="text-[18px] font-semibold text-[#111827] leading-snug flex-1 min-w-0">{complaint.title}</h3>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] text-[11.5px] font-semibold shrink-0">
-              {(complaint as any).priority === 'URGENT' ? 'Urgent' : (complaint as any).priority === 'HIGH' ? 'High' : 'Normal'} Priority · 30 Min SLA
-            </span>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-[11.5px] font-semibold ${breached ? 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]' : 'bg-[#fff7ed] border-[#fed7aa] text-[#c2410c]'}`}>
+                {(complaint as any).priority === 'URGENT' ? 'Urgent' : (complaint as any).priority === 'HIGH' ? 'High' : 'Normal'} Priority · {(complaint as any).slaMinutes || 30} Min SLA
+              </span>
+              {hasDue && (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-bold ${breached ? 'bg-[#dc2626] text-white animate-pulse' : remaining !== null && remaining < 15 * 60000 ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c]' : 'bg-[#e6f7f4] border border-[#bfe8e2] text-[#0f766e]'}`}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  {breached ? 'SLA BREACHED' : remaining !== null && remaining > 0
+                    ? `SLA: ${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m ${Math.floor((remaining % 60000) / 1000)}s left`
+                    : 'SLA: —'}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Work instructions */}
