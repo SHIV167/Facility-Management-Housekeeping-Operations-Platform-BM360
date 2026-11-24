@@ -2356,9 +2356,6 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => { fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}); localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userRole'); window.location.href = '/' }} title="Logout" className="p-2 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            </button>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
@@ -2380,6 +2377,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <p className="text-[12.5px] font-semibold text-[#111827]">ITPO Administrator</p>
                 <p className="text-[11px] text-[#6b7280]">ITPO Official</p>
               </div>
+              <button onClick={() => { fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}); localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userRole'); window.location.href = '/' }} title="Logout" className="ml-1 p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors">
+                <svg className="w-4.5 h-4.5 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              </button>
             </div>
           </div>
         </header>
