@@ -285,7 +285,7 @@ function OfficialDashboard() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#eef1f4]">
-                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS'].map((h) => (
+                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -304,10 +304,13 @@ function OfficialDashboard() {
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusPill(c.status)}`}>{c.status}</span>
                         </td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => setInspectComplaint(c)} className="px-2.5 py-1 text-[11.5px] font-semibold text-white bg-[#0e4c5e] rounded-md hover:bg-[#0b3c4a]">Inspect</button>
+                        </td>
                       </tr>
                     ))}
                     {myComplaints.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
+                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
                     )}
                   </tbody>
                 </table>
