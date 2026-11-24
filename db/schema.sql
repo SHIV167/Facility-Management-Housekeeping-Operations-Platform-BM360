@@ -80,7 +80,9 @@ CREATE TABLE IF NOT EXISTS complaints (
   created_at TIMESTAMPTZ DEFAULT now(),
   resolved_at TIMESTAMPTZ,
   resolved_by TEXT,
-  photo_url TEXT
+  photo_url TEXT,
+  photos JSONB DEFAULT '[]',
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_complaints_status ON complaints(status);
 CREATE INDEX IF NOT EXISTS idx_complaints_zone ON complaints(zone);
