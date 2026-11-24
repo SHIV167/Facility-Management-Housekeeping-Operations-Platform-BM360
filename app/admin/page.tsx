@@ -22,7 +22,7 @@ import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports'
 
 export default function DashboardPage() {
   const { toast } = useToast()
@@ -1878,6 +1878,78 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
       }
+      case 'reports': {
+        const repComplaints = complaints
+        const repPending = repComplaints.filter((c) => c.status === 'PENDING').length
+        const repDone = repComplaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
+        const byService = repComplaints.reduce<Record<string, number>>((m, c) => { const k = c.service || 'General'; m[k] = (m[k] || 0) + 1; return m }, {})
+        const byZone = repComplaints.reduce<Record<string, number>>((m, c) => { const k = (c.zone || c.location || '—').split(' - ')[0]; m[k] = (m[k] || 0) + 1; return m }, {})
+        const byAgency = repComplaints.reduce<Record<string, number>>((m, c) => { const k = c.agency || 'Unassigned'; m[k] = (m[k] || 0) + 1; return m }, {})
+        const todayStr = new Date().toDateString()
+        const attToday = attRecords.filter((r) => new Date(r.dateTime).toDateString() === todayStr).length
+        const statCard = (label: string, value: string | number, sub: string, cls = 'text-[#111827]') => (
+          <div key={label} className="bg-white rounded-xl border border-[#e8edf2] p-5">
+            <p className="text-[11px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{label}</p>
+            <p className={`text-[26px] font-bold mt-1 ${cls}`}>{value}</p>
+            <p className="text-[11.5px] text-[#9ca3af] mt-0.5">{sub}</p>
+          </div>
+        )
+        const bar = (label: string, count: number, total: number, color: string) => (
+          <div key={label} className="flex items-center gap-3 py-2">
+            <span className="w-40 truncate text-[12.5px] text-[#374151]">{label}</span>
+            <div className="flex-1 h-2.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${color}`} style={{ width: `${total ? Math.round((count / total) * 100) : 0}%` }} />
+            </div>
+            <span className="w-8 text-right text-[12.5px] font-semibold text-[#111827]">{count}</span>
+          </div>
+        )
+        return (
+          <div>
+            <div className="mb-4">
+              <h1 className="text-[20px] font-semibold text-[#1f2937]">Reports &amp; Analytics</h1>
+              <p className="text-[13px] text-[#6b7280] mt-0.5">Live operational summary · Bharat Mandapam 360</p>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+              {statCard('Total Complaints', repComplaints.length, 'All registered complaints')}
+              {statCard('Pending', repPending, 'Awaiting resolution', 'text-[#ea580c]')}
+              {statCard('Completed', repDone, `${repComplaints.length ? Math.round((repDone / repComplaints.length) * 100) : 0}% resolution rate`, 'text-[#16a34a]')}
+              {statCard('Attendance Today', attToday, `${attRecords.length} total records`)}
+              {statCard('Field Staff', employees.length, `${employees.filter((e) => e.status === 'Active').length} active`)}
+              {statCard('Agencies', agencies.length, 'Registered partners')}
+              {statCard('ITPO Officials', officials.length, 'Active officials')}
+              {statCard('Zones', zones.length, 'Operational zones')}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Complaints by Service</h3>
+                {Object.entries(byService).sort((a, b) => b[1] - a[1]).map(([k, v]) => bar(k, v, repComplaints.length, 'bg-[#0e4c5e]'))}
+                {!repComplaints.length && <p className="text-[12.5px] text-[#9ca3af]">No complaints yet.</p>}
+              </div>
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Complaints by Zone</h3>
+                {Object.entries(byZone).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => bar(k, v, repComplaints.length, 'bg-[#1b8f84]'))}
+                {!repComplaints.length && <p className="text-[12.5px] text-[#9ca3af]">No complaints yet.</p>}
+              </div>
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Complaints by Agency</h3>
+                {Object.entries(byAgency).sort((a, b) => b[1] - a[1]).map(([k, v]) => bar(k, v, repComplaints.length, 'bg-[#d97706]'))}
+                {!repComplaints.length && <p className="text-[12.5px] text-[#9ca3af]">No complaints yet.</p>}
+              </div>
+              <div className="bg-white rounded-xl border border-[#e8edf2] p-5">
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Attendance Summary</h3>
+                <div className="space-y-2 text-[13px]">
+                  <div className="flex justify-between py-2 border-b border-[#f3f4f6]"><span className="text-[#6b7280]">Total records</span><span className="font-semibold">{attRecords.length}</span></div>
+                  <div className="flex justify-between py-2 border-b border-[#f3f4f6]"><span className="text-[#6b7280]">Marked today</span><span className="font-semibold text-[#16a34a]">{attToday}</span></div>
+                  <div className="flex justify-between py-2"><span className="text-[#6b7280]">With photo evidence</span><span className="font-semibold">{attRecords.filter((r) => r.photoFile).length}</span></div>
+                </div>
+                <a href="/api/attendance" className="mt-4 inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                  Export Attendance CSV
+                </a>
+              </div>
+            </div>
+          </div>
+        )
+      }
       default:
         return <div>Page not found</div>
     }
@@ -1920,7 +1992,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   const refreshAttRecords = () => {
     fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => { if (d.ok) setAttRecords(d.records) }).catch(() => {})
   }
-  useEffect(() => { if (currentView === 'field-staff') refreshAttRecords() }, [currentView])
+  useEffect(() => { if (currentView === 'field-staff' || currentView === 'reports') refreshAttRecords() }, [currentView])
 
   const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string }) => {
     await fetch('/api/attendance', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...data }) }).catch(() => {})
@@ -1979,6 +2051,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     agencies: 'Agencies',
     'itpo-officials': 'ITPO Officials',
     'field-staff': 'Field Staff',
+    reports: 'Reports',
     zones: 'Zones',
     areas: 'Areas',
     categories: 'Categories',
@@ -2006,6 +2079,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     { id: 'agencies', label: 'Agencies', icon: 'building' },
     { id: 'itpo-officials', label: 'ITPO Officials', icon: 'badge' },
     { id: 'field-staff', label: 'Field Staff', icon: 'users' },
+    { id: 'reports', label: 'Reports', icon: 'chart' },
     { id: 'qr-manager', label: 'QR Manager', icon: 'qr' },
     { id: 'activity-logs', label: 'Activity Logs', icon: 'log' },
     { id: 'escalation-settings', label: 'Escalation Settings', icon: 'gear' },
