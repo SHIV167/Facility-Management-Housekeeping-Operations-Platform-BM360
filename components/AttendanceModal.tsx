@@ -37,7 +37,9 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
   const [photo, setPhoto] = useState<string | null>(null)
   const [cameraError, setCameraError] = useState('')
   const [gps, setGps] = useState<string | null>(null)
+  const [gpsAcc, setGpsAcc] = useState<string | null>(null)
   const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsDenied, setGpsDenied] = useState(false)
   const [now, setNow] = useState(new Date())
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -78,11 +80,29 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
     }
   }, [open])
 
+  // auto-capture GPS with high accuracy when modal opens
+  useEffect(() => {
+    if (!open || !navigator.geolocation) return
+    setGpsLoading(true)
+    setGpsDenied(false)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGps(`${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`)
+        setGpsAcc(String(Math.round(pos.coords.accuracy)))
+        setGpsLoading(false)
+      },
+      () => { setGpsDenied(true); setGpsLoading(false) },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    )
+  }, [open])
+
   // reset on close
   useEffect(() => {
     if (!open) {
       setPhoto(null)
       setGps(null)
+      setGpsAcc(null)
+      setGpsDenied(false)
       setCameraError('')
     }
   }, [open])
@@ -109,14 +129,17 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
     setGpsLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setGps(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`)
+        setGps(`${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`)
+        setGpsAcc(String(Math.round(pos.coords.accuracy)))
+        setGpsDenied(false)
         setGpsLoading(false)
       },
       () => {
         setGps('GPS unavailable')
+        setGpsDenied(true)
         setGpsLoading(false)
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     )
   }
 
@@ -134,6 +157,7 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
       photo,
       mobile: detectedStaff.phone || '',
       agency: detectedStaff.agency || '',
+      accuracy: gpsAcc || '',
       remarks: 'Daily attendance check-in',
     })
     onClose()
@@ -235,11 +259,14 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
             <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
               <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">GPS Location</p>
               <div className="flex items-center justify-between mt-1">
-                <p className="text-[12.5px] font-medium text-[#374151] truncate">{gps ?? 'Not captured'}</p>
+                <div className="min-w-0">
+                  <p className="text-[12.5px] font-medium text-[#374151] truncate">{gps ?? (gpsLoading ? 'Acquiring GPS…' : gpsDenied ? 'GPS denied — tap Enable' : 'Auto-capturing…')}</p>
+                  {gpsAcc && <p className="text-[10.5px] text-[#16a34a] font-medium">±{gpsAcc} m accuracy</p>}
+                </div>
                 <button
                   onClick={captureGps}
                   disabled={gpsLoading}
-                  className="shrink-0 ml-2 px-2.5 py-1 text-[11.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea] disabled:opacity-50"
+                  className={`shrink-0 ml-2 px-2.5 py-1 text-[11.5px] font-semibold rounded-md disabled:opacity-50 ${gps ? 'text-[#0f766e] bg-[#e6f7f4] hover:bg-[#d7f0ea]' : 'text-white bg-[#0e4c5e] hover:bg-[#0b3c4a]'}`}
                 >
                   {gpsLoading ? 'Locating…' : gps ? 'Refresh' : 'Enable GPS'}
                 </button>
