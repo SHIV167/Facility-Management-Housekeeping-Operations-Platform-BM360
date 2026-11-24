@@ -2112,7 +2112,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   }
   useEffect(() => { if (currentView === 'field-staff' || currentView === 'reports' || currentView === 'attendance') refreshAttRecords() }, [currentView])
 
-  const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string }) => {
+  const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string; mobile?: string; agency?: string; accuracy?: string; remarks?: string }) => {
     await fetch('/api/attendance', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...data }) }).catch(() => {})
     setEditingAtt(null); refreshAttRecords()
   }

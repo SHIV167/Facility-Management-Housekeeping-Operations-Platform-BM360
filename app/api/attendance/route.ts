@@ -156,14 +156,14 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, staffName, zone, dateTime, gps } = await req.json()
+    const { id, staffName, zone, dateTime, gps, mobile, agency, accuracy, remarks } = await req.json()
     try {
       const { query } = await import('@/lib/db')
       const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
       const parsedDate = dateTime ? new Date(dateTime) : null
       const rows = await query(
-        `UPDATE attendance SET staff_name=$2, zone=$3, marked_at=COALESCE($4, marked_at), gps_lat=$5, gps_lng=$6 WHERE id=$1 RETURNING id`,
-        [Number(id), staffName ?? '', zone ?? '', parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null, gpsParts[0] || null, gpsParts[1] || null]
+        `UPDATE attendance SET staff_name=$2, zone=$3, marked_at=COALESCE($4, marked_at), gps_lat=$5, gps_lng=$6, mobile=COALESCE($7, mobile), agency=COALESCE($8, agency), accuracy=COALESCE($9, accuracy), remarks=COALESCE($10, remarks) WHERE id=$1 RETURNING id`,
+        [Number(id), staffName ?? '', zone ?? '', parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null, gpsParts[0] || null, gpsParts[1] || null, mobile ?? null, agency ?? null, accuracy ?? null, remarks ?? null]
       )
       if (rows[0]) {
         logActivitySafe(staffName || 'Staff', 'Admin', 'Attendance Updated', `DB record #${id} edited`)

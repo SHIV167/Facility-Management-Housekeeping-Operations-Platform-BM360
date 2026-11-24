@@ -21,7 +21,7 @@ interface Props {
   open: boolean
   record: AttendanceRow | null
   onClose: () => void
-  onSave: (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string }) => void
+  onSave: (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string; mobile?: string; agency?: string; accuracy?: string; remarks?: string }) => void
 }
 
 export default function AttendanceEditModal({ open, record, onClose, onSave }: Props) {
@@ -29,6 +29,10 @@ export default function AttendanceEditModal({ open, record, onClose, onSave }: P
   const [zone, setZone] = useState('')
   const [dateTime, setDateTime] = useState('')
   const [gps, setGps] = useState('')
+  const [mobile, setMobile] = useState('')
+  const [agency, setAgency] = useState('')
+  const [accuracy, setAccuracy] = useState('')
+  const [remarks, setRemarks] = useState('')
 
   useEffect(() => {
     if (record) {
@@ -36,6 +40,10 @@ export default function AttendanceEditModal({ open, record, onClose, onSave }: P
       setZone(record.zone)
       setDateTime(record.dateTime)
       setGps(record.gps)
+      setMobile(record.mobile || '')
+      setAgency(record.agency || '')
+      setAccuracy(record.accuracy || '')
+      setRemarks(record.remarks || '')
     }
   }, [record])
 
@@ -74,13 +82,31 @@ export default function AttendanceEditModal({ open, record, onClose, onSave }: P
             <input value={dateTime} onChange={(e) => setDateTime(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>GPS Coordinates</label>
+            <label className={labelCls}>GPS Coordinates (lat,lng)</label>
             <input value={gps} onChange={(e) => setGps(e.target.value)} className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Mobile</label>
+              <input value={mobile} onChange={(e) => setMobile(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Accuracy (m)</label>
+              <input value={accuracy} onChange={(e) => setAccuracy(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Agency</label>
+            <input value={agency} onChange={(e) => setAgency(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Remarks</label>
+            <input value={remarks} onChange={(e) => setRemarks(e.target.value)} className={inputCls} />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[#eef1f4]">
           <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]">Cancel</button>
-          <button onClick={() => onSave(record.id, { staffName, zone, dateTime, gps })} className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">Save Changes</button>
+          <button onClick={() => onSave(record.id, { staffName, zone, dateTime, gps, mobile, agency, accuracy, remarks })} className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">Save Changes</button>
         </div>
       </div>
     </div>
