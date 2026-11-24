@@ -161,7 +161,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       const mine = d.records.filter((r: any) => {
         const dt = new Date(r.dateTime)
         if (isNaN(dt.getTime()) || dt.toDateString() !== todayStr) return false
-        return !me.agency || !r.agency || r.agency === me.agency
+        return !me.name || r.staffName?.toLowerCase() === me.name.toLowerCase()
       })
       setAttendanceRecords(mine.map((r: any, i: number) => ({
         staffId: Number(r.staffId) || i + 1,
@@ -525,7 +525,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                     {attendanceRecords.length ? `${attendanceRecords.length} Marked Today` : 'Pending'}
                   </span>
                 </div>
-                {attendanceRecords.some((r) => r.staffName === me.name) ? (
+                {attendanceRecords.some((r) => r.staffName.toLowerCase() === me.name.toLowerCase()) ? (
                   <div className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#16a34a] bg-[#e8f8ef] border border-[#b7e8c8] rounded-lg">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     Attendance Marked
@@ -855,7 +855,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       <AttendanceModal
         open={attendanceOpen}
         onClose={() => setAttendanceOpen(false)}
-        staff={staffOptions.filter((s) => s.name === me.name)}
+        staff={staffOptions.filter((s) => s.name.toLowerCase() === me.name.toLowerCase())}
         markedIds={attendanceRecords.map((r) => r.staffId)}
         onMark={handleMarkAttendance}
       />
