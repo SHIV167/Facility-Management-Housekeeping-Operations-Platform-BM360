@@ -2487,6 +2487,16 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         open={inspectComplaint != null}
         onClose={() => setInspectComplaint(null)}
         complaint={inspectComplaint}
+        onStatusChange={(status) => {
+          if (!inspectComplaint) return
+          fetch('/api/complaints', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: inspectComplaint.id, status, actor: 'System Admin', role: 'Admin' }),
+          }).then((r) => r.json()).then((d) => {
+            if (d.ok) { logActivity('System Admin', 'Admin', status === 'COMPLETED' ? 'Complaint Completed' : 'Complaint Reopened', inspectComplaint.publicId || String(inspectComplaint.id)); loadComplaints() }
+          }).catch(() => {})
+        }}
       />
       <ComplaintEditModal
         open={editComplaint != null}
