@@ -47,7 +47,7 @@ export default function AgencyDashboardPage() {
   }, [])
   useEffect(() => {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
-      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || me.agency || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, resolvedAt: c.resolved_at, zone: c.zone })))
+      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || me.agency || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(), priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, resolvedAt: c.resolved_at, zone: c.zone })))
     }).catch(() => {})
     fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
@@ -702,9 +702,20 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                       onClick={() => setSelectedComplaintId(complaint.id)}
                     >
                       <td className="px-4 py-3.5">
-                        <div className="w-11 h-11 bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2]">
-                          <svg className="w-5 h-5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        </div>
+                        {(complaint.photos && complaint.photos.length > 0) ? (
+                          <div className="flex items-center">
+                            {complaint.photos.slice(0, 4).map((p: string, i: number) => (
+                              <a key={i} href={p} target="_blank" rel="noreferrer" title={`Photo ${i + 1} of ${complaint.photos.length}`} onClick={(e) => e.stopPropagation()} className={i > 0 ? '-ml-2' : ''} style={{ zIndex: 4 - i }}>
+                                <img src={p} alt={`Evidence ${i + 1}`} className="w-11 h-11 rounded-lg object-cover border-2 border-white shadow-sm" />
+                              </a>
+                            ))}
+                            {complaint.photos.length > 4 && <span className="ml-1.5 text-[11px] font-semibold text-[#6b7280]">+{complaint.photos.length - 4}</span>}
+                          </div>
+                        ) : (
+                          <div className="w-11 h-11 bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2]">
+                            <svg className="w-5 h-5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <p className="text-[13.5px] font-semibold text-[#111827]">#{complaint.id}</p>
