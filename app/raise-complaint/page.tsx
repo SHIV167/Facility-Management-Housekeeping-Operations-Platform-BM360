@@ -119,7 +119,7 @@ function RaiseComplaintForm() {
           <div>
             <label className={labelCls}>Attach Photos (Optional)</label>
             <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
-              const files = Array.from(e.target.files || [])
+              const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/') && f.size <= 5 * 1024 * 1024).slice(0, 6 - photos.length)
               files.forEach((f) => {
                 const reader = new FileReader()
                 reader.onload = () => setPhotos((p) => [...p, String(reader.result)].slice(0, 6))

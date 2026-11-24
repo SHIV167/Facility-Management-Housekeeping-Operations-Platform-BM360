@@ -84,6 +84,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
     if (!files?.length) return
     const file = files[0]
     if (!file.type.startsWith('image/')) { toast('Please select an image file', 'error'); return }
+    if (file.size > 5 * 1024 * 1024) { toast('Image too large — max 5MB', 'error'); return }
     const reader = new FileReader()
     reader.onload = async () => {
       const dataUrl = String(reader.result)

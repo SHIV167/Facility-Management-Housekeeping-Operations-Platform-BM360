@@ -10,7 +10,7 @@ function savePhotos(dataUrls: string[], tag: string): string[] {
   fs.mkdirSync(PHOTOS_DIR, { recursive: true })
   return dataUrls.slice(0, 6).map((du, i) => {
     const m = String(du).match(/^data:image\/(png|jpe?g|webp);base64,(.+)$/)
-    if (!m) return ''
+    if (!m || m[2].length > 7_000_000) return ''
     const ext = m[1] === 'jpeg' ? 'jpg' : m[1]
     const fname = `complaint_${tag}_${Date.now()}_${i}.${ext}`
     const b64 = m[2]
