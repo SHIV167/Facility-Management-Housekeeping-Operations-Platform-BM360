@@ -848,7 +848,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       <AttendanceModal
         open={attendanceOpen}
         onClose={() => setAttendanceOpen(false)}
-        staff={staffOptions}
+        staff={staffOptions.filter((s) => s.name === me.name)}
         markedIds={attendanceRecords.map((r) => r.staffId)}
         onMark={handleMarkAttendance}
       />
