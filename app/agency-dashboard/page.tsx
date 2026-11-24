@@ -511,15 +511,19 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-end shrink-0">
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#f8fafc] border border-[#e8edf2]">
+                  <svg className="w-4 h-4 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span className="text-[13px] font-semibold text-[#111827]">Daily Attendance</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
+                    {attendanceRecords.length ? `${attendanceRecords.length} Marked Today` : 'Pending'}
+                  </span>
+                </div>
                 <button
                   onClick={() => setAttendanceOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea] shadow-sm"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  Daily Attendance
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
-                    {attendanceRecords.length ? `${attendanceRecords.length} Marked Today` : 'Pending'}
-                  </span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
+                  Mark Attendance
                 </button>
                 <button
                   onClick={() => setShowComplaintForm(true)}
