@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const [editComplaint, setEditComplaint] = useState<any>(null)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
 
   const deleteComplaint = (id: number) => {
     if (!window.confirm('Delete this complaint permanently?')) return
@@ -574,7 +575,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {[
                 { label: 'Total', value: total, cls: 'text-[#111827]' },
                 { label: 'Pending', value: pendingCount, cls: 'text-[#ea580c]' },
@@ -694,7 +695,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-3 mb-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
               {[
                 { label: 'TOTAL ITPO OFFICIALS', value: String(officials.length), iconBg: 'bg-[#eef2ff]', iconColor: 'text-[#4f46e5]', icon: 'shield' },
                 { label: 'CAMPUS-WIDE (ALL ZONES)', value: String(officials.filter((o) => o.zones.includes('All Zones')).length), iconBg: 'bg-[#f3e8ff]', iconColor: 'text-[#7c3aed]', icon: 'globe' },
@@ -884,7 +885,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           <div>
             <h1 className="text-[20px] font-semibold text-[#1f2937] mb-1">ITPO Official Performance</h1>
             <p className="text-[13px] text-[#6b7280] mb-4">Resolution rate and response time for authorized ITPO officials.</p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {[
                 ['AVG. RESPONSE TIME', '8.5 min'],
                 ['RESOLUTION RATE', '94.2%'],
@@ -1816,7 +1817,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 Export CSV
               </a>
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {[{ l: 'TOTAL EVENTS', v: activityLogs.length, c: 'text-[#111827]' }, { l: 'USERS', v: actors.length, c: 'text-[#0f766e]' }, { l: 'UNIQUE ACTIONS', v: new Set(activityLogs.map((l) => l.action)).size, c: 'text-[#4f46e5]' }].map((c) => (
                 <div key={c.l} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{c.l}</p>
@@ -2049,7 +2050,8 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   return (
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
       <DocumentTitle title="BM360 Admin Dashboard" />
-      <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
+      {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:translate-x-0 md:w-[248px] md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
           <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
@@ -2129,7 +2131,10 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
+          <div className="flex items-center gap-2 text-[13px] text-[#6b7280] min-w-0">
+            <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
             <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
@@ -2141,7 +2146,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
             </div>
-            <div className="relative">
+            <div className="relative hidden md:block">
               <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input
                 type="text"
@@ -2151,7 +2156,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 className="w-[230px] h-9 pl-9 pr-3 rounded-full bg-[#f8fafc] text-[13px]"
               />
             </div>
-            <div className="flex items-center gap-2 pl-1">
+            <div className="hidden sm:flex items-center gap-2 pl-1">
 
               <div className="w-8 h-8 rounded-full bg-[#e8eefc] text-[#1d4ed8] text-[11px] font-bold flex items-center justify-center">IA</div>
               <div className="leading-tight">
@@ -2162,7 +2167,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-5 py-4">
+        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {renderContent()}
         </main>
       </div>

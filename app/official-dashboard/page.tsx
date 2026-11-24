@@ -25,6 +25,7 @@ function OfficialDashboard() {
 
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'zones' | 'reports'>('overview')
+  const [navOpen, setNavOpen] = useState(false)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const { toast } = useToast()
@@ -123,7 +124,8 @@ function OfficialDashboard() {
       <DocumentTitle title={`${official.name} • ITPO Official`} />
 
       {/* Sidebar */}
-      <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
+      {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:translate-x-0 md:w-[248px] md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
           <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">BM<span className="text-[#1d4ed8]">360</span></div>
@@ -191,11 +193,14 @@ function OfficialDashboard() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+          <div className="flex items-center gap-2 text-[13px] text-[#6b7280] min-w-0">
+            <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
-            <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
-            <span className="text-[#111827] font-semibold">ITPO Official Dashboard</span>
+            <svg className="w-3.5 h-3.5 text-[#9ca3af] hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
+            <span className="text-[#111827] font-semibold truncate">ITPO Official Dashboard</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
@@ -206,7 +211,7 @@ function OfficialDashboard() {
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
             </div>
-            <div className="flex items-center gap-2 pl-1">
+            <div className="hidden sm:flex items-center gap-2 pl-1">
               <div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[11px] font-bold flex items-center justify-center">{official.initials}</div>
               <div className="leading-tight">
                 <p className="text-[12.5px] font-semibold text-[#111827]">{official.name}</p>
@@ -216,7 +221,7 @@ function OfficialDashboard() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-5 py-4">
+        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {/* Profile header */}
           <div className="mb-4">
             <div className="flex items-start gap-3">
@@ -389,7 +394,7 @@ function OfficialDashboard() {
                         <p className="text-[11px] text-[#9ca3af]">{zoneComplaints.length} complaints</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                       <div className="rounded-lg bg-[#f8fafc] py-2"><p className="text-[16px] font-bold text-[#111827]">{zoneComplaints.length}</p><p className="text-[10px] text-[#6b7280]">Total</p></div>
                       <div className="rounded-lg bg-[#fff7ed] py-2"><p className="text-[16px] font-bold text-[#ea580c]">{zoneComplaints.length - zResolved}</p><p className="text-[10px] text-[#6b7280]">Pending</p></div>
                       <div className="rounded-lg bg-[#e8f8ef] py-2"><p className="text-[16px] font-bold text-[#16a34a]">{zResolved}</p><p className="text-[10px] text-[#6b7280]">Resolved</p></div>
