@@ -165,6 +165,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           complaintType: selectedService,
+          priority: selectedPriority,
           zone: allZones ? 'All Zones' : selectedZone,
           subArea,
           description: complaintDetails,

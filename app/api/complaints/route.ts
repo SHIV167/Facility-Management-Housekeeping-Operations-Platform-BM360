@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
   const pub = await queryOne<{ next: string }>(
     `SELECT 'CMP-' || lpad((COALESCE(MAX(id),0)+1)::text, 4, '0') AS next FROM complaints`
   )
-  const ctype = String(b.complaintType || b.complaint_type || b.service || '').toLowerCase()
-  const slaMin = ctype.includes('urgent') ? 30 : 60
+  const prio = String(b.priority || '').toLowerCase()
+  const slaMin = /urgent|high|p1|immediate/.test(prio) ? 30 : 60
   const due = new Date(Date.now() + slaMin * 60000).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
   const source = String(b.source || b.reportedBy || b.reported_by || 'Citizen')
   const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
