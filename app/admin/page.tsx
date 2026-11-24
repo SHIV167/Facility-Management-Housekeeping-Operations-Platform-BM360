@@ -1504,7 +1504,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         {attendanceRecords.length ? 'Marked Today' : 'Pending'}
                       </span>
                     </div>
-                    <p className="text-[12.5px] text-[#6b7280] mt-0.5">Capture front-camera photo with automatic date &amp; time (GPS optional).</p>
+                    <p className="text-[12.5px] text-[#6b7280] mt-0.5">
+                      {attendanceRecords.length ? `${attendanceRecords.length} marked today · ${attendanceRecords[0]?.timestamp || ''}` : 'Capture front-camera photo with automatic date & time (GPS auto-enabled).'}
+                    </p>
                   </div>
                 </div>
                 <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm shrink-0">
@@ -2108,8 +2110,26 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   useEffect(() => { if (currentView === 'activity-logs') refreshLogs() }, [currentView])
 
   const refreshAttRecords = () => {
-    fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => { if (d.ok) setAttRecords(d.records) }).catch(() => {})
+    fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => {
+      if (d.ok) {
+        setAttRecords(d.records)
+        // Rebuild today's marked list from DB so it survives refresh
+        const todayStr = new Date().toDateString()
+        setAttendanceRecords(d.records.filter((r: any) => {
+          const dt = new Date(r.dateTime)
+          return !isNaN(dt.getTime()) && dt.toDateString() === todayStr
+        }).map((r: any, i: number) => ({
+          staffId: Number(r.staffId) || i + 1,
+          staffName: r.staffName,
+          zone: r.zone || '',
+          timestamp: r.dateTime,
+          gps: r.gps || null,
+          photo: r.photoFile ? `/api/photo?f=${encodeURIComponent(r.photoFile)}` : null,
+        })))
+      }
+    }).catch(() => {})
   }
+  useEffect(() => { refreshAttRecords() }, [])
   useEffect(() => { if (currentView === 'field-staff' || currentView === 'reports' || currentView === 'attendance') refreshAttRecords() }, [currentView])
 
   const handleUpdateAtt = async (id: number, data: { staffName: string; zone: string; dateTime: string; gps: string; mobile?: string; agency?: string; accuracy?: string; remarks?: string }) => {
