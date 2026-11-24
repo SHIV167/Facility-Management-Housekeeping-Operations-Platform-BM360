@@ -146,6 +146,27 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
   const agencyName = me.agency || 'Agency'
 
+  // Load today's attendance from DB (survives refresh)
+  useEffect(() => {
+    fetch('/api/attendance?format=json').then((r) => r.json()).then((d) => {
+      if (!d.ok || !d.records) return
+      const todayStr = new Date().toDateString()
+      const mine = d.records.filter((r: any) => {
+        const dt = new Date(r.dateTime)
+        if (isNaN(dt.getTime()) || dt.toDateString() !== todayStr) return false
+        return !me.agency || !r.agency || r.agency === me.agency
+      })
+      setAttendanceRecords(mine.map((r: any, i: number) => ({
+        staffId: Number(r.staffId) || i + 1,
+        staffName: r.staffName,
+        zone: r.zone || '',
+        timestamp: r.dateTime,
+        gps: r.gps || null,
+        photo: r.photoFile ? `/api/photo?f=${encodeURIComponent(r.photoFile)}` : null,
+      })))
+    }).catch(() => {})
+  }, [me.agency])
+
   const handleAddSupervisor = (data: SupervisorFormData) => {
     setStaffMembers((prev) => [{
       id: data.employeeId || `SFM-${Math.floor(1000 + Math.random() * 9000)}`,
