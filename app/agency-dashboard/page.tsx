@@ -8,6 +8,7 @@ import ZoneSelectModal from '@/components/ZoneSelectModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
 import AddSupervisorModal, { SupervisorFormData } from '@/components/AddSupervisorModal'
 import AddFieldStaffModal, { FieldStaffFormData } from '@/components/AddFieldStaffModal'
+import StaffEditModal from '@/components/StaffEditModal'
 import { logActivity } from '@/lib/activity'
 import { translations } from '@/lib/translations'
 import DocumentTitle from '@/components/DocumentTitle'
@@ -63,6 +64,7 @@ const [attendanceOpen, setAttendanceOpen] = useState(false)
 const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
 const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'staff' | 'reports'>('overview')
 const [navOpen, setNavOpen] = useState(false)
+const [editingStaff, setEditingStaff] = useState<any>(null)
 const [userRole, setUserRole] = useState<'manager' | 'supervisor'>('manager')
 const [sessionRole, setSessionRole] = useState('')
 const isAdminViewer = sessionRole === 'Admin'
@@ -437,13 +439,16 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                             <div className="flex items-center justify-end gap-1">
                               {isManager && (
                                 <>
-                                  <button title="Edit Staff Details" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4] transition-colors">
+                                  <button title="Edit Staff Details" onClick={() => setEditingStaff(m)} className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#0f766e] hover:bg-[#e6f7f4] transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                   </button>
                                   <button title="Schedule / View Shifts by Date" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#d97706] hover:bg-[#fff7ed] transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                   </button>
                                   <button title="Manage Zones" className="px-2 py-1 text-[11.5px] font-medium text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">Zones</button>
+                                  <button title="Delete Staff" onClick={() => { if (window.confirm(`Delete ${m.name}?`)) fetch('/api/staff', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.dbId }) }).then(() => { setStaffMembers((p) => p.filter((x) => x.dbId !== m.dbId)); logActivity(m.username, displayRole, 'Staff Deleted', m.name) }) }} className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2] transition-colors">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  </button>
                                 </>
                               )}
                               <button
@@ -824,6 +829,13 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         staff={staffOptions}
         markedIds={attendanceRecords.map((r) => r.staffId)}
         onMark={handleMarkAttendance}
+      />
+      <StaffEditModal
+        open={editingStaff != null}
+        staff={editingStaff ? { id: editingStaff.dbId, name: editingStaff.name, role: editingStaff.role, designation: editingStaff.designation, phone: editingStaff.phone, zones: editingStaff.zones, shift: editingStaff.shift, status: editingStaff.status, agencyId: me.agencyId } : null}
+        zones={['Admin Building', 'Hall 1', 'Hall 2-4', 'Hall 5', 'Hall 6', 'Hall 2-5 First Floors', 'Hall 11', 'Hall 12', 'Hall 14', 'Grand Canopy', 'All Zones']}
+        onClose={() => setEditingStaff(null)}
+        onSaved={() => window.location.reload()}
       />
     </div>
   )
