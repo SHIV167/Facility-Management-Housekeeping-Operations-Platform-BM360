@@ -40,6 +40,7 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
   const [gpsAcc, setGpsAcc] = useState<string | null>(null)
   const [gpsLoading, setGpsLoading] = useState(false)
   const [gpsDenied, setGpsDenied] = useState(false)
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null)
   const [now, setNow] = useState(new Date())
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -144,7 +145,6 @@ export default function AttendanceModal({ open, onClose, staff, markedIds = [], 
   }
 
   const availableStaff = staff.filter((s) => !markedIds.includes(s.id))
-  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null)
   const detectedStaff = availableStaff.find((s) => s.id === selectedStaffId) ?? availableStaff[0] ?? null
 
   const handleMark = () => {
