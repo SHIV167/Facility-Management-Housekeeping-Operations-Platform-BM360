@@ -195,8 +195,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   const addPhotoFiles = (files: FileList | null) => {
     if (!files?.length) return
     Array.from(files).slice(0, 6 - photos.length).forEach((file) => {
-      if (!file.type.startsWith('image/')) { setError?.('Only image files allowed'); return }
-      if (file.size > 5 * 1024 * 1024) return
+      if (!file.type.startsWith('image/')) { toast('Only image files allowed', 'error'); return }
+      if (file.size > 5 * 1024 * 1024) { toast('Image too large — max 5MB', 'error'); return }
       const reader = new FileReader()
       reader.onload = () => setPhotos((prev) => [...prev, String(reader.result)])
       reader.readAsDataURL(file)
