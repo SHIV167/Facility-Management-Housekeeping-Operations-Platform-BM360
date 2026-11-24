@@ -3,7 +3,8 @@ import fs from 'fs'
 import path from 'path'
 
 export async function GET(req: NextRequest) {
-  const f = new URL(req.url).searchParams.get('f') || ''
+  const params = new URL(req.url).searchParams
+  const f = params.get('f') || params.get('file') || ''
   const safe = path.basename(f)
   const filePath = path.join(process.cwd(), 'data', 'photos', safe)
   if (!safe || !fs.existsSync(filePath)) {
