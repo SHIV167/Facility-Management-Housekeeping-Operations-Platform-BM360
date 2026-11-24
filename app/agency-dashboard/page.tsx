@@ -184,15 +184,17 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.fullName, role: 'Field Staff', designation: data.designation, username: data.username, phone: data.mobile, employeeId: data.employeeId, zones: [data.zone], status: 'Pending', agencyId: 1 }) }).catch(() => {})
   }
   const agencyStaff = staffMembers.filter((m) => me.agencyId == null || m.agencyDbId == null || m.agencyDbId === me.agencyId)
+  const isSupervisorRole = (m: any) => /supervisor|manager|head|operations/i.test(`${m.role} ${m.designation}`) && !/field/i.test(m.role)
   const filteredStaff = agencyStaff.filter((m) => {
     const q = staffSearch.trim().toLowerCase()
     const matchQ = !q || [m.name, m.id, m.username, m.designation, m.phone, m.zones.join(' ')].some((v) => v.toLowerCase().includes(q))
-    const matchRole = staffRoleFilter === 'All Roles' || m.role === staffRoleFilter
+    const matchRole = staffRoleFilter === 'All Roles'
+      || (staffRoleFilter === 'Supervisor' ? isSupervisorRole(m) : !isSupervisorRole(m))
     const matchStatus = staffStatusFilter === 'All Status' || (staffStatusFilter === 'Active' ? m.status === 'Active' : m.status === 'Pending')
     return matchQ && matchRole && matchStatus
   })
-  const supCount = agencyStaff.filter((m) => m.role === 'Supervisor').length
-  const fieldCount = agencyStaff.filter((m) => m.role === 'Field Staff').length
+  const supCount = agencyStaff.filter(isSupervisorRole).length
+  const fieldCount = agencyStaff.length - supCount
   const activeCount = agencyStaff.filter((m) => m.status === 'Active').length
   const pendingCount = agencyStaff.filter((m) => m.status === 'Pending').length
   return (
