@@ -43,6 +43,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // persist to PostgreSQL attendance table (source of truth)
+    try {
+      const { query } = await import('@/lib/db')
+      const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
+      await query(
+        `INSERT INTO attendance (staff_id, staff_name, zone, gps_lat, gps_lng, photo_url, marked_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [Number(staffId) || null, staffName, zone || '', gpsParts[0] || null, gpsParts[1] || null, photoFile ? `/${photoFile}` : null, 'Portal User']
+      )
+    } catch (dbErr) { console.error('attendance db insert failed', dbErr) }
+
+    // legacy CSV mirror
     const row = [
       staffId,
       csvEscape(staffName),
@@ -51,18 +62,7 @@ export async function POST(req: NextRequest) {
       csvEscape(gps || ''),
       csvEscape(photoFile),
     ].join(',') + '\n'
-
     fs.appendFileSync(CSV_PATH, row)
-
-    // also persist to PostgreSQL attendance table
-    try {
-      const { query } = await import('@/lib/db')
-      const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
-      await query(
-        `INSERT INTO attendance (staff_name, zone, gps_lat, gps_lng, photo_url, marked_by) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [staffName, zone || '', gpsParts[0] || null, gpsParts[1] || null, photoFile || null, 'Portal User']
-      )
-    } catch (dbErr) { console.error('attendance db insert failed', dbErr) }
 
     return NextResponse.json({ success: true, photoFile })
   } catch (err) {
@@ -104,12 +104,44 @@ function writeRecords(records: ReturnType<typeof readRecords>) {
   fs.writeFileSync(CSV_PATH, HEADERS + lines.join('\n') + (lines.length ? '\n' : ''))
 }
 
+async function readDbRecords() {
+  try {
+    const { query } = await import('@/lib/db')
+    const rows = await query<any>(
+      `SELECT id, staff_id, staff_name, zone, marked_at, gps_lat, gps_lng, photo_url, marked_by FROM attendance ORDER BY marked_at DESC`
+    )
+    return rows.map((r: any) => ({
+      id: r.id,
+      staffId: r.staff_id != null ? String(r.staff_id) : '',
+      staffName: r.staff_name,
+      zone: r.zone || '',
+      dateTime: r.marked_at ? new Date(r.marked_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '',
+      gps: r.gps_lat != null ? `${r.gps_lat},${r.gps_lng ?? ''}` : '',
+      photoFile: r.photo_url ? String(r.photo_url).replace(/^\/+/, '') : '',
+      markedBy: r.marked_by || '',
+    }))
+  } catch { return null }
+}
+
 export async function GET(req: NextRequest) {
   ensureDirs()
-  const csv = fs.readFileSync(CSV_PATH, 'utf8')
+  const dbRecords = await readDbRecords()
   if (new URL(req.url).searchParams.get('format') === 'json') {
-    return NextResponse.json({ ok: true, records: readRecords() })
+    if (dbRecords && dbRecords.length) return NextResponse.json({ ok: true, records: dbRecords, source: 'db' })
+    return NextResponse.json({ ok: true, records: readRecords(), source: 'csv' })
   }
+  if (dbRecords && dbRecords.length) {
+    const csv = 'staff_id,staff_name,zone,date_time,gps,photo_file\n' + dbRecords.map((r) => [
+      csvEscape(r.staffId), csvEscape(r.staffName), csvEscape(r.zone), csvEscape(r.dateTime), csvEscape(r.gps), csvEscape(r.photoFile),
+    ].join(',')).join('\n') + '\n'
+    return new NextResponse(csv, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="attendance.csv"',
+      },
+    })
+  }
+  const csv = fs.readFileSync(CSV_PATH, 'utf8')
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv',
@@ -121,6 +153,19 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const { id, staffName, zone, dateTime, gps } = await req.json()
+    try {
+      const { query } = await import('@/lib/db')
+      const gpsParts = (gps || '').split(',').map((v: string) => parseFloat(v.trim()))
+      const parsedDate = dateTime ? new Date(dateTime) : null
+      const rows = await query(
+        `UPDATE attendance SET staff_name=$2, zone=$3, marked_at=COALESCE($4, marked_at), gps_lat=$5, gps_lng=$6 WHERE id=$1 RETURNING id`,
+        [Number(id), staffName ?? '', zone ?? '', parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : null, gpsParts[0] || null, gpsParts[1] || null]
+      )
+      if (rows[0]) {
+        logActivitySafe(staffName || 'Staff', 'Admin', 'Attendance Updated', `DB record #${id} edited`)
+        return NextResponse.json({ success: true })
+      }
+    } catch {}
     const records = readRecords()
     const idx = records.findIndex((r) => r.id === Number(id))
     if (idx === -1) return NextResponse.json({ error: 'Record not found' }, { status: 404 })
@@ -136,6 +181,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json()
+    try {
+      const { query } = await import('@/lib/db')
+      const rows = await query(`DELETE FROM attendance WHERE id=$1 RETURNING staff_name, marked_at`, [Number(id)])
+      if (rows[0]) {
+        logActivitySafe(rows[0].staff_name, 'Admin', 'Attendance Deleted', `DB record #${id}`)
+        return NextResponse.json({ success: true })
+      }
+    } catch {}
     const records = readRecords()
     const idx = records.findIndex((r) => r.id === Number(id))
     if (idx === -1) return NextResponse.json({ error: 'Record not found' }, { status: 404 })
