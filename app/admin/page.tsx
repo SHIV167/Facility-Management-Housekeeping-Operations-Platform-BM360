@@ -2204,7 +2204,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
   const complaintItems: { id: ViewType; label: string; icon: string; badge?: string }[] = [
     { id: 'overview', label: 'Overview', icon: 'grid' },
-    { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: '1' },
+    { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: String(complaints.filter((c) => c.status === 'PENDING').length) },
     { id: 'housekeeping-ranking', label: 'Housekeeping Worker Ranking', icon: 'users' },
     { id: 'itpo-performance', label: 'ITPO Official Performance', icon: 'chart' },
     { id: 'all-complaints', label: 'All Complaints', icon: 'clipboard' },
