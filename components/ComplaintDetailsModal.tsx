@@ -117,7 +117,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -252,43 +252,52 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
               </button>
             </div>
 
-            <div className="bg-white border border-[#e8edf2] rounded-xl p-4 mb-3">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#374151]">{photo.label}</span>
-                  <span className="text-[12px] text-[#9ca3af]">{selectedPhoto + 1}/{photos.length}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_132px] gap-3">
+              {/* Main viewer */}
+              <div className="bg-white border border-[#e8edf2] rounded-xl p-3">
+                <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
+                  {photo.src ? (
+                    <img src={photo.src} alt={photo.label} className="w-full h-full object-cover" />
+                  ) : (
+                    <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
                 </div>
-              </div>
-              <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
-                {photo.src ? (
-                  <img src={photo.src} alt="Evidence" className="w-full h-full object-cover" />
-                ) : (
-                  <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                <div className="mt-2.5 space-y-0.5">
+                  <p className="text-[12.5px] font-semibold text-[#111827]">{photo.label} <span className="text-[#9ca3af] font-normal">· {selectedPhoto + 1}/{photos.length}</span></p>
+                  <p className="text-[11px] text-[#9ca3af] truncate">{photo.filename} · {photo.uploadedBy} · {photo.uploadedAt}</p>
+                </div>
+                {photo.src && (
+                  <a href={photo.src} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#0f766e] hover:underline">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    Open full size
+                  </a>
                 )}
               </div>
-              <div className="border-t border-[#eef1f4] pt-3 mt-3 space-y-1">
-                <p className="text-[11.5px] text-[#9ca3af]">Filename: {photo.filename}</p>
-                <p className="text-[11.5px] text-[#9ca3af]">Uploaded by {photo.uploadedBy} · {photo.uploadedAt}</p>
-                <p className="text-[11.5px] text-[#9ca3af]">Size: {photo.size}</p>
+              {/* Thumbnail strip — right side */}
+              <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[240px]">
+                {photos.map((p, idx) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPhoto(idx)}
+                    className={`shrink-0 sm:w-full rounded-lg border-2 overflow-hidden text-left transition-colors ${
+                      selectedPhoto === idx
+                        ? 'border-[#1b8f84] bg-[#e6f7f4]'
+                        : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1]'
+                    }`}
+                  >
+                    <div className="w-full h-14 sm:h-16 bg-[#f3f4f6] flex items-center justify-center overflow-hidden">
+                      {p.src ? (
+                        <img src={p.src} alt={p.label} className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-6 h-6 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      )}
+                    </div>
+                    <p className={`px-1.5 py-1 text-[10px] leading-tight truncate ${selectedPhoto === idx ? 'text-[#0f766e] font-semibold' : 'text-[#6b7280]'}`}>{p.label}</p>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {photos.map((p, idx) => (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedPhoto(idx)}
-                  className={`px-4 py-2 rounded-lg border-2 text-[12.5px] font-medium transition-colors ${
-                    selectedPhoto === idx
-                      ? 'border-[#1b8f84] bg-[#e6f7f4] text-[#0f766e]'
-                      : 'border-[#e5e7eb] bg-white text-[#374151] hover:border-[#cbd5e1]'
-                  }`}
-                >
-                  {p.label.split(' ')[0]}
-                </button>
-              ))}
             </div>
           </div>
 
