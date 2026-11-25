@@ -144,7 +144,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 xl:grid-cols-[55fr_45fr] gap-0">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-0">
             {/* Left column: operational details */}
             <div className="p-6 space-y-5 border-r border-[#e8edf2]">
               {/* Title + priority/SLA */}
