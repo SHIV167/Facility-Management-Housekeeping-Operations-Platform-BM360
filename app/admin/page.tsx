@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const [editComplaint, setEditComplaint] = useState<any>(null)
   const [complaintPage, setComplaintPage] = useState(1)
+  const [complaintTab, setComplaintTab] = useState<'all' | 'active' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
 const [navCollapsed, setNavCollapsed] = useState(false)
@@ -630,12 +631,18 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
       case 'complaint-register': {
         const total = complaints.length
-        const pendingCount = complaints.filter((c) => c.status === 'PENDING').length
+        const activeCount = complaints.filter((c) => c.status === 'PENDING' || c.status === 'IN_PROGRESS').length
         const completedCount = complaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
+        const filteredComplaints = complaints.filter((c) => {
+          if (complaintTab === 'active') return c.status === 'PENDING' || c.status === 'IN_PROGRESS'
+          if (complaintTab === 'completed') return c.status === 'COMPLETED' || c.status === 'RESOLVED'
+          return true
+        })
+        const listTotal = filteredComplaints.length
         const PAGE_SIZE = 5
-        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+        const totalPages = Math.max(1, Math.ceil(listTotal / PAGE_SIZE))
         const safePage = Math.min(Math.max(complaintPage, 1), totalPages)
-        const pagedComplaints = complaints.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+        const pagedComplaints = filteredComplaints.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
         return (
           <div>
             <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
@@ -660,15 +667,19 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-              {[
-                { label: 'Total', value: total, cls: 'text-[#111827]' },
-                { label: 'Pending', value: pendingCount, cls: 'text-[#ea580c]' },
-                { label: 'Completed', value: completedCount, cls: 'text-[#16a34a]' },
-              ].map((s) => (
-                <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+              {([
+                { key: 'all' as const, label: 'Total', value: total, cls: 'text-[#111827]' },
+                { key: 'active' as const, label: 'Active', value: activeCount, cls: 'text-[#ea580c]' },
+                { key: 'completed' as const, label: 'Completed', value: completedCount, cls: 'text-[#16a34a]' },
+              ]).map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => { setComplaintTab(s.key); setComplaintPage(1) }}
+                  className={`bg-white rounded-xl border px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] text-left transition-all ${complaintTab === s.key ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/20' : 'border-[#e8edf2] hover:border-[#b7e4d4]'}`}
+                >
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{s.label.toUpperCase()}</p>
                   <p className={`text-[24px] font-bold mt-1 ${s.cls}`}>{s.value}</p>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -734,14 +745,14 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   </div>
                 )
               })}
-              {complaints.length === 0 && (
+              {listTotal === 0 && (
                 <div className="bg-white rounded-xl border border-[#e8edf2] p-12 text-center text-[13px] text-[#9ca3af]">No complaints found.</div>
               )}
             </div>
 
-            {total > 0 && (
+            {listTotal > 0 && (
               <div className="mt-4 flex items-center justify-between gap-3 flex-wrap bg-white rounded-xl border border-[#e8edf2] px-4 py-3">
-                <p className="text-[12.5px] text-[#6b7280]">Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, total)} of {total} complaints</p>
+                <p className="text-[12.5px] text-[#6b7280]">Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, listTotal)} of {listTotal} complaints</p>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setComplaintPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} className="px-3 py-1.5 text-[12.5px] font-medium rounded-lg border border-[#e5e7eb] bg-white text-[#374151] hover:bg-[#f8fafc] disabled:opacity-40">← Prev</button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
@@ -852,7 +863,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               </select>
             </div>
 
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#eef1f4]">
@@ -952,7 +963,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           <div>
             <h1 className="text-[20px] font-semibold text-[#1f2937] mb-1">Housekeeping Worker Ranking</h1>
             <p className="text-[13px] text-[#6b7280] mb-4">Ranked field performance across Bharat Mandapam housekeeping teams.</p>
-            <div className="bg-white rounded-xl border border-[#e8edf2] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#eef1f4]">
@@ -1018,7 +1029,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">All Complaints</h1>
               <p className="text-[13px] text-[#6b7280]">View all complaints across the system</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1070,7 +1081,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Resolved Complaints</h1>
               <p className="text-[13px] text-[#6b7280]">View all resolved complaints</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1104,7 +1115,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Pending Complaints</h1>
               <p className="text-[13px] text-[#6b7280]">View all pending complaints</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1156,7 +1167,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 {t.addZone}
               </button>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1209,7 +1220,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 {t.addArea}
               </button>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1260,7 +1271,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 {t.addCategory}
               </button>
             </div>
-            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -1410,7 +1421,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     </button>
                   </div>
                 </div>
-                <div className="max-h-[480px] overflow-y-auto">
+                <div className="max-h-[480px] overflow-auto">
                   <table className="w-full">
                     <thead className="sticky top-0 bg-white">
                       <tr className="border-b border-[#eef1f4]">
@@ -1684,7 +1695,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </table>
               </div>
             </div>
-<div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+<div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#f8fafc] border-b border-[#eef1f4]">
                   <tr>
@@ -2352,9 +2363,6 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: String(complaints.filter((c) => c.status === 'PENDING').length) },
     { id: 'housekeeping-ranking', label: 'Housekeeping Worker Ranking', icon: 'users' },
     { id: 'itpo-performance', label: 'ITPO Official Performance', icon: 'chart' },
-    { id: 'all-complaints', label: 'All Complaints', icon: 'clipboard' },
-    { id: 'resolved', label: 'Resolved', icon: 'check' },
-    { id: 'pending', label: 'Pending', icon: 'clock' },
   ]
 
   const masterItems: { id: ViewType; label: string; icon: string }[] = [
