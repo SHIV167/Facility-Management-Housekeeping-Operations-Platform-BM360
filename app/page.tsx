@@ -128,8 +128,20 @@ export default function LoginPage() {
 
   return (
     
-      <div className="min-h-screen flex">
+      <div className="min-h-screen flex flex-col lg:flex-row">
       <DocumentTitle title="BM360 Login" />
+
+      {/* Mobile banner */}
+      <div className="lg:hidden relative h-36 w-full shrink-0 overflow-hidden">
+        <div className="absolute inset-0" style={{ backgroundImage: 'url(https://vigpl.com/bharat-mandapam.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b3c4a]/70 via-[#0b3c4a]/20 to-transparent"></div>
+        <div className="absolute bottom-3 left-4 flex items-center gap-2">
+          <div className="h-9 px-2.5 bg-white rounded-lg flex items-center shadow-md">
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-6 w-auto" />
+          </div>
+        </div>
+      </div>
+
       {/* Left Panel - Brand */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
         {/* Background image */}
