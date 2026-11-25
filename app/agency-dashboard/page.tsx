@@ -22,6 +22,9 @@ export default function AgencyDashboardPage() {
   const { data: dbComplaints = [], refetch: refetchComplaints } = useComplaints()
   const { data: dbStaff = [], refetch: refetchStaff } = useStaff()
 
+  const [me, setMe] = useState<{ name: string; role: string; agency: string; agencyId: number | null }>({ name: '', role: '', agency: '', agencyId: null })
+  const agencyName = me.agency || 'Agency'
+
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState('Last 7 Days')
   const [agencyFilter, setAgencyFilter] = useState('All Agencies')
@@ -93,7 +96,6 @@ const [editingStaff, setEditingStaff] = useState<any>(null)
 const [userRole, setUserRole] = useState<'manager' | 'supervisor'>('manager')
 const [sessionRole, setSessionRole] = useState('')
 const isAdminViewer = sessionRole === 'Admin'
-const [me, setMe] = useState<{ name: string; role: string; agency: string; agencyId: number | null }>({ name: '', role: '', agency: '', agencyId: null })
 const [staffSearch, setStaffSearch] = useState('')
 const [staffRoleFilter, setStaffRoleFilter] = useState('All Roles')
 const [staffStatusFilter, setStaffStatusFilter] = useState('All Status')
@@ -166,7 +168,6 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   const isManager = userRole === 'manager' || sessionRole === 'Admin'
   const displayName = me.name || 'User'
   const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
-  const agencyName = me.agency || 'Agency'
   const staffOptions: StaffOption[] = staffMembers.length
     ? [...staffMembers].sort((a, b) => (a.name === me.name ? -1 : b.name === me.name ? 1 : 0)).map((m, i) => ({
         id: m.dbId || i + 1,
