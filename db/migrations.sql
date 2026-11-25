@@ -23,3 +23,9 @@ ALTER TABLE staff ADD COLUMN IF NOT EXISTS zones TEXT[] DEFAULT '{}';
 ALTER TABLE staff ADD COLUMN IF NOT EXISTS reporting_supervisor_id INT;
 ALTER TABLE staff ADD COLUMN IF NOT EXISTS shift TEXT DEFAULT 'No Shift';
 ALTER TABLE staff ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+-- Add priority and sla_minutes to complaints table for proper SLA tracking
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'MEDIUM';
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS sla_minutes INT DEFAULT 60;
+-- Convert existing due_date from text to timestamptz if needed
+ALTER TABLE complaints ALTER COLUMN due_date TYPE TIMESTAMPTZ USING NULLIF(due_date, '')::TIMESTAMPTZ;
+ALTER TABLE complaints ALTER COLUMN due_date SET DEFAULT now();

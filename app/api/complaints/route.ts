@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
   )
   const prio = String(b.priority || '').toLowerCase()
   const slaMin = /urgent|high|p1|immediate/.test(prio) ? 30 : 60
-  const due = new Date(Date.now() + slaMin * 60000).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+  const dueTs = new Date(Date.now() + slaMin * 60000)
+  const due = dueTs.toISOString()
   const source = String(b.source || b.reportedBy || b.reported_by || 'Citizen')
   const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
   const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : reporterRole === 'Admin' ? 'System Admin' : 'Citizen')
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest) {
     ['photos', JSON.stringify(photoPaths)],
     ['assigned_official_id', assignedOfficialId],
     ['agency_id', agencyId],
+    ['priority', b.priority || 'MEDIUM'],
+    ['sla_minutes', slaMin],
   ]
   let rows: any[] = []
   let lastErr: any = null
@@ -135,8 +138,8 @@ export async function PATCH(req: NextRequest) {
   // Full edit mode — update any provided fields
   if (b.edit) {
     const rows = await query(
-      `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9, updated_at=now() WHERE id=$1 RETURNING *`,
-      [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING']
+      `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9, priority=$10, sla_minutes=$11, updated_at=now() WHERE id=$1 RETURNING *`,
+      [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING', b.priority ?? 'MEDIUM', b.slaMinutes ?? 60]
     ).catch(async () => {
       return query(
         `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9 WHERE id=$1 RETURNING *`,
