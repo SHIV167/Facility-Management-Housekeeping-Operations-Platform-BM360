@@ -67,6 +67,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   const [selectedPriority, setSelectedPriority] = useState('urgent')
   const [complaintDetails, setComplaintDetails] = useState('')
   const [selectedService, setSelectedService] = useState('housekeeping')
+  const [agencies, setAgencies] = useState<{ id: number; name: string }[]>([])
+  const [selectedAgencyId, setSelectedAgencyId] = useState<number | ''>('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannerError, setScannerError] = useState('')
   const [scanMessage, setScanMessage] = useState('')
@@ -125,6 +127,13 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   }
 
   useEffect(() => {
+    if (!open || agencyId || (source !== 'admin' && source !== 'itpo')) return
+    fetch('/api/agencies').then((r) => r.json()).then((d) => {
+      if (d.ok && d.agencies) setAgencies(d.agencies.map((a: any) => ({ id: a.id, name: a.name })))
+    }).catch(() => {})
+  }, [open, agencyId, source])
+
+  useEffect(() => {
     if (!scannerOpen) return
     setScannerError('')
     const timer = setTimeout(() => {
@@ -175,7 +184,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
           mobile: '—',
           photos,
           assignedOfficialId: officialId || null,
-          agencyId: agencyId || null,
+          agencyId: agencyId || selectedAgencyId || null,
         }),
       })
       const d = await res.json().catch(() => ({}))
@@ -280,6 +289,28 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
                   </span>
                 </div>
               </div>
+
+              {/* Assigned Agency — admin/ITPO pick which agency handles it */}
+              {!agencyId && (source === 'admin' || source === 'itpo') && agencies.length > 0 && (
+                <div className="mb-4">
+                  <label className={labelCls}>Assigned Agency</label>
+                  <div className="relative">
+                    <select
+                      value={selectedAgencyId}
+                      onChange={(e) => setSelectedAgencyId(e.target.value ? Number(e.target.value) : '')}
+                      className={`${inputCls} appearance-none`}
+                    >
+                      <option value="">Unassigned / Select Agency...</option>
+                      {agencies.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                    <svg className="w-4 h-4 text-[#9ca3af] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              )}
 
               {/* Location */}
               <div className="mb-4">
