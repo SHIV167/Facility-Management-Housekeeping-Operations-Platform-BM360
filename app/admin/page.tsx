@@ -2009,7 +2009,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <span className="w-10 text-center">Today</span>
                     <span className="w-10 text-center">Photo</span>
                   </div>
-                  {Object.entries(byAgency).sort((a, b) => b[1].total - a[1].total).map(([agency, stats]) => (
+                  {byAgencyArr.sort((a, b) => b[1].total - a[1].total).map(([agency, stats]) => (
                     <div key={agency} className="flex justify-between py-1.5 px-2 border-b border-[#f3f4f6] last:border-0">
                       <span className="text-[#111827] font-medium">{agency}</span>
                       <span className="w-10 text-center">{stats.total}</span>
@@ -2017,7 +2017,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                       <span className="w-10 text-center text-[#1d4ed8]">{stats.photo}</span>
                     </div>
                   ))}
-                  {!Object.keys(byAgency).length && <p className="py-3 text-center text-[#9ca3af]">No attendance records yet.</p>}
+                  {!byAgencyArr.length && <p className="py-3 text-center text-[#9ca3af]">No attendance records yet.</p>}
                 </div>
                 <div className="mt-4 flex items-center gap-2">
                   <button onClick={downloadPdf} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#1d4ed8] bg-[#eef2ff] border border-[#bfdbfe] rounded-lg hover:bg-[#e0e7ff]">
@@ -2039,15 +2039,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
         const attWithPhoto = attRecords.filter((r) => r.photoFile).length
         const filteredAtt = attRecords.filter((r) => !attSearch || [r.staffName, r.staffId, r.zone, r.dateTime, r.gps, r.markedBy || ''].some((v) => String(v).toLowerCase().includes(attSearch.toLowerCase())))
-        const byAgency: Record<string, { total: number; today: number; photo: number }> = attRecords.reduce((m, r) => {
+        const byAgencyMap = new Map<string, { total: number; today: number; photo: number }>()
+        attRecords.forEach((r) => {
           const a = r.agency || 'Unassigned'
-          if (!m[a]) m[a] = { total: 0, today: 0, photo: 0 }
-          m[a].total++
+          const cur = byAgencyMap.get(a) || { total: 0, today: 0, photo: 0 }
+          cur.total++
           const d = new Date(r.dateTime)
-          if (!isNaN(d.getTime()) && d.toDateString() === todayStr) m[a].today++
-          if (r.photoFile) m[a].photo++
-          return m
-        }, {} as Record<string, { total: number; today: number; photo: number }>)
+          if (!isNaN(d.getTime()) && d.toDateString() === todayStr) cur.today++
+          if (r.photoFile) cur.photo++
+          byAgencyMap.set(a, cur)
+        })
+        const byAgencyArr = Array.from(byAgencyMap.entries())
         const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-')
         const downloadPdf = () => {
           const doc = new jsPDF()
@@ -2066,7 +2068,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           doc.text('With Photo', 140, y)
           doc.setTextColor(0, 0, 0)
           y += 8
-          Object.entries(byAgency).sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
+          byAgencyArr.sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
             if (y > 270) { doc.addPage(); y = 20 }
             doc.text(agency, 16, y)
             doc.text(String(stats.total), 70, y)
