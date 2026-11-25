@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
   const slaMin = /urgent|high|p1|immediate/.test(prio) ? 30 : 60
   const dueTs = new Date(Date.now() + slaMin * 60000)
   const due = dueTs.toISOString()
+  const dueLegacy = dueTs.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
   const source = String(b.source || b.reportedBy || b.reported_by || 'Citizen')
   const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
   const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : reporterRole === 'Admin' ? 'System Admin' : 'Citizen')
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
     ['reported_by', reporterRole],
     ['reporter_name', reporterName],
     ['reporter_mobile', b.mobile || b.reporter_mobile || ''],
-    ['due_date', due],
+    ['due_date', dueLegacy],
     ['photo_url', photoPaths[0] || null],
     ['photos', JSON.stringify(photoPaths)],
     ['assigned_official_id', assignedOfficialId],
