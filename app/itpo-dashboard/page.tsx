@@ -453,7 +453,7 @@ export default function ITPODashboardPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2">
+        <div className="flex-1 min-h-0 overflow-y-auto sidebar-scroll px-3 pt-3 pb-2">
           <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">ITPO OFFICIALS</p>
           <nav className="space-y-0.5">{navItems.map(navButton)}</nav>
         </div>

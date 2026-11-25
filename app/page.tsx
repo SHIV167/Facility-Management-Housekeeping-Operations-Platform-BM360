@@ -135,9 +135,6 @@ export default function LoginPage() {
         {/* Background image */}
         <div className="absolute inset-0" style={{ backgroundImage: 'url(https://vigpl.com/bharat-mandapam.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-        {/* Subtle dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30"></div>
-
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
           {/* Logo */}
