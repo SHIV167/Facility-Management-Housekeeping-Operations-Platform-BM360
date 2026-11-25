@@ -280,6 +280,13 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="relative z-10 w-full max-w-md mx-6">
           <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/60 p-8 sm:p-10 border border-gray-100 border-t-4 border-t-green-500">
+            {/* Logo */}
+            <div className="mb-8 flex justify-center">
+              <div className="bg-white rounded-xl px-4 py-2.5 shadow-md border border-gray-100">
+                <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-10 w-auto" />
+              </div>
+            </div>
+
             {/* Step Indicator */}
             <div className="mb-10">
               <div className="flex items-center gap-3">
@@ -318,13 +325,6 @@ export default function LoginPage() {
                     <p className={`text-xs ${step === 2 ? 'text-gray-500' : 'text-gray-400'}`}>Code</p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Logo */}
-            <div className="mb-6 flex justify-center">
-              <div className="bg-white rounded-xl px-4 py-2.5 shadow-md border border-gray-100">
-                <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-10 w-auto" />
               </div>
             </div>
 
