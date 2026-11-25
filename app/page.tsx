@@ -158,9 +158,6 @@ export default function LoginPage() {
             <div className="h-14 px-3 bg-white rounded-2xl flex items-center justify-center shadow-lg">
               <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto" />
             </div>
-            <div>
-              <p className="text-teal-200 text-sm">Bharat Mandapam</p>
-            </div>
           </div>
 
           {/* Hero Content */}
@@ -181,6 +178,21 @@ export default function LoginPage() {
               One shared workspace for Bharat Mandapam operations, teamwork, and
               continuous improvement.
             </p>
+
+            {/* ITPO Secure Gateway */}
+            <div className="mb-8 max-w-md rounded-2xl border border-emerald-300/40 bg-emerald-400/10 backdrop-blur-md px-5 py-4 flex items-center gap-4 animate-pulse shadow-[0_0_25px_rgba(52,211,153,0.25)]">
+              <div className="relative">
+                <span className="absolute inline-flex h-3 w-3 rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400"></span>
+              </div>
+              <div>
+                <p className="text-[13px] font-bold tracking-[0.18em] text-emerald-200">ITPO SECURE GATEWAY</p>
+                <p className="text-[11px] text-teal-100/80 mt-0.5">Encrypted access · Authorized personnel only</p>
+              </div>
+              <svg className="w-5 h-5 text-emerald-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
 
             {/* Feature Cards */}
             <div className="space-y-4 max-w-md">
