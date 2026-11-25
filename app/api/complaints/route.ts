@@ -53,7 +53,10 @@ export async function POST(req: NextRequest) {
   const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
   const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : reporterRole === 'Admin' ? 'System Admin' : 'Citizen')
   // Save uploaded photos first so we can tag files with the complaint id
-  const photoPaths = savePhotos(Array.isArray(b.photos) ? b.photos : (b.photo ? [b.photo] : []), 'pending')
+  let photoPaths: string[] = []
+  try {
+    photoPaths = savePhotos(Array.isArray(b.photos) ? b.photos : (b.photo ? [b.photo] : []), 'pending')
+  } catch { /* non-blocking — photos optional */ }
   const assignedOfficialId = b.assignedOfficialId || b.assigned_official_id || null
   const agencyId = b.agencyId || b.agency_id || null
   // (column, value) pairs — status is a literal, rest are params $1..$n
@@ -77,6 +80,7 @@ export async function POST(req: NextRequest) {
   ]
   let rows: any[] = []
   let lastErr: any = null
+  // Try progressive column-drop: missing columns get removed, retry
   for (let attempt = 0; attempt < fields.length + 2; attempt++) {
     const cols = fields.map(([c]) => c)
     const vals = fields.map(([, v]) => v)
@@ -97,7 +101,17 @@ export async function POST(req: NextRequest) {
       break
     }
   }
-  if (!rows.length) throw lastErr || new Error('complaint insert failed')
+  // Last-resort minimal insert — core columns only
+  if (!rows.length) {
+    try {
+      rows = await query(
+        `INSERT INTO complaints (public_id, title, complaint_type, zone, description, service, reported_by, reporter_name, reporter_mobile, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'PENDING') RETURNING *`,
+        [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.description || '', b.service || '', reporterRole, reporterName, b.mobile || b.reporter_mobile || '']
+      )
+    } catch (e2) {
+      throw lastErr || e2 || new Error('complaint insert failed')
+    }
+  }
   const c = rows[0]
   // Try to set due_date separately in case column type mismatch caused 500
   if (c.id) {
