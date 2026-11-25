@@ -50,21 +50,47 @@ export async function POST(req: NextRequest) {
   const photoPaths = savePhotos(Array.isArray(b.photos) ? b.photos : (b.photo ? [b.photo] : []), 'pending')
   const assignedOfficialId = b.assignedOfficialId || b.assigned_official_id || null
   const agencyId = b.agencyId || b.agency_id || null
+  // (column, value) pairs — status is a literal, rest are params $1..$n
+  let fields: [string, any][] = [
+    ['public_id', pub?.next],
+    ['title', b.title || b.description?.slice(0, 60) || 'Citizen Complaint'],
+    ['complaint_type', b.complaintType || b.complaint_type || 'General'],
+    ['zone', b.zone || ''],
+    ['sub_area', b.subArea || b.sub_area || ''],
+    ['description', b.description || ''],
+    ['service', b.service || ''],
+    ['reported_by', reporterRole],
+    ['reporter_name', reporterName],
+    ['reporter_mobile', b.mobile || b.reporter_mobile || ''],
+    ['due_date', due],
+    ['photo_url', photoPaths[0] || null],
+    ['photos', JSON.stringify(photoPaths)],
+    ['assigned_official_id', assignedOfficialId],
+    ['agency_id', agencyId],
+  ]
   let rows: any[] = []
-  try {
-    rows = await query(
-      `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status, due_date, photo_url, photos, assigned_official_id, agency_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11,$12,$13,$14,$15) RETURNING *`,
-      [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', reporterRole, reporterName, b.mobile || b.reporter_mobile || '', due, photoPaths[0] || null, JSON.stringify(photoPaths), assignedOfficialId, agencyId]
-    )
-  } catch {
-    // Fallback for DBs missing newer columns (photos/assigned_official_id/agency_id)
-    rows = await query(
-      `INSERT INTO complaints (public_id, title, complaint_type, zone, sub_area, description, service, reported_by, reporter_name, reporter_mobile, status, due_date, photo_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'PENDING',$11,$12) RETURNING *`,
-      [pub?.next, b.title || b.description?.slice(0, 60) || 'Citizen Complaint', b.complaintType || b.complaint_type || 'General', b.zone || '', b.subArea || b.sub_area || '', b.description || '', b.service || '', reporterRole, reporterName, b.mobile || b.reporter_mobile || '', due, photoPaths[0] || null]
-    )
+  let lastErr: any = null
+  for (let attempt = 0; attempt < fields.length + 2; attempt++) {
+    const cols = fields.map(([c]) => c)
+    const vals = fields.map(([, v]) => v)
+    const ph = vals.map((_, i) => `$${i + 1}`).join(',')
+    try {
+      rows = await query(
+        `INSERT INTO complaints (${cols.join(',')}, status) VALUES (${ph},'PENDING') RETURNING *`,
+        vals
+      )
+      break
+    } catch (e: any) {
+      lastErr = e
+      const m = String(e?.message || '').match(/column "?(\w+)"? does not exist/i)
+      if (m) {
+        const idx = fields.findIndex(([c]) => c === m[1])
+        if (idx >= 0) { fields.splice(idx, 1); continue }
+      }
+      break
+    }
   }
+  if (!rows.length) throw lastErr || new Error('complaint insert failed')
   const c = rows[0]
   // Rename saved files with the real complaint id for traceability
   if (photoPaths.length) {
