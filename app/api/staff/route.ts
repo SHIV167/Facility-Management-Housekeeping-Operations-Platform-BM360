@@ -29,19 +29,26 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
-  if (b.password) {
-    const hash = await bcrypt.hash(String(b.password), 10)
-    const rows = await query(
-      `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, password_hash=$13, updated_at=now() WHERE id=$1 RETURNING *`,
-      [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending', hash]
-    )
+  const cols = [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending']
+  const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
+  const fullSql = hash
+    ? `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, password_hash=$13, updated_at=now() WHERE id=$1 RETURNING *`
+    : `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, updated_at=now() WHERE id=$1 RETURNING *`
+  try {
+    const rows = await query(fullSql, hash ? [...cols, hash] : cols)
     return NextResponse.json({ ok: true, staff: rows[0] })
+  } catch {
+    // fallback for DBs missing newer columns
+    try {
+      const rows = await query(
+        `UPDATE staff SET agency_id=$2, name=$3, role=$4, phone=$5, status=$6 WHERE id=$1 RETURNING *`,
+        [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.phone || '', b.status || 'Pending']
+      )
+      return NextResponse.json({ ok: true, staff: rows[0] })
+    } catch (e2) {
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    }
   }
-  const rows = await query(
-    `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, updated_at=now() WHERE id=$1 RETURNING *`,
-    [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending']
-  )
-  return NextResponse.json({ ok: true, staff: rows[0] })
 }
 
 export async function DELETE(req: NextRequest) {
