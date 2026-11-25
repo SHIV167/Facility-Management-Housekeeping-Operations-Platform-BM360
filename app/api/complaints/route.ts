@@ -32,7 +32,11 @@ export async function GET(req: NextRequest) {
   if (conds.length) sql += ' WHERE ' + conds.join(' AND ')
   sql += ' ORDER BY c.id DESC'
   const rows = await query(sql, params)
-  return NextResponse.json({ ok: true, complaints: rows })
+  const complaints = rows.map((c: any) => ({
+    ...c,
+    dueDate: c.due_date ? new Date(c.due_date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '—',
+  }))
+  return NextResponse.json({ ok: true, complaints })
 }
 
 export async function POST(req: NextRequest) {
