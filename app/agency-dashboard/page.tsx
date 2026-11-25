@@ -13,10 +13,15 @@ import { logActivity } from '@/lib/activity'
 import { translations } from '@/lib/translations'
 import DocumentTitle from '@/components/DocumentTitle'
 import { useToast } from '@/components/Toast'
+import { useComplaints, useStaff } from '@/lib/hooks'
 
 export default function AgencyDashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
+  // React Query hooks
+  const { data: dbComplaints = [], refetch: refetchComplaints } = useComplaints()
+  const { data: dbStaff = [], refetch: refetchStaff } = useStaff()
+
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState('Last 7 Days')
   const [agencyFilter, setAgencyFilter] = useState('All Agencies')
@@ -45,17 +50,36 @@ export default function AgencyDashboardPage() {
       }).catch(() => {})
     }).catch(() => {})
   }, [])
+  // Sync React Query data to local state
   useEffect(() => {
-    fetch('/api/complaints').then((r) => r.json()).then((d) => {
-      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || me.agency || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(), priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, agencyId: c.agency_id ?? null, resolvedAt: c.resolved_at, createdAt: c.created_at, zone: c.zone })))
-    }).catch(() => {})
-    fetch('/api/staff').then((r) => r.json()).then((d) => {
-      if (d.ok && d.staff && d.staff.length) {
-        const mapped = d.staff.map((m) => ({ id: m.employee_id || 'SFM-'+m.id, dbId: m.id, agencyDbId: m.agency_id ?? null, name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '', agency: m.agency_name || agencyName, zones: m.zones || [], shift: m.shift || 'No Shift', status: m.status === 'Active' ? 'Active' : 'Pending' }))
-        setStaffMembers(mapped)
-      }
-    }).catch(() => {})
-  }, [])
+    if (dbComplaints.length) {
+      setComplaints(dbComplaints.map((c: any) => ({
+        id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '',
+        status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING',
+        completionTime: c.resolved_at ? 'Resolved' : undefined,
+        location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '',
+        campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General',
+        agency: c.agency_name || me.agency || '—', dueDate: c.dueDate || c.due_date || '—',
+        photo: c.photo_url || null,
+        photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(),
+        priority: c.priority || 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official',
+        publicId: c.public_id, agencyId: c.agency_id ?? null, resolvedAt: c.resolved_at, createdAt: c.created_at, zone: c.zone
+      })))
+    }
+  }, [dbComplaints, me.agency])
+
+  useEffect(() => {
+    if (dbStaff.length) {
+      const mapped = dbStaff.map((m: any) => ({
+        id: m.employee_id || 'SFM-'+m.id, dbId: m.id, agencyDbId: m.agency_id ?? null,
+        name: m.name, role: m.role, designation: m.designation || m.role, username: m.username || '', phone: m.phone || '',
+        agency: m.agency_name || agencyName, zones: m.zones || [], shift: m.shift || 'No Shift',
+        status: m.status === 'Active' ? 'Active' : 'Pending'
+      }))
+      setStaffMembers(mapped)
+    }
+  }, [dbStaff, agencyName])
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [overviewTab, setOverviewTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
