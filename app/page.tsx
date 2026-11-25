@@ -238,6 +238,33 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
+
+            {/* Mobile App & Support */}
+            <div className="mt-6 max-w-md rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-md p-5">
+              <p className="text-[11px] font-bold tracking-[0.18em] text-teal-200/90 uppercase mb-3">Mobile App &amp; Support</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://vigpl.com/BM360_v1.9.apk"
+                  download
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-teal-500 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Android App
+                </a>
+                <a
+                  href="mailto:admin@bm360.in"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-teal-100 text-sm font-semibold hover:bg-white/20 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Contact ITPO Admin
+                </a>
+              </div>
+              <p className="mt-3 text-[11px] text-teal-200/70">BM360 v1.9 APK · Official Mobile Build</p>
+            </div>
           </div>
 
           {/* Footer */}
