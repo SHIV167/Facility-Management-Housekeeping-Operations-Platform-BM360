@@ -2326,14 +2326,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       <DocumentTitle title="BM360 Admin Dashboard" />
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[96px]' : 'md:w-[248px]'} md:shrink-0`}>
-        <div className="px-3.5 pt-3.5 pb-2">
-          <div className={`bg-white rounded-lg px-2 py-1.5 shadow-sm ${navCollapsed ? 'md:px-1 md:text-center' : ''}`}>
-            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto mx-auto" />
+        <div className={`flex items-center gap-1.5 px-3 pt-3.5 pb-2 ${navCollapsed ? 'md:px-1.5 md:justify-center' : ''}`}>
+          <div className={`bg-white rounded-lg px-2 py-1.5 shadow-sm ${navCollapsed ? 'md:px-1' : ''}`}>
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-8 w-auto" />
           </div>
-        </div>
-
-        <div className={`px-3 ${navCollapsed ? 'md:px-1.5' : ''}`}>
-          <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex w-full items-center justify-center py-1 text-[#9ec3d0] hover:text-white" title="Toggle sidebar">
+          <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1 text-[#9ec3d0] hover:text-white shrink-0" title="Toggle sidebar">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={navCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} /></svg>
           </button>
         </div>
