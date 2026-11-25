@@ -12,6 +12,7 @@ import { defaultZones, ZoneRecord } from '@/lib/zones'
 import AgencyFormModal from '@/components/AgencyFormModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
 import AttendanceEditModal, { AttendanceRow } from '@/components/AttendanceEditModal'
+import StaffEditModal from '@/components/StaffEditModal'
 import { defaultAgencies, AgencyRecord, defaultEmployees, EmployeeRecord } from '@/lib/agencies'
 import ImportEmployeesModal, { ImportedEmployee } from '@/components/ImportEmployeesModal'
 import DocumentTitle from '@/components/DocumentTitle'
@@ -67,7 +68,7 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
       if (d.ok && d.staff && d.staff.length) {
         setEmployees(d.staff.map((s: any) => ({
           id: s.id, agencyId: s.agency_id, agency: s.agency_name || '',
-          name: s.name, role: s.role || 'Field Staff', phone: s.phone || '',
+          name: s.name, role: s.role || 'Field Staff', designation: s.designation || '', phone: s.phone || '', zones: Array.isArray(s.zones) ? s.zones : [],
           zone: Array.isArray(s.zones) && s.zones.length ? s.zones[0] : '—',
           shift: s.shift || 'No Shift',
           status: s.status === 'Active' ? 'Active' : 'Inactive',
@@ -133,6 +134,7 @@ const [logPageSize, setLogPageSize] = useState(10)
 const [attRecords, setAttRecords] = useState<AttendanceRow[]>([])
 const [attSearch, setAttSearch] = useState('')
 const [editingAtt, setEditingAtt] = useState<AttendanceRow | null>(null)
+const [editingEmployee, setEditingEmployee] = useState<any>(null)
 const [logSearch, setLogSearch] = useState('')
 const [logActorFilter, setLogActorFilter] = useState('All Users')
 const [agencies, setAgencies] = useState<AgencyRecord[]>(defaultAgencies)
@@ -506,7 +508,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                           <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.zone}</td>
                           <td className="px-4 py-3 text-[13px] text-[#374151]">{emp.shift}</td>
                           <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${emp.status === 'Active' ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{emp.status}</span></td>
-                          <td className="px-4 py-3"><button onClick={() => handleDeleteEmployee(emp.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#dc2626] bg-[#fef2f2] rounded-md hover:bg-[#fee2e2]">Delete</button></td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <button onClick={() => setEditingEmployee(emp)} className="px-2.5 py-1 text-[12px] font-medium text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">Edit</button>
+                              <button onClick={() => handleDeleteEmployee(emp.id)} className="px-2.5 py-1 text-[12px] font-medium text-[#dc2626] bg-[#fef2f2] rounded-md hover:bg-[#fee2e2]">Delete</button>
+                            </div>
+                          </td>
                         </tr>
                       )
                     })}
@@ -2470,6 +2477,13 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         staff={staffOptions}
         markedIds={attendanceRecords.map((r) => r.staffId)}
         onMark={handleMarkAttendance}
+      />
+      <StaffEditModal
+        open={editingEmployee != null}
+        staff={editingEmployee ? { id: editingEmployee.id, name: editingEmployee.name, role: editingEmployee.role, designation: editingEmployee.designation || '', phone: editingEmployee.phone || '', zones: editingEmployee.zones || [], shift: editingEmployee.shift || 'No Shift', status: editingEmployee.status || 'Active', agencyId: editingEmployee.agencyId ?? null } : null}
+        zones={zones.map((z) => z.name)}
+        onClose={() => setEditingEmployee(null)}
+        onSaved={() => { setEditingEmployee(null); fetch('/api/staff').then((r) => r.json()).then((d) => { if (d.ok && d.staff) setEmployees(d.staff.map((s: any) => ({ id: s.id, agencyId: s.agency_id, agency: s.agency_name || '', name: s.name, role: s.role || 'Field Staff', designation: s.designation || '', phone: s.phone || '', zones: Array.isArray(s.zones) ? s.zones : [], zone: Array.isArray(s.zones) && s.zones.length ? s.zones[0] : '—', shift: s.shift || 'No Shift', status: s.status === 'Active' ? 'Active' : 'Inactive' }))) }).catch(() => {}) }}
       />
       <AttendanceEditModal
         open={editingAtt != null}

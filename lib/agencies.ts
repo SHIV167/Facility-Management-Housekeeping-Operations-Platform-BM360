@@ -17,10 +17,13 @@ export interface EmployeeRecord {
   agencyId: number
   name: string
   role: string
+  designation?: string
+  zones?: string[]
   phone: string
   zone: string
   shift: string
   status: 'Active' | 'Inactive'
+  agency?: string
 }
 
 export const SERVICE_OPTIONS = ['Housekeeping', 'Electrical', 'Plumbing', 'HVAC']

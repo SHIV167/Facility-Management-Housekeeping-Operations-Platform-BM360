@@ -76,7 +76,7 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
     setErrors([])
 
     const staff = [
-      ...(managerName.trim() ? [{ name: managerName.trim(), role: 'Supervisor', designation: 'Agency Manager', phone: managerPhone.trim() }] : []),
+      ...(managerName.trim() ? [{ name: managerName.trim(), role: 'Manager', designation: 'Agency Manager', phone: managerPhone.trim() }] : []),
       ...supervisors.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Supervisor', designation: 'Housekeeping Supervisor', phone: s.phone.trim() })),
       ...fieldStaff.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Field Staff', designation: 'Housekeeping Field Staff', phone: s.phone.trim() })),
     ]
