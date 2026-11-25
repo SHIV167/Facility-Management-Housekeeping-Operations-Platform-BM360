@@ -530,7 +530,50 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         )
       }
     }
-    switch (currentView) {
+    const todayStr = new Date().toDateString()
+  const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
+  const attWithPhoto = attRecords.filter((r) => r.photoFile).length
+  const byAgencyMap = new Map<string, { total: number; today: number; photo: number }>()
+  attRecords.forEach((r) => {
+    const a = r.agency || 'Unassigned'
+    const cur = byAgencyMap.get(a) || { total: 0, today: 0, photo: 0 }
+    cur.total++
+    const d = new Date(r.dateTime)
+    if (!isNaN(d.getTime()) && d.toDateString() === todayStr) cur.today++
+    if (r.photoFile) cur.photo++
+    byAgencyMap.set(a, cur)
+  })
+  const byAgencyArr = Array.from(byAgencyMap.entries())
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-')
+  const downloadAttendancePdf = () => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('BM360 Attendance Report', 14, 15)
+    doc.setFontSize(10)
+    doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 22)
+    doc.setFontSize(11)
+    let y = 32
+    doc.setFillColor(14, 76, 94)
+    doc.rect(14, y - 5, 182, 8, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.text('Agency', 16, y)
+    doc.text('Total', 70, y)
+    doc.text('Today', 100, y)
+    doc.text('With Photo', 140, y)
+    doc.setTextColor(0, 0, 0)
+    y += 8
+    byAgencyArr.sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
+      if (y > 270) { doc.addPage(); y = 20 }
+      doc.text(agency, 16, y)
+      doc.text(String(stats.total), 70, y)
+      doc.text(String(stats.today), 100, y)
+      doc.text(String(stats.photo), 140, y)
+      y += 7
+    })
+    doc.save(`BM360_Attendance_Report_${dateStr}.pdf`)
+  }
+
+  switch (currentView) {
       case 'overview':
         return (
           
@@ -2020,7 +2063,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   {!byAgencyArr.length && <p className="py-3 text-center text-[#9ca3af]">No attendance records yet.</p>}
                 </div>
                 <div className="mt-4 flex items-center gap-2">
-                  <button onClick={downloadPdf} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#1d4ed8] bg-[#eef2ff] border border-[#bfdbfe] rounded-lg hover:bg-[#e0e7ff]">
+                  <button onClick={downloadAttendancePdf} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#1d4ed8] bg-[#eef2ff] border border-[#bfdbfe] rounded-lg hover:bg-[#e0e7ff]">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     Download PDF
                   </button>
@@ -2035,49 +2078,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         )
       }
       case 'attendance': {
-        const todayStr = new Date().toDateString()
-        const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
-        const attWithPhoto = attRecords.filter((r) => r.photoFile).length
         const filteredAtt = attRecords.filter((r) => !attSearch || [r.staffName, r.staffId, r.zone, r.dateTime, r.gps, r.markedBy || ''].some((v) => String(v).toLowerCase().includes(attSearch.toLowerCase())))
-        const byAgencyMap = new Map<string, { total: number; today: number; photo: number }>()
-        attRecords.forEach((r) => {
-          const a = r.agency || 'Unassigned'
-          const cur = byAgencyMap.get(a) || { total: 0, today: 0, photo: 0 }
-          cur.total++
-          const d = new Date(r.dateTime)
-          if (!isNaN(d.getTime()) && d.toDateString() === todayStr) cur.today++
-          if (r.photoFile) cur.photo++
-          byAgencyMap.set(a, cur)
-        })
-        const byAgencyArr = Array.from(byAgencyMap.entries())
-        const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-')
-        const downloadPdf = () => {
-          const doc = new jsPDF()
-          doc.setFontSize(16)
-          doc.text('BM360 Attendance Report', 14, 15)
-          doc.setFontSize(10)
-          doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 22)
-          doc.setFontSize(11)
-          let y = 32
-          doc.setFillColor(14, 76, 94)
-          doc.rect(14, y - 5, 182, 8, 'F')
-          doc.setTextColor(255, 255, 255)
-          doc.text('Agency', 16, y)
-          doc.text('Total', 70, y)
-          doc.text('Today', 100, y)
-          doc.text('With Photo', 140, y)
-          doc.setTextColor(0, 0, 0)
-          y += 8
-          byAgencyArr.sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
-            if (y > 270) { doc.addPage(); y = 20 }
-            doc.text(agency, 16, y)
-            doc.text(String(stats.total), 70, y)
-            doc.text(String(stats.today), 100, y)
-            doc.text(String(stats.photo), 140, y)
-            y += 7
-          })
-          doc.save(`BM360_Attendance_Report_${dateStr}.pdf`)
-        }
         return (
           <div>
             <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
