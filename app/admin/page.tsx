@@ -2039,7 +2039,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
         const attWithPhoto = attRecords.filter((r) => r.photoFile).length
         const filteredAtt = attRecords.filter((r) => !attSearch || [r.staffName, r.staffId, r.zone, r.dateTime, r.gps, r.markedBy || ''].some((v) => String(v).toLowerCase().includes(attSearch.toLowerCase())))
-        const byAgency = attRecords.reduce<Record<string, { total: number; today: number; photo: number }>>((m, r) => {
+        const byAgency: Record<string, { total: number; today: number; photo: number }> = attRecords.reduce((m, r) => {
           const a = r.agency || 'Unassigned'
           if (!m[a]) m[a] = { total: 0, today: 0, photo: 0 }
           m[a].total++
@@ -2047,7 +2047,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           if (!isNaN(d.getTime()) && d.toDateString() === todayStr) m[a].today++
           if (r.photoFile) m[a].photo++
           return m
-        }, {})
+        }, {} as Record<string, { total: number; today: number; photo: number }>)
         const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-')
         const downloadPdf = () => {
           const doc = new jsPDF()
