@@ -75,8 +75,8 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
 
   const dbPhotos: string[] = [...(((complaint as any).photos && Array.isArray((complaint as any).photos) ? (complaint as any).photos : [])), ...extraPhotos, (complaint as any).photo].filter(Boolean)
   const photos = dbPhotos.length
-    ? dbPhotos.map((src, i) => ({ id: i + 1, src, label: i === 0 ? 'ITPO Official (Before)' : 'Agency Evidence', filename: String(src).split('file=')[1] || `photo_${i + 1}`, uploadedBy: i === 0 ? 'ITPO Official' : 'Agency Staff', uploadedAt: complaint.date || '—', size: '—' }))
-    : [{ id: 1, src: '', label: 'ITPO Official (Before)', filename: `complaint_${complaint.id}_before.jpg`, uploadedBy: 'Brij Lal (ITPO Official)', uploadedAt: complaint.date || '—', size: '—' }]
+    ? dbPhotos.map((src, i) => ({ id: i + 1, src, label: i === 0 ? 'ITPO Official (Before)' : 'Agency Evidence', shortLabel: i === 0 ? 'ITPO' : 'AGENCY', filename: String(src).split('file=')[1] || `photo_${i + 1}`, uploadedBy: i === 0 ? 'ITPO Official' : 'Agency Staff', uploadedAt: complaint.date || '—', size: '—' }))
+    : [{ id: 1, src: '', label: 'ITPO Official (Before)', shortLabel: 'ITPO', filename: `complaint_${complaint.id}_before.jpg`, uploadedBy: 'Brij Lal (ITPO Official)', uploadedAt: complaint.date || '—', size: '—' }]
 
   const photo = photos[Math.min(selectedPhoto, photos.length - 1)]
 
@@ -292,7 +292,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                         <svg className="w-8 h-8 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       )}
                     </div>
-                    <p className={`px-3 py-2 text-[11px] leading-tight ${selectedPhoto === idx ? 'text-[#0f766e] font-semibold' : 'text-[#6b7280]'}`}>{p.label}</p>
+                    <p className={`px-3 py-2 text-[11px] leading-tight ${selectedPhoto === idx ? 'text-[#0f766e] font-semibold' : 'text-[#6b7280]'}`}>{p.shortLabel}</p>
                   </button>
                 ))}
               </div>
