@@ -143,200 +143,183 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Title + priority/SLA */}
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <h3 className="text-[18px] font-semibold text-[#111827] leading-snug flex-1 min-w-0">{complaint.title}</h3>
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-[11.5px] font-semibold ${breached ? 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]' : 'bg-[#fff7ed] border-[#fed7aa] text-[#c2410c]'}`}>
-                {(complaint as any).priority === 'URGENT' ? 'Urgent' : (complaint as any).priority === 'HIGH' ? 'High' : 'Normal'} Priority · {(complaint as any).slaMinutes || 30} Min SLA
-              </span>
-              {hasDue && (
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-bold ${breached ? 'bg-[#dc2626] text-white animate-pulse' : remaining !== null && remaining < 15 * 60000 ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c]' : 'bg-[#e6f7f4] border border-[#bfe8e2] text-[#0f766e]'}`}>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  {breached ? 'SLA BREACHED' : remaining !== null && remaining > 0
-                    ? `SLA: ${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m ${Math.floor((remaining % 60000) / 1000)}s left`
-                    : 'SLA: —'}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Work instructions */}
-          {(complaint as any).description && (
-            <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
-              <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#b45309] uppercase mb-1">Work Instructions &amp; Details</p>
-              <p className="text-[13px] text-[#78350f] leading-relaxed">{(complaint as any).description}</p>
-            </div>
-          )}
-
-          {/* Status banner */}
-          <div className={`rounded-xl border p-4 ${isCompleted ? 'bg-[#e8f8ef] border-[#b7e4c7]' : 'bg-[#fff7ed] border-[#fed7aa]'}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${isCompleted ? 'bg-[#16a34a]' : 'bg-[#ea580c]'}`}></div>
-              <span className={`text-[15px] font-semibold ${isCompleted ? 'text-[#15803d]' : 'text-[#c2410c]'}`}>
-                {isCompleted ? 'WORK FULLY COMPLETED' : isPending ? 'WORK PENDING' : 'IN PROGRESS'}
-              </span>
-            </div>
-            <p className="text-[12.5px] text-[#6b7280] mt-2 ml-6">
-              Current Workflow State:{' '}
-              <span className={`font-medium ${isCompleted ? 'text-[#16a34a]' : 'text-[#ea580c]'}`}>
-                {isCompleted ? 'Completed' : complaint.status}
-              </span>
-            </p>
-            {complaint.completionTime && (
-              <p className="text-[12.5px] text-[#6b7280] mt-1 ml-6">{complaint.completionTime}</p>
-            )}
-          </div>
-
-          {/* Details grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { label: 'SERVICE CLASSIFICATION', value: complaint.service || 'Housekeeping Operations' },
-              { label: 'FACILITY / CAMPUS', value: complaint.campus || 'Bharat Mandapam' },
-              { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
-              { label: 'ASSIGNED AGENCY', value: complaint.agency && complaint.agency !== '—' ? complaint.agency : 'Unassigned' },
-              { label: 'REPORTED / CREATED BY', value: (complaint as any).reportedBy || 'Brij Lal', sub: (complaint as any).reporterRole || 'ITPO Official' },
-              { label: 'ACTIVITY CATALOG ITEM', value: complaint.service || 'Housekeeping Operations' },
-              { label: 'DUE DATE', value: complaint.dueDate || '—' },
-              { label: 'CREATED AT', value: complaint.date || '—' },
-              { label: 'RESOLVED AT', value: isCompleted ? ((complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (complaint.date || '—')) : '—' },
-              { label: 'RESOLUTION TIME', value: (() => {
-                const created = (complaint as any).createdAt ? new Date((complaint as any).createdAt).getTime() : NaN
-                const resolved = (complaint as any).resolvedAt ? new Date((complaint as any).resolvedAt).getTime() : NaN
-                if (!isCompleted || isNaN(created) || isNaN(resolved)) return isCompleted ? '—' : 'In progress'
-                const mins = Math.max(0, Math.round((resolved - created) / 60000))
-                const dur = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins} min`
-                if (!isNaN(dueMs)) {
-                  const diff = Math.round((dueMs - resolved) / 60000)
-                  if (diff > 0) return `Completed in ${dur} · ${diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60}m` : `${diff} min`} early`
-                  if (diff < 0) return `Completed in ${dur} · ${Math.abs(diff) >= 60 ? `${Math.floor(Math.abs(diff) / 60)}h ${Math.abs(diff) % 60}m` : `${Math.abs(diff)} min`} late`
-                  return `Completed in ${dur} · on time`
-                }
-                return `Completed in ${dur}`
-              })(), sub: isCompleted ? undefined : 'Timer running against due date' },
-            ].map((item) => (
-              <div key={item.label} className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
-                <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{item.label}</p>
-                <p className="text-[13.5px] font-semibold text-[#111827] mt-1">{item.value}</p>
-                {item.sub && <p className="text-[11.5px] text-[#9ca3af] mt-0.5">{item.sub}</p>}
-              </div>
-            ))}
-          </div>
-
-          {/* Evidence Photos */}
-          <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">Site Evidence Photos ({photos.length})</h4>
-              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
-              <input ref={camRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
-              <button
-                onClick={() => camRef.current?.click()}
-                disabled={uploading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#b7e4d4] text-[#0f766e] hover:bg-[#e6f7f4] text-[12px] font-semibold rounded-lg transition-colors disabled:opacity-50"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Take Photo
-              </button>
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0e4c5e] hover:bg-[#0b3c4a] text-white text-[12px] font-semibold rounded-lg transition-colors disabled:opacity-50"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {uploading ? 'Uploading...' : 'Upload Photo'}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_132px] gap-3">
-              {/* Main viewer */}
-              <div className="bg-white border border-[#e8edf2] rounded-xl p-3">
-                <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
-                  {photo.src ? (
-                    <img src={photo.src} alt={photo.label} className="w-full h-full object-cover" />
-                  ) : (
-                    <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+        <div className="flex-1 overflow-y-auto p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_168px] gap-5">
+            {/* Left column: operational details */}
+            <div className="space-y-4">
+              {/* Title + priority/SLA */}
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <h3 className="text-[18px] font-semibold text-[#111827] leading-snug flex-1 min-w-0">{complaint.title}</h3>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-[11.5px] font-semibold ${breached ? 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]' : 'bg-[#fff7ed] border-[#fed7aa] text-[#c2410c]'}`}>
+                    {(complaint as any).priority === 'URGENT' ? 'Urgent' : (complaint as any).priority === 'HIGH' ? 'High' : 'Normal'} Priority · {(complaint as any).slaMinutes || 30} Min SLA
+                  </span>
+                  {hasDue && (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-bold ${breached ? 'bg-[#dc2626] text-white animate-pulse' : remaining !== null && remaining < 15 * 60000 ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c]' : 'bg-[#e6f7f4] border border-[#bfe8e2] text-[#0f766e]'}`}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {breached ? 'SLA BREACHED' : remaining !== null && remaining > 0
+                        ? `SLA: ${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m ${Math.floor((remaining % 60000) / 1000)}s left`
+                        : 'SLA: —'}
+                    </span>
                   )}
                 </div>
-                <div className="mt-2.5 space-y-0.5">
-                  <p className="text-[12.5px] font-semibold text-[#111827]">{photo.label} <span className="text-[#9ca3af] font-normal">· {selectedPhoto + 1}/{photos.length}</span></p>
-                  <p className="text-[11px] text-[#9ca3af] truncate">{photo.filename} · {photo.uploadedBy} · {photo.uploadedAt}</p>
+              </div>
+
+              {/* Work instructions */}
+              {(complaint as any).description && (
+                <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
+                  <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#b45309] uppercase mb-1">WORK INSTRUCTIONS &amp; DETAILS</p>
+                  <p className="text-[13px] text-[#78350f] leading-relaxed">{(complaint as any).description}</p>
                 </div>
-                {photo.src && (
-                  <a href={photo.src} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#0f766e] hover:underline">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                    Open full size
-                  </a>
+              )}
+
+              {/* Status banner */}
+              <div className={`rounded-xl border p-4 ${isCompleted ? 'bg-[#e8f8ef] border-[#b7e4c7]' : 'bg-[#fff7ed] border-[#fed7aa]'}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${isCompleted ? 'bg-[#16a34a]' : 'bg-[#ea580c]'}`}></div>
+                  <span className={`text-[15px] font-semibold ${isCompleted ? 'text-[#15803d]' : 'text-[#c2410c]'}`}>
+                    {isCompleted ? 'Completed' : isPending ? 'Pending' : 'In Progress'}
+                  </span>
+                </div>
+                <p className="text-[12.5px] text-[#6b7280] mt-2 ml-6">
+                  Current Workflow State:{' '}
+                  <span className={`font-medium ${isCompleted ? 'text-[#16a34a]' : 'text-[#ea580c]'}`}>
+                    {isCompleted ? 'Completed' : complaint.status}
+                  </span>
+                </p>
+                {complaint.completionTime && (
+                  <p className="text-[12.5px] text-[#6b7280] mt-1 ml-6">{complaint.completionTime}</p>
                 )}
               </div>
-              {/* Thumbnail strip — right side */}
-              <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[240px]">
-                {photos.map((p, idx) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedPhoto(idx)}
-                    className={`shrink-0 sm:w-full rounded-lg border-2 overflow-hidden text-left transition-colors ${
-                      selectedPhoto === idx
-                        ? 'border-[#1b8f84] bg-[#e6f7f4]'
-                        : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1]'
-                    }`}
-                  >
-                    <div className="w-full h-14 sm:h-16 bg-[#f3f4f6] flex items-center justify-center overflow-hidden">
-                      {p.src ? (
-                        <img src={p.src} alt={p.label} className="w-full h-full object-cover" />
-                      ) : (
-                        <svg className="w-6 h-6 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      )}
+
+              {/* Details list */}
+              <div className="space-y-3">
+                {[
+                  { label: 'ASSIGNED AGENCY', value: complaint.agency && complaint.agency !== '—' ? complaint.agency : 'Unassigned' },
+                  { label: 'REPORTED / CREATED BY', value: (complaint as any).reportedBy || 'Brij Lal', sub: (complaint as any).reporterRole || 'ITPO Official' },
+                  { label: 'SERVICE CLASSIFICATION', value: complaint.service || 'Housekeeping Operations' },
+                  { label: 'FACILITY / CAMPUS', value: complaint.campus || 'Bharat Mandapam' },
+                  { label: 'OPERATIONAL LOCATION', value: `${complaint.location}`, sub: (complaint as any).subArea ? `Sub Area: ${(complaint as any).subArea}` : (complaint.campus || 'Bharat Mandapam') },
+                  { label: 'ACTIVITY CATALOG ITEM', value: complaint.service || 'Housekeeping Operations' },
+                  { label: 'OPERATIONAL SCHEDULE & SLA TARGETS', isSection: true },
+                  { label: 'CREATED AT', value: complaint.date || '—', indent: true },
+                  { label: 'TARGET DUE TIME', value: complaint.dueDate || '—', indent: true },
+                ].map((item) => (
+                  item.isSection ? (
+                    <div key={item.label} className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3">
+                      <p className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">{item.label}</p>
                     </div>
-                    <p className={`px-1.5 py-1 text-[10px] leading-tight truncate ${selectedPhoto === idx ? 'text-[#0f766e] font-semibold' : 'text-[#6b7280]'}`}>{p.label}</p>
-                  </button>
+                  ) : (
+                    <div key={item.label} className={`bg-[#f8fafc] border border-[#e8edf2] rounded-xl px-4 py-3 ${item.indent ? 'ml-4' : ''}`}>
+                      <p className="text-[10.5px] font-semibold tracking-[0.06em] text-[#9ca3af] uppercase">{item.label}</p>
+                      <p className="text-[13.5px] font-semibold text-[#111827] mt-1">{item.value}</p>
+                      {item.sub && <p className="text-[11.5px] text-[#9ca3af] mt-0.5">{item.sub}</p>}
+                    </div>
+                  )
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Audit Trail */}
-          <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4">
-            <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase mb-3">Execution History & Audit Trail</h4>
-            <div className="space-y-3">
-              {history.length > 0 ? (
-                history.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className={`w-3 h-3 rounded-full mt-1 ${item.action.includes('Closed') || item.action.includes('Completed') ? 'bg-[#16a34a]' : 'bg-[#ea580c]'}`}></div>
-                    <div>
-                      <p className="text-[13px] text-[#111827]">
-                        <span className="font-semibold">{item.action}</span>
-                        {item.by && <span className="text-[#6b7280]"> — by {item.by}</span>}
-                      </p>
-                      <p className="text-[11.5px] text-[#9ca3af]">{item.timestamp}</p>
-                    </div>
+            {/* Right column: Site Evidence Photos */}
+            <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4 lg:sticky lg:top-0">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">SITE EVIDENCE PHOTOS ({photos.length})</h4>
+                <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
+                <input ref={camRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
+                <button
+                  onClick={() => camRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#b7e4d4] text-[#0f766e] hover:bg-[#e6f7f4] text-[12px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Take Photo
+                </button>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0e4c5e] hover:bg-[#0b3c4a] text-white text-[12px] font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  {uploading ? 'Uploading...' : 'Upload Photo'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-[1fr_72px] gap-3">
+                {/* Main viewer */}
+                <div className="bg-white border border-[#e8edf2] rounded-xl p-3">
+                  <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
+                    {photo.src ? (
+                      <img src={photo.src} alt={photo.label} className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-14 h-14 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
                   </div>
-                ))
-              ) : (
-                [
-                  { action: 'Complaint Created', timestamp: complaint.date || '—', by: 'Brij Lal (ITPO)' },
-                  ...(isCompleted
-                    ? [{ action: 'Work Completed', timestamp: complaint.date || '—', by: complaint.agency || 'Field Staff' }]
-                    : [{ action: 'Assigned to Agency', timestamp: complaint.date || '—', by: 'System' }]),
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="w-3 h-3 rounded-full mt-1 bg-[#16a34a]"></div>
-                    <div>
-                      <p className="text-[13px] text-[#111827]">
-                        <span className="font-semibold">{item.action}</span>
-                        {item.by && <span className="text-[#6b7280]"> — by {item.by}</span>}
-                      </p>
-                      <p className="text-[11.5px] text-[#9ca3af]">{item.timestamp}</p>
-                    </div>
+                  <div className="mt-2.5 space-y-0.5">
+                    <p className="text-[12.5px] font-semibold text-[#111827]">{photo.label} <span className="text-[#9ca3af] font-normal">· {selectedPhoto + 1}/{photos.length}</span></p>
+                    <p className="text-[11px] text-[#9ca3af] truncate">{photo.filename} · {photo.uploadedBy} · {photo.uploadedAt}</p>
                   </div>
-                ))
-              )}
+                  {photo.src && (
+                    <a href={photo.src} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#0f766e] hover:underline">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      Open full size
+                    </a>
+                  )}
+                </div>
+                {/* Thumbnail strip — right side */}
+                <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[240px]">
+                  {photos.map((p, idx) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPhoto(idx)}
+                      className={`shrink-0 sm:w-full rounded-lg border-2 overflow-hidden text-left transition-colors ${
+                        selectedPhoto === idx
+                          ? 'border-[#1b8f84] bg-[#e6f7f4]'
+                          : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1]'
+                      }`}
+                    >
+                      <div className="w-full h-14 sm:h-16 bg-[#f3f4f6] flex items-center justify-center overflow-hidden">
+                        {p.src ? (
+                          <img src={p.src} alt={p.label} className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-6 h-6 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        )}
+                      </div>
+                      <p className={`px-1.5 py-1 text-[10px] leading-tight truncate ${selectedPhoto === idx ? 'text-[#0f766e] font-semibold' : 'text-[#6b7280]'}`}>{p.label.split(' ')[0]}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-[#e8edf2]">
+                <p className="text-[11px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase mb-2">SELECT PHOTO PREVIEW ({photos.length})</p>
+                <div className="flex gap-2 overflow-x-auto">
+                  {photos.map((p, idx) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPhoto(idx)}
+                      className={`shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-colors ${
+                        selectedPhoto === idx
+                          ? 'border-[#1b8f84] bg-[#e6f7f4]'
+                          : 'border-[#e5e7eb] bg-white hover:border-[#cbd5e1]'
+                      }`}
+                    >
+                      <div className="w-full h-full bg-[#f3f4f6] flex items-center justify-center overflow-hidden">
+                        {p.src ? (
+                          <img src={p.src} alt={p.label} className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-6 h-6 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
