@@ -27,6 +27,7 @@ export default function ITPODashboardPage() {
   }, [])
   const [zoneModalOpen, setZoneModalOpen] = useState(false)
   const [showItpoForm, setShowItpoForm] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
@@ -86,7 +87,7 @@ export default function ITPODashboardPage() {
     return (
       <button
         key={item.id}
-        onClick={() => setCurrentView(item.id)}
+        onClick={() => { setCurrentView(item.id); setNavOpen(false) }}
         className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
           active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
         }`}
@@ -434,11 +435,15 @@ export default function ITPODashboardPage() {
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
       <DocumentTitle title="ITPO Dashboard" />
       {/* Sidebar - same theme as main dashboard */}
-      <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
-        <div className="px-3.5 pt-3.5 pb-2">
-          <div className="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+      {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 md:w-[248px] md:shrink-0`}>
+        <div className="flex items-center gap-1.5 px-3 pt-3.5 pb-2">
+          <div className="bg-white rounded-lg px-2 py-1.5 shadow-sm flex-1">
             <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto mx-auto" />
           </div>
+          <button onClick={() => setNavOpen(false)} className="md:hidden p-1.5 text-[#9ec3d0] hover:text-white hover:bg-white/10 rounded-lg" title="Close menu">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
 
         <div className="px-3 pt-2">
@@ -497,6 +502,9 @@ export default function ITPODashboardPage() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
+            <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-4 w-auto" />
             <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>

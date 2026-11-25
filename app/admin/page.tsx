@@ -56,6 +56,7 @@ export default function DashboardPage() {
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
 const [navCollapsed, setNavCollapsed] = useState(false)
+const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null)
 
   const deleteComplaint = (id: number) => {
     if (!window.confirm('Delete this complaint permanently?')) return
@@ -2391,7 +2392,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     return (
       <button
         key={item.id}
-        onClick={() => { setSelectedAgencyId(null); setCurrentView(item.id) }}
+        onClick={() => { setSelectedAgencyId(null); setCurrentView(item.id); setNavOpen(false) }}
+        onMouseEnter={(e) => { if (navCollapsed) { const r = e.currentTarget.getBoundingClientRect(); setNavTip({ label: item.label, top: r.top + r.height / 2 }) } }}
+        onMouseLeave={() => setNavTip(null)}
         className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
           active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
         }`}
@@ -2416,6 +2419,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
           <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1 text-[#9ec3d0] hover:text-white shrink-0" title="Toggle sidebar">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={navCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} /></svg>
+          </button>
+          <button onClick={() => setNavOpen(false)} className="md:hidden ml-auto p-1.5 text-[#9ec3d0] hover:text-white hover:bg-white/10 rounded-lg" title="Close menu">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
@@ -2476,6 +2482,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </button>
         </div>
       </aside>
+
+      {navTip && (
+        <div className="hidden md:block fixed z-[70] pointer-events-none" style={{ left: 104, top: navTip.top }}>
+          <div className="relative -translate-y-1/2">
+            <div className="whitespace-nowrap rounded-lg border border-white/15 bg-[#0b3c4a] px-3 py-1.5 text-[12px] font-medium text-white shadow-xl">
+              {navTip.label}
+            </div>
+            <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rotate-45 border-r border-t border-white/15 bg-[#0b3c4a]" />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
