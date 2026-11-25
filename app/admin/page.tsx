@@ -59,12 +59,17 @@ const [navCollapsed, setNavCollapsed] = useState(false)
 
   const deleteComplaint = (id: number) => {
     if (!window.confirm('Delete this complaint permanently?')) return
+    // Optimistic removal — disappear instantly
+    setComplaints((prev) => prev.filter((c) => c.id !== id))
     deleteComplaintMutation.mutate(id, {
       onSuccess: () => {
         logActivity('System Admin', 'Admin', 'Complaint Deleted', `Complaint #${id} removed`)
         toast('Complaint deleted', 'success')
       },
-      onError: (err: any) => toast(err.message || 'Delete failed', 'error'),
+      onError: (err: any) => {
+        toast(err.message || 'Delete failed', 'error')
+        refetchComplaints()
+      },
     })
   }
 const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
