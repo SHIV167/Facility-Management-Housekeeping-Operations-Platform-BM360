@@ -563,7 +563,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const total = complaints.length
         const pendingCount = complaints.filter((c) => c.status === 'PENDING').length
         const completedCount = complaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
-        const PAGE_SIZE = 10
+        const PAGE_SIZE = 5
         const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
         const safePage = Math.min(Math.max(complaintPage, 1), totalPages)
         const pagedComplaints = complaints.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
@@ -670,7 +670,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               )}
             </div>
 
-            {total > PAGE_SIZE && (
+            {total > 0 && (
               <div className="mt-4 flex items-center justify-between gap-3 flex-wrap bg-white rounded-xl border border-[#e8edf2] px-4 py-3">
                 <p className="text-[12.5px] text-[#6b7280]">Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, total)} of {total} complaints</p>
                 <div className="flex items-center gap-1.5">
