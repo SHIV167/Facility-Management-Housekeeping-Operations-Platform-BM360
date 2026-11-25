@@ -262,7 +262,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                   )}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[13px] font-semibold text-[#111827]">{photo.label} <span className="text-[#9ca3af] font-normal">· {selectedPhoto + 1}/{photos.length}</span></p>
+                  <p className="text-[13px] font-semibold text-[#111827]">{photo.shortLabel} <span className="text-[#9ca3af] font-normal">· {selectedPhoto + 1}/{photos.length}</span></p>
                   <p className="text-[12px] text-[#9ca3af] truncate">{photo.filename} · {photo.uploadedBy} · {photo.uploadedAt}</p>
                 </div>
                 {photo.src && (
