@@ -168,6 +168,14 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Agency is mandatory for admin/ITPO complaints
+    const finalAgencyId = agencyId || selectedAgencyId || null
+    if (!agencyId && (source === 'admin' || source === 'itpo')) {
+      if (!finalAgencyId) {
+        toast('Please select an Assigned Agency before submitting', 'error')
+        return
+      }
+    }
     try {
       const res = await fetch('/api/complaints', {
         method: 'POST',
@@ -184,7 +192,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
           mobile: '—',
           photos,
           assignedOfficialId: officialId || null,
-          agencyId: agencyId || selectedAgencyId || null,
+          agencyId: finalAgencyId,
+          agencyName: agencies.find((a) => a.id === finalAgencyId)?.name || '',
         }),
       })
       const d = await res.json().catch(() => ({}))
