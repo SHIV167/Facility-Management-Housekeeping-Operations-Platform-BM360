@@ -47,9 +47,8 @@ export async function POST(req: NextRequest) {
   const prio = String(b.priority || '').toLowerCase()
   const slaMin = /urgent|high|p1|immediate/.test(prio) ? 30 : 60
   const dueTs = new Date(Date.now() + slaMin * 60000)
-  const due = dueTs.toISOString()
-  const dueLegacy = dueTs.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
-  const dueSimple = dueTs.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dueTs.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+  const dueIso = dueTs.toISOString()
+  const dueStr = dueTs.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
   const source = String(b.source || b.reportedBy || b.reported_by || 'Citizen')
   const reporterRole = source === 'itpo' ? 'ITPO Official' : source === 'agency' ? 'Agency' : source === 'admin' ? 'Admin' : 'Citizen'
   const reporterName = b.name || b.reporter_name || (reporterRole === 'ITPO Official' ? 'ITPO Official' : reporterRole === 'Agency' ? 'Agency Staff' : reporterRole === 'Admin' ? 'System Admin' : 'Citizen')
@@ -69,7 +68,6 @@ export async function POST(req: NextRequest) {
     ['reported_by', reporterRole],
     ['reporter_name', reporterName],
     ['reporter_mobile', b.mobile || b.reporter_mobile || ''],
-    ['due_date', dueSimple],
     ['photo_url', photoPaths[0] || null],
     ['photos', JSON.stringify(photoPaths)],
     ['assigned_official_id', assignedOfficialId],
@@ -101,6 +99,12 @@ export async function POST(req: NextRequest) {
   }
   if (!rows.length) throw lastErr || new Error('complaint insert failed')
   const c = rows[0]
+  // Try to set due_date separately in case column type mismatch caused 500
+  if (c.id) {
+    query(`UPDATE complaints SET due_date=$1 WHERE id=$2`, [dueIso, c.id]).catch(() => {
+      query(`UPDATE complaints SET due_date=$1 WHERE id=$2`, [dueStr, c.id]).catch(() => {})
+    })
+  }
   // Rename saved files with the real complaint id for traceability
   if (photoPaths.length) {
     const renamed = photoPaths.map((p) => {
