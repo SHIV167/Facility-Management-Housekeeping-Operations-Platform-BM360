@@ -254,15 +254,35 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                 </div>
               </div>
 
-              {/* Photo viewer */}
+              {/* Photo viewer with slider */}
               <div className="bg-white border border-[#e8edf2] rounded-xl p-4 mb-4">
-                <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden mb-3">
+                <div className="relative aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden mb-3">
                   {photo.src ? (
                     <img src={photo.src} alt={photo.label} className="w-full h-full object-cover" />
                   ) : (
                     <svg className="w-16 h-16 text-[#d1d5db]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
+                  )}
+                  {/* Slider controls */}
+                  {photos.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setSelectedPhoto((prev) => (prev - 1 + photos.length) % photos.length)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                      </button>
+                      <button
+                        onClick={() => setSelectedPhoto((prev) => (prev + 1) % photos.length)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/50 text-white text-[11px] rounded-full">
+                        {selectedPhoto + 1} / {photos.length}
+                      </div>
+                    </>
                   )}
                 </div>
                 <div className="space-y-1">
