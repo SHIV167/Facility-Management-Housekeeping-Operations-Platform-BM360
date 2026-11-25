@@ -271,9 +271,9 @@ export default function LoginPage() {
         <div className="absolute -top-24 -right-24 w-72 h-72 bg-teal-100/50 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl"></div>
 
-        {/* Mobile Logo */}
-        <div className="lg:hidden absolute top-8 left-8 flex items-center gap-3">
-          <div className="h-10 px-3 bg-white rounded-xl flex items-center shadow-lg">
+        {/* Right panel top header */}
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <div className="h-11 px-4 bg-white rounded-xl flex items-center shadow-lg shadow-gray-300/40 border border-gray-100">
             <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-7 w-auto" />
           </div>
         </div>
@@ -554,28 +554,22 @@ export default function LoginPage() {
             {/* Mobile App & Support */}
             <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50/80 p-4">
               <p className="text-[11px] font-bold tracking-[0.16em] text-gray-500 uppercase mb-3 text-center">Mobile App &amp; Support</p>
-              <div className="flex flex-col gap-2.5">
-                <a
-                  href="https://vigpl.com/BM360_v1.9.apk"
-                  download
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 hover:from-emerald-500 hover:to-teal-500 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download Android App
-                </a>
-                <a
-                  href="mailto:admin@bm360.in"
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:border-teal-400 hover:text-teal-700 transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+              <a
+                href="https://vigpl.com/BM360_v1.9.apk"
+                download
+                className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-teal-900/25"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Android App
+              </a>
+              <p className="mt-3 text-[11px] text-gray-400 text-center">BM360 v1.9 APK · Official Mobile Build</p>
+              <div className="mt-3 pt-3 border-t border-gray-200 text-center">
+                <a href="mailto:admin@bm360.in" className="text-sm text-[#0f766e] font-semibold hover:underline">
                   Contact ITPO Platform Administrator
                 </a>
               </div>
-              <p className="mt-2.5 text-[11px] text-gray-400 text-center">BM360 v1.9 APK · Official Mobile Build</p>
             </div>
           </div>
 
