@@ -550,6 +550,12 @@ export default function LoginPage() {
               </a>
             </div>
           </div>
+
+          {/* Footer */}
+          <div className="mt-6 text-center space-y-1">
+            <p className="text-xs text-gray-500 font-medium">© 2026 BM360 · Bharat Mandapam Operations</p>
+            <p className="text-xs text-gray-400 font-semibold tracking-wide">ITPO Bharat Mandapam</p>
+          </div>
         </div>
       </div>
     </div>
