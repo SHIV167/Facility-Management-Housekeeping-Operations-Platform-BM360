@@ -2568,6 +2568,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         onClose={() => setEditComplaint(null)}
         complaint={editComplaint}
         zones={zones.map((z) => z.name)}
+        agencies={agencies.map((a) => ({ id: a.id, name: a.name }))}
         onSaved={() => { loadComplaints(); setEditComplaint(null) }}
       />
       <RegisterComplaintModal

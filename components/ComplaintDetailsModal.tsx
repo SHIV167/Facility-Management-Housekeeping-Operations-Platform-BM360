@@ -80,29 +80,33 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
 
   const photo = photos[Math.min(selectedPhoto, photos.length - 1)]
 
-  const uploadPhoto = (files: FileList | null) => {
+  const uploadPhoto = async (files: FileList | null) => {
     if (!files?.length) return
-    const file = files[0]
-    if (!file.type.startsWith('image/')) { toast('Please select an image file', 'error'); return }
-    if (file.size > 5 * 1024 * 1024) { toast('Image too large — max 5MB', 'error'); return }
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const dataUrl = String(reader.result)
-      setUploading(true)
-      try {
-        const res = await fetch('/api/complaints', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: complaint.id, addPhotos: [dataUrl], actor: 'Agency', role: 'Agency' }),
-        })
-        const d = await res.json().catch(() => ({}))
-        if (!res.ok || !d.ok) { toast(d.error || 'Upload failed', 'error'); return }
-        setExtraPhotos((prev) => [...prev, ...(d.photos || []).slice(-1)])
-        setSelectedPhoto(photos.length)
-        toast('Photo uploaded successfully', 'success')
-      } catch { toast('Upload failed', 'error') } finally { setUploading(false) }
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    if (!imageFiles.length) { toast('Please select image files', 'error'); return }
+    if (imageFiles.length > 5 - dbPhotos.length) { toast(`Maximum ${5 - dbPhotos.length} more photos allowed`, 'error'); return }
+    for (const file of imageFiles) {
+      if (file.size > 5 * 1024 * 1024) { toast(`Image ${file.name} too large — max 5MB`, 'error'); continue }
     }
-    reader.readAsDataURL(file)
+    setUploading(true)
+    try {
+      const dataUrls = await Promise.all(imageFiles.map((f) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsDataURL(f)
+      })))
+      const res = await fetch('/api/complaints', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: complaint.id, addPhotos: dataUrls, actor: 'Agency', role: 'Agency' }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok || !d.ok) { toast(d.error || 'Upload failed', 'error'); return }
+      setExtraPhotos((prev) => [...prev, ...(d.photos || []).slice(-imageFiles.length)])
+      setSelectedPhoto(photos.length)
+      toast(`${imageFiles.length} photo(s) uploaded successfully`, 'success')
+    } catch { toast('Upload failed', 'error') } finally { setUploading(false) }
   }
 
   const markCompleted = () => {

@@ -8,13 +8,14 @@ type Props = {
   onClose: () => void
   complaint: any
   zones?: string[]
+  agencies?: { id: number; name: string }[]
   onSaved?: () => void
 }
 
 const inputCls = 'w-full h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#1b8f84]/20 focus:border-[#1b8f84]'
 const labelCls = 'block text-[12.5px] font-semibold text-[#374151] mb-1.5'
 
-export default function ComplaintEditModal({ open, onClose, complaint, zones = [], onSaved }: Props) {
+export default function ComplaintEditModal({ open, onClose, complaint, zones = [], agencies = [], onSaved }: Props) {
   const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [zone, setZone] = useState('')
@@ -23,6 +24,7 @@ export default function ComplaintEditModal({ open, onClose, complaint, zones = [
   const [service, setService] = useState('')
   const [status, setStatus] = useState('PENDING')
   const [dueDate, setDueDate] = useState('')
+  const [agencyId, setAgencyId] = useState<number | ''>('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function ComplaintEditModal({ open, onClose, complaint, zones = [
       setService(complaint.service || complaint.serviceType || '')
       setStatus(complaint.status || 'PENDING')
       setDueDate(complaint.dueDate || '')
+      setAgencyId(complaint.agencyId || complaint.agency_id || '')
     }
   }, [complaint])
 
@@ -51,6 +54,8 @@ export default function ComplaintEditModal({ open, onClose, complaint, zones = [
           title, zone, subArea, description,
           complaintType: complaint.type || complaint.service || service,
           service, status, dueDate,
+          agencyId: agencyId || null,
+          agencyName: agencies.find((a) => a.id === agencyId)?.name || '',
           actor: 'Admin', role: 'Admin',
         }),
       })
@@ -98,6 +103,13 @@ export default function ComplaintEditModal({ open, onClose, complaint, zones = [
             <div>
               <label className={labelCls}>Service</label>
               <input className={inputCls} value={service} onChange={(e) => setService(e.target.value)} placeholder="Housekeeping, Plumbing..." />
+            </div>
+            <div>
+              <label className={labelCls}>Assigned Agency</label>
+              <select className={inputCls} value={agencyId} onChange={(e) => setAgencyId(e.target.value ? Number(e.target.value) : '')}>
+                <option value="">Unassigned / Select Agency...</option>
+                {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
             </div>
             <div>
               <label className={labelCls}>Description / Work Details</label>

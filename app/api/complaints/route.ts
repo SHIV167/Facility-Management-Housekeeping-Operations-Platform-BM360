@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
   } catch { /* non-blocking — photos optional */ }
   const assignedOfficialId = b.assignedOfficialId || b.assigned_official_id || null
   const agencyId = b.agencyId || b.agency_id || null
+  const agencyName = b.agencyName || b.agency_name || ''
   // (column, value) pairs — status is a literal, rest are params $1..$n
   let fields: [string, any][] = [
     ['public_id', pub?.next],
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
     ['photos', JSON.stringify(photoPaths)],
     ['assigned_official_id', assignedOfficialId],
     ['agency_id', agencyId],
+    ['agency_name', agencyName],
     ['priority', b.priority || 'MEDIUM'],
     ['sla_minutes', slaMin],
   ]
@@ -162,8 +164,8 @@ export async function PATCH(req: NextRequest) {
   // Full edit mode — update any provided fields
   if (b.edit) {
     const rows = await query(
-      `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9, priority=$10, sla_minutes=$11, updated_at=now() WHERE id=$1 RETURNING *`,
-      [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING', b.priority ?? 'MEDIUM', b.slaMinutes ?? 60]
+      `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9, priority=$10, sla_minutes=$11, agency_id=$12, agency_name=$13, updated_at=now() WHERE id=$1 RETURNING *`,
+      [complaintId, b.title ?? '', b.complaintType ?? b.complaint_type ?? 'General', b.zone ?? '', b.subArea ?? b.sub_area ?? '', b.description ?? '', b.service ?? '', b.dueDate ?? b.due_date ?? '', b.status ?? 'PENDING', b.priority ?? 'MEDIUM', b.slaMinutes ?? 60, b.agencyId ?? b.agency_id ?? null, b.agencyName ?? b.agency_name ?? '']
     ).catch(async () => {
       return query(
         `UPDATE complaints SET title=$2, complaint_type=$3, zone=$4, sub_area=$5, description=$6, service=$7, due_date=$8, status=$9 WHERE id=$1 RETURNING *`,

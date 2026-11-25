@@ -29,3 +29,4 @@ ALTER TABLE complaints ADD COLUMN IF NOT EXISTS sla_minutes INT DEFAULT 60;
 -- Convert existing due_date from text to timestamptz if needed
 ALTER TABLE complaints ALTER COLUMN due_date TYPE TIMESTAMPTZ USING NULLIF(due_date, '')::TIMESTAMPTZ;
 ALTER TABLE complaints ALTER COLUMN due_date SET DEFAULT now();
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS agency_name TEXT DEFAULT '';
