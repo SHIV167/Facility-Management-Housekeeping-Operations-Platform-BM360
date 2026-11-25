@@ -2306,7 +2306,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     return (
       <button
         key={item.id}
-        onClick={() => setCurrentView(item.id)}
+        onClick={() => { setSelectedAgencyId(null); setCurrentView(item.id) }}
         className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] text-left ${
           active ? 'bg-[#1b8f84] text-white font-medium shadow-sm' : 'text-[#d5e6ec] hover:bg-white/5'
         }`}
