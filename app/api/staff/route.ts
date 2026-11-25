@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const rows = await query(fullSql, hash ? [...cols, hash] : cols)
     return NextResponse.json({ ok: true, staff: rows[0] })
-  } catch {
+  } catch (e1) {
     // fallback for DBs missing newer columns
     try {
       const rows = await query(
@@ -46,7 +46,12 @@ export async function PATCH(req: NextRequest) {
       )
       return NextResponse.json({ ok: true, staff: rows[0] })
     } catch (e2) {
-      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+      try {
+        const rows = await query(`UPDATE staff SET name=$2 WHERE id=$1 RETURNING *`, [b.id, b.name])
+        return NextResponse.json({ ok: true, staff: rows[0] })
+      } catch (e3) {
+        return NextResponse.json({ error: String((e3 as any)?.message || e1) }, { status: 500 })
+      }
     }
   }
 }
