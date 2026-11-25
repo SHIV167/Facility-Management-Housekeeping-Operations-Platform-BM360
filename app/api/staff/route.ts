@@ -29,31 +29,57 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
-  const cols = [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending']
   const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
-  const fullSql = hash
-    ? `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, password_hash=$13, updated_at=now() WHERE id=$1 RETURNING *`
-    : `UPDATE staff SET agency_id=$2, name=$3, role=$4, designation=$5, username=$6, phone=$7, employee_id=$8, zones=$9, reporting_supervisor_id=$10, shift=$11, status=$12, updated_at=now() WHERE id=$1 RETURNING *`
-  try {
-    const rows = await query(fullSql, hash ? [...cols, hash] : cols)
-    return NextResponse.json({ ok: true, staff: rows[0] })
-  } catch (e1) {
-    // fallback for DBs missing newer columns
+  // column -> param index (1-based after id=$1)
+  const fields: [string, any][] = [
+    ['agency_id', b.agencyId || b.agency_id || null],
+    ['name', b.name],
+    ['role', b.role || 'Field Staff'],
+    ['designation', b.designation || ''],
+    ['username', b.username || ''],
+    ['phone', b.phone || ''],
+    ['employee_id', b.employeeId || b.employee_id || ''],
+    ['zones', b.zones || []],
+    ['reporting_supervisor_id', b.reportingSupervisorId || b.reporting_supervisor_id || null],
+    ['shift', b.shift || 'No Shift'],
+    ['status', b.status || 'Pending'],
+    ...(hash ? [['password_hash', hash] as [string, any]] : []),
+  ]
+  // progressively drop columns the DB doesn't have (Render schema drift)
+  let active = [...fields]
+  for (let attempt = 0; attempt < fields.length + 1; attempt++) {
+    const setClause = active.map(([col], i) => `${col}=$${i + 2}`).join(', ')
+    const params = [b.id, ...active.map(([, v]) => v)]
     try {
-      const rows = await query(
-        `UPDATE staff SET agency_id=$2, name=$3, role=$4, phone=$5, status=$6 WHERE id=$1 RETURNING *`,
-        [b.id, b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.phone || '', b.status || 'Pending']
-      )
+      const sql = active.length
+        ? `UPDATE staff SET ${setClause}, updated_at=now() WHERE id=$1 RETURNING *`
+        : `UPDATE staff SET name=$2 WHERE id=$1 RETURNING *`
+      const p = active.length ? params : [b.id, b.name]
+      const rows = await query(sql, p)
       return NextResponse.json({ ok: true, staff: rows[0] })
-    } catch (e2) {
-      try {
-        const rows = await query(`UPDATE staff SET name=$2 WHERE id=$1 RETURNING *`, [b.id, b.name])
-        return NextResponse.json({ ok: true, staff: rows[0] })
-      } catch (e3) {
-        return NextResponse.json({ error: String((e3 as any)?.message || e1) }, { status: 500 })
+    } catch (e: any) {
+      const msg = String(e?.message || '')
+      const m = msg.match(/column "?(\w+)"? does not exist/i) || msg.match(/column (\w+) of relation/i)
+      if (m) {
+        const bad = m[1]
+        const idx = active.findIndex(([c]) => c === bad || c.replace(/_id$/, '') === bad)
+        if (idx >= 0) { active.splice(idx, 1); continue }
+        // column may be updated_at or other non-field — drop and retry once
+        if (bad === 'updated_at') {
+          try {
+            const setClause2 = active.map(([col], i) => `${col}=$${i + 2}`).join(', ')
+            const rows = await query(`UPDATE staff SET ${setClause2} WHERE id=$1 RETURNING *`, params)
+            return NextResponse.json({ ok: true, staff: rows[0] })
+          } catch { /* fall through */ }
+        }
       }
+      if (attempt === fields.length) break
+      // unknown error — try dropping last field once
+      if (active.length) active.pop()
+      else break
     }
   }
+  return NextResponse.json({ error: 'Update failed — run db/migrations.sql on the database' }, { status: 500 })
 }
 
 export async function DELETE(req: NextRequest) {
