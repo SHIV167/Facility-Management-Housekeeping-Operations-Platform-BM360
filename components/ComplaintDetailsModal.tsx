@@ -117,7 +117,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -143,8 +143,8 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_168px] gap-5">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
             {/* Left column: operational details */}
             <div className="space-y-4">
               {/* Title + priority/SLA */}
@@ -221,7 +221,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
             </div>
 
             {/* Right column: Site Evidence Photos */}
-            <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4 lg:sticky lg:top-0">
+            <div className="bg-[#f8fafc] border border-[#e8edf2] rounded-xl p-4 xl:sticky xl:top-0 self-start">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-[12px] font-semibold tracking-[0.05em] text-[#6b7280] uppercase">SITE EVIDENCE PHOTOS ({photos.length})</h4>
                 <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { uploadPhoto(e.target.files); e.target.value = '' }} />
@@ -248,7 +248,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
                 </button>
               </div>
 
-              <div className="grid grid-cols-[1fr_72px] gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_96px] gap-3">
                 {/* Main viewer */}
                 <div className="bg-white border border-[#e8edf2] rounded-xl p-3">
                   <div className="aspect-video bg-[#f3f4f6] rounded-lg flex items-center justify-center border border-[#e8edf2] overflow-hidden">
