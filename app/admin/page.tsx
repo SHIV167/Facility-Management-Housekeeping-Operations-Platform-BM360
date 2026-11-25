@@ -2382,16 +2382,6 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         </div>
 
-        <div className={`relative mx-3 mb-3 rounded-xl border border-[#1b8f84] bg-[#0c4654] px-3 py-2 ${navCollapsed ? 'md:hidden' : ''}`}>
-          <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
-          <div className="flex items-center justify-between gap-2 mt-0.5">
-            <p className="text-[12px] text-white truncate">{operationalZone}</p>
-            <button onClick={() => setZoneModalOpen(true)} className="shrink-0 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#5eead4]">
-              Change
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-          </div>
-        </div>
         <div className="px-3 pb-3">
           <button
             onClick={() => { fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}); localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userRole'); window.location.href = '/' }}
