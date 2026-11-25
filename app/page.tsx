@@ -321,6 +321,13 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Logo */}
+            <div className="mb-6 flex justify-center">
+              <div className="bg-white rounded-xl px-4 py-2.5 shadow-md border border-gray-100">
+                <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-10 w-auto" />
+              </div>
+            </div>
+
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
