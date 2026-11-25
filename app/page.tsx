@@ -132,24 +132,11 @@ export default function LoginPage() {
       <DocumentTitle title="BM360 Login" />
       {/* Left Panel - Brand */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0b3c4a] via-[#0e4c5e] to-[#0f766e]"></div>
-
         {/* Background image */}
-        <div className="absolute inset-0 opacity-[0.22]" style={{ backgroundImage: 'url(https://vigpl.com/bharat-mandapam.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+        <div className="absolute inset-0" style={{ backgroundImage: 'url(https://vigpl.com/bharat-mandapam.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-        {/* Decorative circles */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-20 w-[30rem] h-[30rem] bg-emerald-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-teal-400/10 rounded-full blur-2xl"></div>
-
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.07]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)',
-            backgroundSize: '48px 48px'
-          }}></div>
-        </div>
+        {/* Subtle dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30"></div>
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
