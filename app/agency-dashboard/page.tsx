@@ -236,7 +236,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
       <DocumentTitle title="Agency Portal" />
       {/* Sidebar - same theme as main dashboard */}
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'} md:shrink-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[96px]' : 'md:w-[248px]'} md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
           <div className={`bg-white rounded-lg px-2 py-1.5 shadow-sm ${navCollapsed ? 'md:px-1 md:text-center' : ''}`}>
             <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto mx-auto" />
