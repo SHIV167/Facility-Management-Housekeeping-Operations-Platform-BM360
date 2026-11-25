@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [complaintPage, setComplaintPage] = useState(1)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
+const [navCollapsed, setNavCollapsed] = useState(false)
 
   const deleteComplaint = (id: number) => {
     if (!window.confirm('Delete this complaint permanently?')) return
@@ -2312,7 +2313,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         }`}
       >
         <NavIcon name={item.icon} />
-        <span className="flex-1 leading-tight">{item.label}</span>
+        <span className={`flex-1 leading-tight ${navCollapsed ? 'md:hidden' : ''}`}>{item.label}</span>
         {item.badge && (
           <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#e11d48] text-white text-[10px] font-bold flex items-center justify-center">{item.badge}</span>
         )}
@@ -2324,7 +2325,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     <div className="admin-shell min-h-screen flex bg-[#f3f5f8]">
       <DocumentTitle title="BM360 Admin Dashboard" />
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 md:w-[248px] md:shrink-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'} md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
           <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
@@ -2353,17 +2354,17 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2">
           {opsOpen && (
             <>
-              <p className="px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">COMPLAINTS</p>
+              <p className={`px-2 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab] ${navCollapsed ? 'md:hidden' : ''}`}>COMPLAINTS</p>
               <nav className="space-y-0.5">{complaintItems.map(navButton)}</nav>
             </>
           )}
-          <p className="px-2 pt-4 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab]">MASTER DATA ENTRY</p>
+          <p className={`px-2 pt-4 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-[#7f9eab] ${navCollapsed ? 'md:hidden' : ''}`}>MASTER DATA ENTRY</p>
           <nav className="space-y-0.5">{masterItems.map(navButton)}</nav>
         </div>
 
         <div className="px-3.5 py-2.5 border-t border-white/10">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[#b7d0d8]">Language / हिंदी</span>
+            <span className={`text-[11px] text-[#b7d0d8] ${navCollapsed ? 'md:hidden' : ''}`}>Language / हिंदी</span>
             <div className="flex items-center rounded-full bg-[#082f3b] p-0.5">
               <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>हिंदी</button>
@@ -2407,6 +2408,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           <div className="flex items-center gap-2 text-[13px] text-[#6b7280] min-w-0">
             <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
             </button>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
