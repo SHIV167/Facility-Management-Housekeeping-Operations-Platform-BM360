@@ -47,7 +47,7 @@ export default function AgencyDashboardPage() {
   }, [])
   useEffect(() => {
     fetch('/api/complaints').then((r) => r.json()).then((d) => {
-      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || me.agency || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(), priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, resolvedAt: c.resolved_at, createdAt: c.created_at, zone: c.zone })))
+      if (d.ok && d.complaints && d.complaints.length) setComplaints(d.complaints.map((c) => ({ id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }), title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '', status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING', completionTime: c.resolved_at ? 'Resolved' : undefined, location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '', campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General', agency: c.agency_name || me.agency || '—', dueDate: c.due_date || '—', photo: c.photo_url || null, photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(), priority: 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official', publicId: c.public_id, agencyId: c.agency_id ?? null, resolvedAt: c.resolved_at, createdAt: c.created_at, zone: c.zone })))
     }).catch(() => {})
     fetch('/api/staff').then((r) => r.json()).then((d) => {
       if (d.ok && d.staff && d.staff.length) {
@@ -100,9 +100,13 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
     toast(status === 'COMPLETED' ? `Complaint #${id} closed successfully` : `Complaint #${id} reopened`, status === 'COMPLETED' ? 'success' : 'info')
   }
 
-  const activeComplaint = selectedComplaintId != null ? complaints.find((c) => c.id === selectedComplaintId) || null : null
+  // Agency users see only their own agency's complaints; admin/ITPO see all
+  const scopedComplaints = me.agencyId != null
+    ? complaints.filter((c) => c.agencyId === me.agencyId || (c.agencyId == null && c.agency === me.agency))
+    : complaints
+  const activeComplaint = selectedComplaintId != null ? scopedComplaints.find((c) => c.id === selectedComplaintId) || null : null
 
-  const filteredComplaints = complaints.filter((c) =>
+  const filteredComplaints = scopedComplaints.filter((c) =>
     overviewTab === 'all' ? true : overviewTab === 'pending' ? c.status === 'PENDING' : c.status === 'COMPLETED'
   )
 
@@ -616,7 +620,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab('all')} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'all' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">TOTAL COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{complaints.length}</p>
+                  <p className="text-[28px] font-semibold text-[#111827] leading-none mt-1.5">{scopedComplaints.length}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#eef2ff] text-[#4f46e5] flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -625,7 +629,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab((prev) => (prev === 'pending' ? 'all' : 'pending'))} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'pending' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">PENDING COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#ea580c] leading-none mt-1.5">{complaints.filter((c) => c.status === 'PENDING').length}</p>
+                  <p className="text-[28px] font-semibold text-[#ea580c] leading-none mt-1.5">{scopedComplaints.filter((c) => c.status === 'PENDING').length}</p>
                   <p className="text-[11px] text-[#e11d48] mt-1">Past SLA</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#fff7ed] text-[#ea580c] flex items-center justify-center">
@@ -635,7 +639,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
               <div onClick={() => setOverviewTab((prev) => (prev === 'completed' ? 'all' : 'completed'))} role="button" className={`bg-white rounded-xl border px-4 py-3.5 flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer transition-all ${overviewTab === 'completed' ? 'border-[#1b8f84] ring-2 ring-[#1b8f84]/30' : 'border-[#e8edf2] hover:shadow-md'}`}>
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">COMPLETED COMPLAINTS</p>
-                  <p className="text-[28px] font-semibold text-[#16a34a] leading-none mt-1.5">{complaints.filter((c) => c.status === 'COMPLETED').length}</p>
+                  <p className="text-[28px] font-semibold text-[#16a34a] leading-none mt-1.5">{scopedComplaints.filter((c) => c.status === 'COMPLETED').length}</p>
                   <p className="text-[11px] text-[#9ca3af] mt-1">Resolved</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#e8f8ef] text-[#16a34a] flex items-center justify-center">
@@ -652,9 +656,9 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           {activeView === 'complaints' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {[
-                { label: 'TOTAL COMPLAINTS', value: complaints.length, cls: 'text-[#111827]' },
-                { label: 'PENDING', value: complaints.filter((c) => c.status === 'PENDING').length, cls: 'text-[#ea580c]' },
-                { label: 'COMPLETED', value: complaints.filter((c) => c.status === 'COMPLETED').length, cls: 'text-[#16a34a]' },
+                { label: 'TOTAL COMPLAINTS', value: scopedComplaints.length, cls: 'text-[#111827]' },
+                { label: 'PENDING', value: scopedComplaints.filter((c) => c.status === 'PENDING').length, cls: 'text-[#ea580c]' },
+                { label: 'COMPLETED', value: scopedComplaints.filter((c) => c.status === 'COMPLETED').length, cls: 'text-[#16a34a]' },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-xl border border-[#e8edf2] px-4 py-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
                   <p className="text-[11px] font-semibold tracking-[0.04em] text-[#6b7280]">{s.label}</p>
@@ -768,7 +772,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
             {/* Pagination */}
             <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
-              <p className="text-[12.5px] text-[#9ca3af]">Showing 1 to {filteredComplaints.length} of {complaints.length} complaints</p>
+              <p className="text-[12.5px] text-[#9ca3af]">Showing 1 to {filteredComplaints.length} of {scopedComplaints.length} complaints</p>
               <div className="flex items-center gap-3">
                 <select className="h-8 px-2 bg-white border border-[#e5e7eb] rounded-lg text-[12.5px] text-[#374151]">
                   <option>10</option>
