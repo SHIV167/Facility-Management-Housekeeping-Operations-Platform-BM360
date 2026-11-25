@@ -7,6 +7,7 @@ import RegisterComplaintModal from '@/components/RegisterComplaintModal'
 import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import { useToast } from '@/components/Toast'
 import { translations } from '@/lib/translations'
+import { useComplaints, useOfficials, useUpdateComplaint, useDeleteComplaint } from '@/lib/hooks'
 
 const fallbackOfficials = [
   { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
@@ -18,6 +19,12 @@ const fallbackComplaints: any[] = []
 
 function OfficialDashboard() {
   const router = useRouter()
+  // React Query hooks
+  const { data: dbOfficials = [], refetch: refetchOfficials } = useOfficials()
+  const { data: dbComplaints = [], refetch: refetchComplaints } = useComplaints()
+  const updateComplaintMutation = useUpdateComplaint()
+  const deleteComplaintMutation = useDeleteComplaint()
+
   const handleLogout = () => {
     fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     localStorage.removeItem('isLoggedIn')
@@ -45,7 +52,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status, actor: official.name, role: 'ITPO Official' }),
     }).then((r) => r.json()).then((d) => {
-      if (d.ok) { toast(status === 'COMPLETED' ? 'Complaint marked completed' : 'Complaint reopened', 'success'); loadComplaints() }
+      if (d.ok) { toast(status === 'COMPLETED' ? 'Complaint marked completed' : 'Complaint reopened', 'success'); refetchComplaints() }
       else toast(d.error || 'Update failed', 'error')
     }).catch(() => toast('Update failed', 'error'))
   }
@@ -57,47 +64,43 @@ const [navCollapsed, setNavCollapsed] = useState(false)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     }).then((r) => r.json()).then((d) => {
-      if (d.ok) { toast('Complaint deleted', 'success'); loadComplaints() }
+      if (d.ok) { toast('Complaint deleted', 'success'); refetchComplaints() }
       else toast('Delete failed', 'error')
     }).catch(() => toast('Delete failed', 'error'))
   }
 
+  // Sync React Query data to local state
   useEffect(() => {
-    fetch('/api/officials').then((r) => r.json()).then((d) => {
-      if (d.ok && d.officials?.length) {
-        setOfficials(d.officials.map((o: any) => ({
-          id: o.id, name: o.name,
-          initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
-          username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
-          phone: o.phone || '', email: o.email || '',
-          zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
-          zonesList: Array.isArray(o.zones) ? o.zones : [],
-          status: o.status || 'Active',
-        })))
-      }
-    }).catch(() => {})
-    loadComplaints()
-  }, [])
+    if (dbOfficials.length) {
+      setOfficials(dbOfficials.map((o: any) => ({
+        id: o.id, name: o.name,
+        initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+        username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
+        phone: o.phone || '', email: o.email || '',
+        zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+        zonesList: Array.isArray(o.zones) ? o.zones : [],
+        status: o.status || 'Active',
+      })))
+    }
+  }, [dbOfficials])
 
-  const loadComplaints = () => {
-    fetch('/api/complaints').then((r) => r.json()).then((d) => {
-      if (d.ok && d.complaints) {
-        setAllComplaints(d.complaints.map((c: any) => ({
-          id: c.id, publicId: c.public_id,
-          date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-          title: c.title || (c.description || '').slice(0, 60) || 'Complaint',
-          status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : c.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'PENDING',
-          location: c.sub_area ? `${c.zone} - ${c.sub_area}` : c.zone || '—',
-          service: c.service || c.complaint_type || 'General',
-          dueDate: c.due_date || '—',
-          assignedTo: c.official_name || '',
-          agency: c.agency_name || '',
-          assignedOfficialId: c.assigned_official_id,
-          zone: c.zone,
-        })))
-      }
-    }).catch(() => {})
-  }
+  useEffect(() => {
+    if (dbComplaints.length) {
+      setAllComplaints(dbComplaints.map((c: any) => ({
+        id: c.id, date: new Date(c.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        title: c.title || (c.description || '').slice(0, 60) || 'Complaint', description: c.description || '',
+        status: c.status === 'COMPLETED' || c.status === 'RESOLVED' ? 'COMPLETED' : 'PENDING',
+        completionTime: c.resolved_at ? 'Resolved' : undefined,
+        location: c.sub_area ? c.zone + ' - ' + c.sub_area : c.zone || '—', subArea: c.sub_area || '',
+        campus: 'Bharat Mandapam', service: c.service || c.complaint_type || 'General',
+        agency: c.agency_name || 'Unassigned', dueDate: c.dueDate || c.due_date || '—',
+        photo: c.photo_url || null,
+        photos: (() => { try { const p = typeof c.photos === 'string' ? JSON.parse(c.photos) : c.photos; return Array.isArray(p) && p.length ? p : (c.photo_url ? [c.photo_url] : []) } catch { return c.photo_url ? [c.photo_url] : [] } })(),
+        priority: c.priority || 'HIGH', reportedBy: c.reporter_name || 'Citizen', reporterRole: c.reported_by || 'ITPO Official',
+        publicId: c.public_id, agencyId: c.agency_id ?? null, resolvedAt: c.resolved_at, createdAt: c.created_at, zone: c.zone
+      })))
+    }
+  }, [dbComplaints])
 
   const isAllZones = official.zonesList?.includes('All Zones (Entire Complex)') || official.zones.includes('All Zones')
   const myComplaints = allComplaints.filter((c) =>
@@ -496,7 +499,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
           )}
         </main>
       </div>
-      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={loadComplaints} source="itpo" officialId={official.id} reporterName={official.name} />
+      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={() => refetchComplaints()} source="itpo" officialId={official.id} reporterName={official.name} />
       <ComplaintDetailsModal
         open={inspectComplaint != null}
         onClose={() => setInspectComplaint(null)}
