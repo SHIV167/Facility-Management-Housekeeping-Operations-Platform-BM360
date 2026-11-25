@@ -7,12 +7,16 @@ import ZoneSelectModal from '@/components/ZoneSelectModal'
 import DocumentTitle from '@/components/DocumentTitle'
 import { logActivity } from '@/lib/activity'
 import { useToast } from '@/components/Toast'
+import { useOfficials } from '@/lib/hooks'
 
 type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
 export default function ITPODashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
+  // React Query hooks
+  const { data: dbOfficials = [], refetch: refetchOfficials } = useOfficials()
+
   const [currentView, setCurrentView] = useState<ViewType>('overview')
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
@@ -29,99 +33,21 @@ export default function ITPODashboardPage() {
     router.push('/')
   }
 
-  const [officials, setOfficials] = useState<any[]>([
-    {
-      id: 1,
-      name: 'Mr. Premjit Lal',
-      initials: 'MP',
-      username: '@mrpremjitlal',
-      employeeId: '9123',
-      designation: 'ED',
-      zones: 'All Zones (Entire Complex)',
-      status: 'Active',
-      assignedComplaints: 142,
-      resolvedComplaints: 128,
-      resolutionRate: 98,
-      avgResponseTime: 5.2
-    },
-    {
-      id: 2,
-      name: 'Mrs. Sunita Sharma',
-      initials: 'SS',
-      username: '@sunitasharma',
-      employeeId: '9124',
-      designation: 'Manager',
-      zones: 'Hall 1-5',
-      status: 'Active',
-      assignedComplaints: 98,
-      resolvedComplaints: 93,
-      resolutionRate: 95,
-      avgResponseTime: 6.8
-    },
-    {
-      id: 3,
-      name: 'Mr. Rajesh Kumar',
-      initials: 'RK',
-      username: '@rajeshkumar',
-      employeeId: '9125',
-      designation: 'Supervisor',
-      zones: 'Hall 6-10',
-      status: 'Active',
-      assignedComplaints: 76,
-      resolvedComplaints: 70,
-      resolutionRate: 92,
-      avgResponseTime: 7.5
-    },
-    {
-      id: 4,
-      name: 'Ms. Priya Verma',
-      initials: 'PV',
-      username: '@priyaverma',
-      employeeId: '9126',
-      designation: 'Officer',
-      zones: 'Hall 11-14',
-      status: 'Active',
-      assignedComplaints: 115,
-      resolvedComplaints: 108,
-      resolutionRate: 94,
-      avgResponseTime: 5.5
-    },
-    {
-      id: 5,
-      name: 'Mr. Amit Singh',
-      initials: 'AS',
-      username: '@amitsingh',
-      employeeId: '9127',
-      designation: 'Officer',
-      zones: 'Parking Area',
-      status: 'Active',
-      assignedComplaints: 89,
-      resolvedComplaints: 82,
-      resolutionRate: 92,
-      avgResponseTime: 6.2
-    }
-  ])
-
+  // Sync React Query data to local state
+  const [officials, setOfficials] = useState<any[]>([])
   useEffect(() => {
-    fetch('/api/officials').then((r) => r.json()).then((d) => {
-      if (d.ok && d.officials && d.officials.length) {
-        setOfficials(d.officials.map((o: any) => ({
-          id: o.id,
-          name: o.name,
-          initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
-          username: o.username || '',
-          employeeId: o.employee_id || '',
-          designation: o.designation || '',
-          zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
-          status: o.status || 'Active',
-          assignedComplaints: 0,
-          resolvedComplaints: 0,
-          resolutionRate: 0,
-          avgResponseTime: 0,
-        })))
-      }
-    }).catch(() => {})
-  }, [])
+    if (dbOfficials.length) {
+      setOfficials(dbOfficials.map((o: any) => ({
+        id: o.id, name: o.name,
+        initials: o.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
+        username: o.username || '', employeeId: o.employee_id || '', designation: o.designation || '',
+        phone: o.phone || '', email: o.email || '',
+        zones: Array.isArray(o.zones) && o.zones.length ? o.zones.join(', ') : 'All Zones (Entire Complex)',
+        zonesList: Array.isArray(o.zones) ? o.zones : [],
+        status: o.status || 'Active',
+      })))
+    }
+  }, [dbOfficials])
 
   const recentActivities = [
     { id: 1, action: 'Complaint Resolved', official: 'Mr. Premjit Lal', complaintId: '#156', timestamp: '2 minutes ago', type: 'success' },
