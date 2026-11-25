@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const [inspectComplaint, setInspectComplaint] = useState<any>(null)
   const [editComplaint, setEditComplaint] = useState<any>(null)
   const [complaintPage, setComplaintPage] = useState(1)
-  const [complaintTab, setComplaintTab] = useState<'all' | 'active' | 'completed'>('all')
+  const [complaintTab, setComplaintTab] = useState<'all' | 'pending' | 'completed'>('all')
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
 const [navCollapsed, setNavCollapsed] = useState(false)
@@ -634,7 +634,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const activeCount = complaints.filter((c) => c.status === 'PENDING' || c.status === 'IN_PROGRESS').length
         const completedCount = complaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
         const filteredComplaints = complaints.filter((c) => {
-          if (complaintTab === 'active') return c.status === 'PENDING' || c.status === 'IN_PROGRESS'
+          if (complaintTab === 'pending') return c.status === 'PENDING' || c.status === 'IN_PROGRESS'
           if (complaintTab === 'completed') return c.status === 'COMPLETED' || c.status === 'RESOLVED'
           return true
         })
@@ -669,7 +669,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
               {([
                 { key: 'all' as const, label: 'Total', value: total, cls: 'text-[#111827]' },
-                { key: 'active' as const, label: 'Active', value: activeCount, cls: 'text-[#ea580c]' },
+                { key: 'pending' as const, label: 'Pending', value: activeCount, cls: 'text-[#ea580c]' },
                 { key: 'completed' as const, label: 'Completed', value: completedCount, cls: 'text-[#16a34a]' },
               ]).map((s) => (
                 <button
@@ -769,19 +769,19 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       case 'itpo-officials':
         return (
           <div>
-            <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-4">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
                   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h1 className="text-[20px] font-semibold text-[#1f2937] leading-tight">ITPO Officials Directory</h1>
                   <p className="text-[13px] text-[#6b7280] mt-0.5">Manage authorized ITPO Officials and their operational zone tagging across Bharat Mandapam.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <button className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] hover:bg-white rounded-lg">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -833,8 +833,8 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               ))}
             </div>
 
-            <div className="flex items-center gap-3 mb-3">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+              <div className="relative flex-1 min-w-0">
                 <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -851,12 +851,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   </button>
                 )}
               </div>
-              <select value={filterZone} onChange={(e) => setFilterZone(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] min-w-[190px]">
+              <select value={filterZone} onChange={(e) => setFilterZone(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] w-full sm:w-auto sm:min-w-[190px]">
                 <option>All Zone Tagging Scopes</option>
                 <option>All Zones (Entire Complex)</option>
                 <option>Zone-Specific</option>
               </select>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] min-w-[130px]">
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 px-3 bg-white border border-[#e5e7eb] rounded-lg text-[13px] text-[#374151] w-full sm:w-auto sm:min-w-[130px]">
                 <option>Active Only</option>
                 <option>Inactive Only</option>
                 <option>All Status</option>
