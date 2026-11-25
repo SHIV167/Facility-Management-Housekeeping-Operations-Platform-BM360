@@ -614,7 +614,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                           <img src={c.photo} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
-                      <div className="min-w-0 flex-1">
+                      <div className={"min-w-0 flex-1"}>
                         <div className="flex items-center gap-2 flex-wrap mb-1.5">
                           <span className="text-[13px] font-bold text-[#111827]">#{c.publicId || c.id}</span>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${c.priority === 'URGENT' ? 'bg-[#fef2f2] text-[#dc2626]' : c.priority === 'HIGH' ? 'bg-[#fff7ed] text-[#ea580c]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>{c.priority || 'MEDIUM'}</span>
@@ -798,7 +798,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-[#12786f] text-white text-[12px] font-semibold flex items-center justify-center shrink-0">{official.initials}</div>
-                          <div className="min-w-0">
+                          <div className={"min-w-0"}>
                             <p className="text-[13.5px] font-semibold text-[#111827] leading-tight">{official.name}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-[12px] text-[#0f766e]">{official.username}</span>
@@ -1246,7 +1246,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-lg font-semibold text-gray-900">Zones and Areas</h3>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage operational zones and specific areas within Bharat Mandapam.</p>
-                <div className="flex items-center justify-between">
+                <div className={"flex items-center justify-between"}>
                   <span className="text-2xl font-bold text-[#0f766e]">{zones.length}</span>
                   <span className="text-sm text-[#6b7280]">Zones</span>
                 </div>
@@ -1261,7 +1261,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-lg font-semibold text-gray-900">Agencies</h3>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage housekeeping and facility management agencies.</p>
-                <div className="flex items-center justify-between">
+                <div className={"flex items-center justify-between"}>
                   <span className="text-2xl font-bold text-green-600">{agencies.length}</span>
                   <span className="text-sm text-[#6b7280]">Agencies</span>
                 </div>
@@ -1276,7 +1276,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-lg font-semibold text-gray-900">ITPO Officials</h3>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage ITPO officials and their operational jurisdictions.</p>
-                <div className="flex items-center justify-between">
+                <div className={"flex items-center justify-between"}>
                   <span className="text-2xl font-bold text-purple-600">{officials.length}</span>
                   <span className="text-sm text-[#6b7280]">Officials</span>
                 </div>
@@ -1291,7 +1291,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-lg font-semibold text-gray-900">Field Staff</h3>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Manage field staff and their assignments.</p>
-                <div className="flex items-center justify-between">
+                <div className={"flex items-center justify-between"}>
                   <span className="text-2xl font-bold text-orange-600">{employees.length}</span>
                   <span className="text-sm text-[#6b7280]">Staff</span>
                 </div>
@@ -1307,7 +1307,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-lg font-semibold text-gray-900">Escalation Settings</h3>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">Configure complaint escalation rules and timelines.</p>
-                <div className="flex items-center justify-between">
+                <div className={"flex items-center justify-between"}>
                   <span className="text-2xl font-bold text-red-600">5</span>
                   <span className="text-sm text-[#6b7280]">Rules</span>
                 </div>
@@ -1446,7 +1446,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-full bg-[#0e4c5e] text-white text-[11px] font-bold flex items-center justify-center shrink-0">{initials}</div>
-                              <div className="min-w-0">
+                              <div className={"min-w-0"}>
                                 <p className="text-[13.5px] font-semibold text-[#111827] leading-tight">{agency.name}</p>
                                 <p className="text-[11px] text-[#9ca3af] mt-0.5">ID: AG-{String(agency.id).padStart(3, '0')}</p>
                               </div>
@@ -1547,7 +1547,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     return (
                       <div key={r.staffId} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e8edf2]">
                         <div className="w-8 h-8 rounded-full bg-[#0e4c5e] text-white text-[10px] font-bold flex items-center justify-center shrink-0">{ini}</div>
-                        <div className="min-w-0 flex-1">
+                        <div className={"min-w-0 flex-1"}>
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-[13px] font-semibold text-[#111827]">{r.staffName}</p>
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#e8f8ef] text-[#16a34a]">Marked Today</span>
@@ -2327,11 +2327,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'} md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
-          <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
+          <div className={`bg-white rounded-lg px-3 py-2 shadow-sm ${navCollapsed ? 'md:px-1.5 md:text-center' : ''}`}>
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
               BM<span className="text-[#1d4ed8]">360</span>
             </div>
-            <div className="text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5">BHARAT MANDAPAM</div>
+            <div className={`text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5 ${navCollapsed ? 'md:hidden' : ''}`}>BHARAT MANDAPAM</div>
           </div>
         </div>
 
@@ -2343,7 +2343,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             <span className="w-8 h-8 rounded-lg bg-[#14586a] flex items-center justify-center">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M4 6h6v6H4V6zm10 0h6v6h-6V6zM4 16h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
             </span>
-            <span className="flex-1 min-w-0">
+            <span className={`flex-1 min-w-0 ${navCollapsed ? 'md:hidden' : ''}`}>
               <span className="block text-[13px] font-semibold leading-tight">ITPO Operations</span>
               <span className="block text-[10px] text-[#9ec3d0] leading-tight mt-0.5">BM360 · Operations</span>
             </span>
@@ -2363,7 +2363,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         </div>
 
         <div className="px-3.5 py-2.5 border-t border-white/10">
-          <div className="flex items-center justify-between">
+          <div className={`flex items-center justify-between ${navCollapsed ? 'md:justify-center' : ''}`}>
             <span className={`text-[11px] text-[#b7d0d8] ${navCollapsed ? 'md:hidden' : ''}`}>Language / हिंदी</span>
             <div className="flex items-center rounded-full bg-[#082f3b] p-0.5">
               <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>EN</button>
@@ -2376,13 +2376,13 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           <div className="w-9 h-9 rounded-full bg-[#14586a] flex items-center justify-center shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
-          <div className="min-w-0">
+          <div className={`min-w-0 ${navCollapsed ? 'md:hidden' : ''}`}>
             <p className="text-[13px] font-semibold leading-tight truncate">ITPO Administrator</p>
             <p className="text-[11px] text-[#9ec3d0] leading-tight">ITPO Official</p>
           </div>
         </div>
 
-        <div className="relative mx-3 mb-3 rounded-xl border border-[#1b8f84] bg-[#0c4654] px-3 py-2">
+        <div className={`relative mx-3 mb-3 rounded-xl border border-[#1b8f84] bg-[#0c4654] px-3 py-2 ${navCollapsed ? 'md:hidden' : ''}`}>
           <p className="text-[9px] font-semibold tracking-[0.12em] text-[#8fb4c0]">OPERATIONAL ZONE</p>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             <p className="text-[12px] text-white truncate">{operationalZone}</p>
@@ -2398,7 +2398,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-[#fca5a5] hover:bg-white/5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            Logout
+            <span className={`hidden ${navCollapsed ? '' : 'md:inline'}`}>Logout</span>
           </button>
         </div>
       </aside>
@@ -2409,11 +2409,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-            </button>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
+            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 -ml-1 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
             <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
             <span className="text-[#111827] font-semibold">{breadcrumbs[currentView]}</span>
           </div>

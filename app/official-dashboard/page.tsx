@@ -136,9 +136,9 @@ const [navCollapsed, setNavCollapsed] = useState(false)
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'} md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
-          <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
+          <div className={`bg-white rounded-lg px-3 py-2 shadow-sm ${navCollapsed ? 'md:px-1.5 md:text-center' : ''}`}>
             <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">BM<span className="text-[#1d4ed8]">360</span></div>
-            <div className="text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5">BHARAT MANDAPAM</div>
+            <div className={`text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5 ${navCollapsed ? 'md:hidden' : ''}`}>BHARAT MANDAPAM</div>
           </div>
         </div>
 
@@ -147,7 +147,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
             <span className="w-8 h-8 rounded-lg bg-[#14586a] flex items-center justify-center">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             </span>
-            <span className="flex-1 min-w-0">
+            <span className={`flex-1 min-w-0 ${navCollapsed ? 'md:hidden' : ''}`}>
               <span className="block text-[13px] font-semibold leading-tight">{official.name}</span>
               <span className="block text-[10px] text-[#9ec3d0] leading-tight mt-0.5">ITPO Official • BM360</span>
             </span>
@@ -171,7 +171,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
         </div>
 
         <div className="px-3.5 py-2.5 border-t border-white/10">
-          <div className="flex items-center justify-between">
+          <div className={`flex items-center justify-between ${navCollapsed ? 'md:justify-center' : ''}`}>
             <span className={`text-[11px] text-[#b7d0d8] ${navCollapsed ? 'md:hidden' : ''}`}>Language / हिंदी</span>
             <div className="flex items-center rounded-full bg-[#082f3b] p-0.5">
               <button onClick={() => setLanguage('en')} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#b7d0d8]'}`}>EN</button>
@@ -184,7 +184,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
           <div className="w-9 h-9 rounded-full bg-[#14586a] flex items-center justify-center shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
-          <div className="min-w-0 flex-1">
+          <div className={`min-w-0 flex-1 ${navCollapsed ? 'md:hidden' : ''}`}>
             <p className="text-[13px] font-semibold leading-tight truncate">{official.name}</p>
             <p className="text-[11px] text-[#9ec3d0] leading-tight">{official.designation} • ITPO</p>
           </div>
@@ -206,11 +206,11 @@ const [navCollapsed, setNavCollapsed] = useState(false)
             <button onClick={() => setNavOpen(true)} className="md:hidden p-1.5 -ml-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Menu">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-            </button>
             <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
+            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 -ml-1 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+            </button>
             <svg className="w-3.5 h-3.5 text-[#9ca3af] hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
             <span className="text-[#111827] font-semibold truncate">ITPO Official Dashboard</span>
           </div>
@@ -404,7 +404,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                       <div className="w-9 h-9 rounded-lg bg-[#e6f7f4] flex items-center justify-center">
                         <svg className="w-4.5 h-4.5 w-5 h-5 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                       </div>
-                      <div className="min-w-0">
+                      <div className={"min-w-0"}>
                         <p className="text-[14px] font-semibold text-[#111827] truncate">{z}</p>
                         <p className="text-[11px] text-[#9ca3af]">{zoneComplaints.length} complaints</p>
                       </div>
