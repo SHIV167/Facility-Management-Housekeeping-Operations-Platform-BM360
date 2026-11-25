@@ -155,13 +155,10 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
           {/* Logo */}
           <div className="flex items-center gap-4 mb-10">
-            <div className="w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div className="h-14 px-3 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">BM360</h1>
               <p className="text-teal-200 text-sm">Bharat Mandapam</p>
             </div>
           </div>
@@ -263,12 +260,9 @@ export default function LoginPage() {
 
         {/* Mobile Logo */}
         <div className="lg:hidden absolute top-8 left-8 flex items-center gap-3">
-          <div className="w-11 h-11 bg-gradient-to-br from-teal-600 to-teal-800 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="h-10 px-3 bg-white rounded-xl flex items-center shadow-lg">
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-7 w-auto" />
           </div>
-          <span className="text-xl font-bold text-gray-900">BM360</span>
         </div>
 
         {/* Login Card */}

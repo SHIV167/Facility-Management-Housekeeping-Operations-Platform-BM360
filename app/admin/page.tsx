@@ -2327,11 +2327,8 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       {navOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setNavOpen(false)} />}
       <aside className={`fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0b3c4a] text-white flex flex-col transform transition-transform duration-200 ${navOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:bottom-auto md:left-auto md:h-screen md:self-start md:translate-x-0 ${navCollapsed ? 'md:w-[76px]' : 'md:w-[248px]'} md:shrink-0`}>
         <div className="px-3.5 pt-3.5 pb-2">
-          <div className={`bg-white rounded-lg px-3 py-2 shadow-sm ${navCollapsed ? 'md:px-1.5 md:text-center' : ''}`}>
-            <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
-              BM<span className="text-[#1d4ed8]">360</span>
-            </div>
-            <div className={`text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5 ${navCollapsed ? 'md:hidden' : ''}`}>BHARAT MANDAPAM</div>
+          <div className={`bg-white rounded-lg px-2 py-1.5 shadow-sm ${navCollapsed ? 'md:px-1 md:text-center' : ''}`}>
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto mx-auto" />
           </div>
         </div>
 
@@ -2416,7 +2413,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-            <span>BM360</span>
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-4 w-auto" />
             <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
             <span className="text-[#111827] font-semibold">{breadcrumbs[currentView]}</span>
           </div>

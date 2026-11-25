@@ -510,11 +510,8 @@ export default function ITPODashboardPage() {
       {/* Sidebar - same theme as main dashboard */}
       <aside className="w-[248px] shrink-0 bg-[#0b3c4a] text-white flex flex-col">
         <div className="px-3.5 pt-3.5 pb-2">
-          <div className="bg-white rounded-lg px-3 py-2 shadow-sm">
-            <div className="text-[22px] font-extrabold leading-none tracking-tight text-[#0b3c4a]">
-              BM<span className="text-[#1d4ed8]">360</span>
-            </div>
-            <div className="text-[8px] font-bold tracking-[0.16em] text-[#64748b] mt-0.5">BHARAT MANDAPAM</div>
+          <div className="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360 Bharat Mandapam" className="h-9 w-auto mx-auto" />
           </div>
         </div>
 
@@ -575,7 +572,7 @@ export default function ITPODashboardPage() {
         <header className="h-14 bg-white border-b border-[#e8edf2] px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-            <span>BM360</span>
+            <img src="https://vigpl.com/bm360_dark_logo.png" alt="BM360" className="h-4 w-auto" />
             <svg className="w-3.5 h-3.5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
             <span className="text-[#111827] font-semibold">{breadcrumbs[currentView]}</span>
           </div>
