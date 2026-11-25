@@ -90,6 +90,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
           service: c.service || c.complaint_type || 'General',
           dueDate: c.due_date || '—',
           assignedTo: c.official_name || '',
+          agency: c.agency_name || '',
           assignedOfficialId: c.assigned_official_id,
           zone: c.zone,
         })))
