@@ -242,6 +242,12 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           </div>
         </div>
 
+        <div className={`px-3 ${navCollapsed ? 'md:px-1.5' : ''}`}>
+          <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex w-full items-center justify-center py-1 text-[#9ec3d0] hover:text-white" title="Toggle sidebar">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={navCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} /></svg>
+          </button>
+        </div>
+
         <div className="px-3 pt-2">
           <div className="w-full flex items-center gap-2.5 rounded-xl bg-[#0e4c5e] px-2.5 py-2">
             <span className="w-8 h-8 rounded-lg bg-[#14586a] flex items-center justify-center">
@@ -322,9 +328,6 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
             </button>
             <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             <span>BM360</span>
-            <button onClick={() => setNavCollapsed(!navCollapsed)} className="hidden md:flex p-1.5 -ml-1 text-[#374151] hover:bg-[#f3f5f8] rounded-lg" title="Toggle sidebar">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-            </button>
             <svg className="w-3.5 h-3.5 text-[#9ca3af] hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" /></svg>
             <span className="text-[#111827] font-semibold truncate">Complaint Register</span>
           </div>
