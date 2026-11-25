@@ -32,6 +32,7 @@ function OfficialDashboard() {
 
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [activeView, setActiveView] = useState<'overview' | 'complaints' | 'zones' | 'reports'>('overview')
+  const [compPage, setCompPage] = useState(1)
   const [navOpen, setNavOpen] = useState(false)
 const [navCollapsed, setNavCollapsed] = useState(false)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
@@ -102,6 +103,10 @@ const [navCollapsed, setNavCollapsed] = useState(false)
   const myComplaints = allComplaints.filter((c) =>
     c.assignedOfficialId === official.id || c.assignedTo === official.name || (isAllZones && c.zone) || (!isAllZones && official.zonesList?.some((z: string) => c.zone === z || c.zone?.includes(z)))
   )
+  const COMP_PAGE_SIZE = 8
+  const compPages = Math.max(1, Math.ceil(myComplaints.length / COMP_PAGE_SIZE))
+  const compPageClamped = Math.min(compPage, compPages)
+  const pagedComplaints = myComplaints.slice((compPageClamped - 1) * COMP_PAGE_SIZE, compPageClamped * COMP_PAGE_SIZE)
   const resolved = myComplaints.filter((c) => c.status === 'COMPLETED' || c.status === 'RESOLVED').length
   const pending = myComplaints.filter((c) => c.status === 'PENDING').length
   const zoneList = official.zones === 'All Zones (Entire Complex)' ? ['All Campus Zones (Entire Complex)'] : official.zones.split(',').map((z) => z.trim())
@@ -309,13 +314,13 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#eef1f4]">
-                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
+                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'AGENCY', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {myComplaints.map((c) => (
+                    {pagedComplaints.map((c) => (
                       <tr key={c.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
                         <td className="px-4 py-3">
                           <p className="text-[13px] font-semibold text-[#111827]">#{c.id}</p>
@@ -324,6 +329,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                         <td className="px-4 py-3 text-[13px] text-[#111827] max-w-[220px] truncate">{c.title}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.location}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.service}</td>
+                        <td className="px-4 py-3 text-[13px] text-[#374151]">{c.agency || 'Unassigned'}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.dueDate}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusPill(c.status)}`}>{c.status}</span>
@@ -334,11 +340,23 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                       </tr>
                     ))}
                     {myComplaints.length === 0 && (
-                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
+                      <tr><td colSpan={8} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
+              {compPages > 1 && (
+                <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
+                  <p className="text-[12px] text-[#9ca3af]">Showing {(compPageClamped - 1) * COMP_PAGE_SIZE + 1}–{Math.min(compPageClamped * COMP_PAGE_SIZE, myComplaints.length)} of {myComplaints.length}</p>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => setCompPage((p) => Math.max(1, p - 1))} disabled={compPageClamped <= 1} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Prev</button>
+                    {Array.from({ length: compPages }, (_, i) => i + 1).map((p) => (
+                      <button key={p} onClick={() => setCompPage(p)} className={`w-7 h-7 text-[12px] font-semibold rounded-md ${p === compPageClamped ? 'bg-[#0e4c5e] text-white' : 'border border-[#e5e7eb] hover:bg-[#f8fafc]'}`}>{p}</button>
+                    ))}
+                    <button onClick={() => setCompPage((p) => Math.min(compPages, p + 1))} disabled={compPageClamped >= compPages} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           </>
@@ -356,13 +374,13 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#eef1f4]">
-                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
+                      {['ID & DATE', 'COMPLAINT', 'LOCATION', 'SERVICE', 'AGENCY', 'DUE DATE', 'STATUS', 'ACTION'].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold tracking-[0.04em] text-[#9ca3af] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {myComplaints.map((c) => (
+                    {pagedComplaints.map((c) => (
                       <tr key={c.id} className="border-b border-[#f3f4f6] last:border-0 hover:bg-[#fafbfc]">
                         <td className="px-4 py-3">
                           <p className="text-[13px] font-semibold text-[#111827]">#{c.publicId || c.id}</p>
@@ -371,6 +389,7 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                         <td className="px-4 py-3 text-[13px] text-[#111827] max-w-[260px] truncate">{c.title}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.location}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.service}</td>
+                        <td className="px-4 py-3 text-[13px] text-[#374151]">{c.agency || 'Unassigned'}</td>
                         <td className="px-4 py-3 text-[13px] text-[#374151]">{c.dueDate}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusPill(c.status)}`}>{c.status}</span>
@@ -389,11 +408,23 @@ const [navCollapsed, setNavCollapsed] = useState(false)
                       </tr>
                     ))}
                     {myComplaints.length === 0 && (
-                      <tr><td colSpan={7} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
+                      <tr><td colSpan={8} className="px-4 py-10 text-center text-[13px] text-[#9ca3af]">No complaints assigned to this official yet.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
+              {compPages > 1 && (
+                <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
+                  <p className="text-[12px] text-[#9ca3af]">Showing {(compPageClamped - 1) * COMP_PAGE_SIZE + 1}–{Math.min(compPageClamped * COMP_PAGE_SIZE, myComplaints.length)} of {myComplaints.length}</p>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => setCompPage((p) => Math.max(1, p - 1))} disabled={compPageClamped <= 1} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Prev</button>
+                    {Array.from({ length: compPages }, (_, i) => i + 1).map((p) => (
+                      <button key={p} onClick={() => setCompPage(p)} className={`w-7 h-7 text-[12px] font-semibold rounded-md ${p === compPageClamped ? 'bg-[#0e4c5e] text-white' : 'border border-[#e5e7eb] hover:bg-[#f8fafc]'}`}>{p}</button>
+                    ))}
+                    <button onClick={() => setCompPage((p) => Math.min(compPages, p + 1))} disabled={compPageClamped >= compPages} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
