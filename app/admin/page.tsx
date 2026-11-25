@@ -13,6 +13,7 @@ import AgencyFormModal from '@/components/AgencyFormModal'
 import AttendanceModal, { AttendanceRecord, StaffOption } from '@/components/AttendanceModal'
 import AttendanceEditModal, { AttendanceRow } from '@/components/AttendanceEditModal'
 import StaffEditModal from '@/components/StaffEditModal'
+import { jsPDF } from 'jspdf'
 import { defaultAgencies, AgencyRecord, defaultEmployees, EmployeeRecord } from '@/lib/agencies'
 import ImportEmployeesModal, { ImportedEmployee } from '@/components/ImportEmployeesModal'
 import DocumentTitle from '@/components/DocumentTitle'
@@ -2000,15 +2001,34 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 {!repComplaints.length && <p className="text-[12.5px] text-[#9ca3af]">No complaints yet.</p>}
               </div>
               <div className="bg-white rounded-xl border border-[#e8edf2] p-5">
-                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Attendance Summary</h3>
-                <div className="space-y-2 text-[13px]">
-                  <div className="flex justify-between py-2 border-b border-[#f3f4f6]"><span className="text-[#6b7280]">Total records</span><span className="font-semibold">{attRecords.length}</span></div>
-                  <div className="flex justify-between py-2 border-b border-[#f3f4f6]"><span className="text-[#6b7280]">Marked today</span><span className="font-semibold text-[#16a34a]">{attToday}</span></div>
-                  <div className="flex justify-between py-2"><span className="text-[#6b7280]">With photo evidence</span><span className="font-semibold">{attRecords.filter((r) => r.photoFile).length}</span></div>
+                <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Attendance Summary (by Agency)</h3>
+                <div className="space-y-1.5 text-[12.5px]">
+                  <div className="flex justify-between py-1.5 px-2 bg-[#f8fafc] rounded font-semibold text-[#6b7280] text-[11px] uppercase tracking-wide">
+                    <span>Agency</span>
+                    <span className="w-10 text-center">Total</span>
+                    <span className="w-10 text-center">Today</span>
+                    <span className="w-10 text-center">Photo</span>
+                  </div>
+                  {Object.entries(byAgency).sort((a, b) => b[1].total - a[1].total).map(([agency, stats]) => (
+                    <div key={agency} className="flex justify-between py-1.5 px-2 border-b border-[#f3f4f6] last:border-0">
+                      <span className="text-[#111827] font-medium">{agency}</span>
+                      <span className="w-10 text-center">{stats.total}</span>
+                      <span className="w-10 text-center text-[#16a34a]">{stats.today}</span>
+                      <span className="w-10 text-center text-[#1d4ed8]">{stats.photo}</span>
+                    </div>
+                  ))}
+                  {!Object.keys(byAgency).length && <p className="py-3 text-center text-[#9ca3af]">No attendance records yet.</p>}
                 </div>
-                <a href="/api/attendance" className="mt-4 inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
-                  Export Attendance CSV
-                </a>
+                <div className="mt-4 flex items-center gap-2">
+                  <button onClick={downloadPdf} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#1d4ed8] bg-[#eef2ff] border border-[#bfdbfe] rounded-lg hover:bg-[#e0e7ff]">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Download PDF
+                  </button>
+                  <a href="/api/attendance" className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] border border-[#b7e4d4] rounded-lg hover:bg-[#d7f0ea]">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download CSV
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -2019,6 +2039,43 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
         const attToday = attRecords.filter((r) => { const d = new Date(r.dateTime); return !isNaN(d.getTime()) && d.toDateString() === todayStr }).length
         const attWithPhoto = attRecords.filter((r) => r.photoFile).length
         const filteredAtt = attRecords.filter((r) => !attSearch || [r.staffName, r.staffId, r.zone, r.dateTime, r.gps, r.markedBy || ''].some((v) => String(v).toLowerCase().includes(attSearch.toLowerCase())))
+        const byAgency = attRecords.reduce<Record<string, { total: number; today: number; photo: number }>>((m, r) => {
+          const a = r.agency || 'Unassigned'
+          if (!m[a]) m[a] = { total: 0, today: 0, photo: 0 }
+          m[a].total++
+          const d = new Date(r.dateTime)
+          if (!isNaN(d.getTime()) && d.toDateString() === todayStr) m[a].today++
+          if (r.photoFile) m[a].photo++
+          return m
+        }, {})
+        const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\//g, '-')
+        const downloadPdf = () => {
+          const doc = new jsPDF()
+          doc.setFontSize(16)
+          doc.text('BM360 Attendance Report', 14, 15)
+          doc.setFontSize(10)
+          doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 22)
+          doc.setFontSize(11)
+          let y = 32
+          doc.setFillColor(14, 76, 94)
+          doc.rect(14, y - 5, 182, 8, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.text('Agency', 16, y)
+          doc.text('Total', 70, y)
+          doc.text('Today', 100, y)
+          doc.text('With Photo', 140, y)
+          doc.setTextColor(0, 0, 0)
+          y += 8
+          Object.entries(byAgency).sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
+            if (y > 270) { doc.addPage(); y = 20 }
+            doc.text(agency, 16, y)
+            doc.text(String(stats.total), 70, y)
+            doc.text(String(stats.today), 100, y)
+            doc.text(String(stats.photo), 140, y)
+            y += 7
+          })
+          doc.save(`BM360_Attendance_Report_${dateStr}.pdf`)
+        }
         return (
           <div>
             <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
