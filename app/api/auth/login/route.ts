@@ -43,10 +43,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Invalid OTP' }, { status: 401 })
     }
     // Agency staff/supervisors authenticate by registered mobile number
-    const staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
+    let staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
       'SELECT id, name, username, role FROM staff WHERE phone=$1 AND status=\'Active\' LIMIT 1',
       [mobile]
     ).catch(() => null)
+    // Fallback: agency contact phone → resolve to that agency's manager staff (auto-provision if none)
+    if (!staff) {
+      const ag = await queryOne<{ id: number; name: string; contact_person: string }>(
+        'SELECT id, name, contact_person FROM agencies WHERE phone=$1 LIMIT 1', [mobile]
+      ).catch(() => null)
+      if (ag) {
+        staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
+          `SELECT id, name, username, role FROM staff WHERE agency_id=$1 AND status='Active' ORDER BY CASE WHEN role ILIKE '%manager%' THEN 0 WHEN role ILIKE '%supervisor%' THEN 1 ELSE 2 END LIMIT 1`,
+          [ag.id]
+        ).catch(() => null)
+        if (!staff) {
+          const mgrName = ag.contact_person || ag.name
+          staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
+            `INSERT INTO staff (agency_id, name, role, designation, phone, status) VALUES ($1,$2,'Manager','Agency Manager',$3,'Active') RETURNING id, name, username, role`,
+            [ag.id, mgrName, mobile]
+          ).catch(() => null)
+        }
+      }
+    }
     const role = staff ? (/manager/i.test(staff.role) ? 'Agency Manager' : /supervisor/i.test(staff.role) ? 'Agency Supervisor' : 'Field Staff') : null
     if (!role) {
       // Only registered agency staff or All-Campus-authorized mobiles may log in
