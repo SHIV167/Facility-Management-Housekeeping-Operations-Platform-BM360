@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Fallback: agency contact phone → resolve to that agency's manager staff (auto-provision if none)
     if (!staff) {
       const ag = await queryOne<{ id: number; name: string; contact_person: string }>(
-        'SELECT id, name, contact_person FROM agencies WHERE phone=$1 LIMIT 1', [mobile]
+        `SELECT id, name, contact_person FROM agencies WHERE regexp_replace(COALESCE(phone,''),'\\D','','g') LIKE '%' || $1 LIMIT 1`, [mobile]
       ).catch(() => null)
       if (ag) {
         staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
