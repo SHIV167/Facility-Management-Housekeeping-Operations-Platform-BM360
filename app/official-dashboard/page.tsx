@@ -360,7 +360,7 @@ const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null
                 </table>
               </div>
               {compPages > 1 && (
-                <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
+                <div className="px-5 py-3 border-t border-[#eef1f4] flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[12px] text-[#9ca3af]">Showing {(compPageClamped - 1) * COMP_PAGE_SIZE + 1}–{Math.min(compPageClamped * COMP_PAGE_SIZE, myComplaints.length)} of {myComplaints.length}</p>
                   <div className="flex items-center gap-1.5">
                     <button onClick={() => setCompPage((p) => Math.max(1, p - 1))} disabled={compPageClamped <= 1} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Prev</button>
@@ -428,7 +428,7 @@ const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null
                 </table>
               </div>
               {compPages > 1 && (
-                <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
+                <div className="px-5 py-3 border-t border-[#eef1f4] flex flex-wrap items-center justify-between gap-2">
                   <p className="text-[12px] text-[#9ca3af]">Showing {(compPageClamped - 1) * COMP_PAGE_SIZE + 1}–{Math.min(compPageClamped * COMP_PAGE_SIZE, myComplaints.length)} of {myComplaints.length}</p>
                   <div className="flex items-center gap-1.5">
                     <button onClick={() => setCompPage((p) => Math.max(1, p - 1))} disabled={compPageClamped <= 1} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Prev</button>

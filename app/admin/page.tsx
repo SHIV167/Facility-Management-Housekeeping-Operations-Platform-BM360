@@ -495,7 +495,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
 
             {/* Employees section */}
             <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-[15px] font-semibold text-[#111827]">Employees</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredEmp.length} of {agencyEmployees.length} imported employees</p>
@@ -688,7 +688,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 const done = c.status === 'COMPLETED' || c.status === 'RESOLVED'
                 return (
                   <div key={c.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-                    <div className="flex items-start gap-4 p-4">
+                    <div className="flex flex-wrap items-start gap-4 p-4">
                       {c.photo && (
                         <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#e8edf2] shrink-0 hidden sm:block">
                           <img src={c.photo} alt="" className="w-full h-full object-cover" />
@@ -713,7 +713,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </div>
                         <p className="text-[11px] text-[#9ca3af] mt-1.5">{c.date} · Reported by {c.reportedBy || c.assignedTo} ({c.reporterRole || 'ITPO Official'})</p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                         <button onClick={() => setEditComplaint(c)} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0e4c5e] bg-[#e6f7f4] border border-[#bfe8e2] rounded-lg hover:bg-[#d9f2ee]">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           Edit
@@ -751,7 +751,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
 
             {listTotal > 0 && (
-              <div className="mt-4 flex items-center justify-between gap-3 flex-wrap bg-white rounded-xl border border-[#e8edf2] px-4 py-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-[#e8edf2] px-4 py-3">
                 <p className="text-[12.5px] text-[#6b7280]">Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, listTotal)} of {listTotal} complaints</p>
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setComplaintPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} className="px-3 py-1.5 text-[12.5px] font-medium rounded-lg border border-[#e5e7eb] bg-white text-[#374151] hover:bg-[#f8fafc] disabled:opacity-40">← Prev</button>
@@ -1405,7 +1405,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
             <div className="grid grid-cols-1 gap-6 mb-6">
               <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
+                <div className="px-5 py-3.5 border-b border-[#eef1f4] flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="text-[15px] font-semibold text-[#111827]">Zones</h3>
                     <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredZones.length} of {zones.length} zones</p>
@@ -1493,7 +1493,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
               <p className="text-[13px] text-[#6b7280] mt-1">Manage housekeeping and facility management agencies across Bharat Mandapam.</p>
             </div>
             <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-[15px] font-semibold text-[#111827]">Agency Directory</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredAgencies.length} of {agencies.length} agencies</p>
@@ -1643,7 +1643,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
             {/* Attendance Records */}
             <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden mb-6">
-              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-[15px] font-semibold text-[#111827]">Attendance Records</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{attRecords.length} saved record{attRecords.length === 1 ? '' : 's'} · persisted to attendance.csv</p>
@@ -2154,7 +2154,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             </div>
 
             <div className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex items-center justify-between gap-3 flex-wrap">
+              <div className="px-5 py-3.5 border-b border-[#eef1f4] flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-[15px] font-semibold text-[#111827]">Attendance Records</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredAtt.length} record{filteredAtt.length === 1 ? '' : 's'} · PostgreSQL attendance table</p>

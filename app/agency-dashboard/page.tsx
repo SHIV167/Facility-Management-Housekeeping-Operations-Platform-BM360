@@ -550,7 +550,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           <>
           {/* Greeting Header */}
           <div className="mb-4">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="mt-0.5 w-9 h-9 rounded-full bg-white border border-[#e6ebf0] flex items-center justify-center text-[#1f8f86] shrink-0">
                   <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
@@ -564,7 +564,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 items-end shrink-0">
+              <div className="flex flex-col gap-2 items-stretch sm:items-end sm:shrink-0">
                 <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#f8fafc] border border-[#e8edf2]">
                   <svg className="w-4 h-4 text-[#0f766e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <span className="text-[13px] font-semibold text-[#111827]">Daily Attendance</span>
@@ -807,7 +807,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
             </div>
 
             {/* Pagination */}
-            <div className="px-5 py-3 border-t border-[#eef1f4] flex items-center justify-between">
+            <div className="px-5 py-3 border-t border-[#eef1f4] flex flex-wrap items-center justify-between gap-2">
               <p className="text-[12.5px] text-[#9ca3af]">Showing 1 to {filteredComplaints.length} of {scopedComplaints.length} complaints</p>
               <div className="flex items-center gap-3">
                 <select className="h-8 px-2 bg-white border border-[#e5e7eb] rounded-lg text-[12.5px] text-[#374151]">
