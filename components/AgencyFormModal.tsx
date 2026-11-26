@@ -101,8 +101,10 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
     if (errs.length) { setErrors(errs); return }
     setErrors([])
 
+    const mgrPhone = managerPhone.trim() || phone.trim()
+    const mgrName = managerName.trim() || contactPerson.trim() || 'Agency Manager'
     const staff = [
-      ...((managerName.trim() || managerPhone.trim()) ? [{ name: managerName.trim() || 'Agency Manager', role: 'Manager', designation: 'Agency Manager', phone: managerPhone.trim() }] : []),
+      ...((managerName.trim() || mgrPhone) ? [{ name: mgrName, role: 'Manager', designation: 'Agency Manager', phone: mgrPhone }] : []),
       ...supervisors.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Supervisor', designation: 'Housekeeping Supervisor', phone: s.phone.trim() })),
       ...fieldStaff.filter((s) => s.name.trim()).map((s) => ({ name: s.name.trim(), role: 'Field Staff', designation: 'Housekeeping Field Staff', phone: s.phone.trim() })),
     ]
