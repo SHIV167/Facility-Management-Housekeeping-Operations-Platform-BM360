@@ -14,8 +14,10 @@ type Props = {
 
 const emptyForm = {
   name: '', username: '', employeeId: '', designation: '',
-  phone: '', email: '', password: '', zones: '', status: 'Active',
+  phone: '', email: '', password: '', zones: '', zonesList: [] as string[], status: 'Active',
 }
+
+const FALLBACK_ZONES = ['All Zones (Entire Complex)', 'Hall 1-5', 'Hall 6-10', 'Hall 11-14', 'Parking Area', 'Admin Building']
 
 export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }: Props) {
   const { toast } = useToast()
@@ -23,13 +25,19 @@ export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }
   const t = translations[language]
 
   const [formData, setFormData] = useState(emptyForm)
+  const [zoneOptions, setZoneOptions] = useState<string[]>(FALLBACK_ZONES)
 
   useEffect(() => {
     if (open) {
+      fetch('/api/zones').then((r) => r.json()).then((d) => {
+        const names = (d.zones || []).map((z: any) => z.name).filter(Boolean)
+        if (names.length) setZoneOptions(['All Zones (Entire Complex)', ...names.filter((n: string) => n !== 'All Zones (Entire Complex)')])
+      }).catch(() => {})
+      const initZones = editing?.zonesList || (Array.isArray(editing?.zones) ? editing.zones : String(editing?.zones || '').split(',').map((z: string) => z.trim()).filter(Boolean))
       setFormData(editing ? {
         name: editing.name || '', username: editing.username || '', employeeId: editing.employeeId || editing.employee_id || '',
         designation: editing.designation || '', phone: editing.phone || '', email: editing.email || '', password: '',
-        zones: editing.zonesList ? editing.zonesList.join(', ') : (editing.zones || ''), status: editing.status || 'Active',
+        zones: Array.isArray(initZones) ? initZones.join(', ') : String(editing.zones || ''), zonesList: Array.isArray(initZones) ? initZones : [], status: editing.status || 'Active',
       } : emptyForm)
     }
   }, [open, editing])
@@ -39,8 +47,10 @@ export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) { toast('Official name is required', 'error'); return }
+    if (!formData.zonesList.length && !formData.zones.trim()) { toast('Please select at least one operational zone', 'error'); return }
+    const payload = { ...formData, zones: formData.zonesList.length ? formData.zonesList.join(', ') : formData.zones }
     if (onSave) {
-      onSave(formData)
+      onSave(payload)
     } else {
       logActivity('System Admin', 'Admin', 'ITPO Official Saved', `${formData.name || 'New official'} · ${formData.designation || ''}`.trim())
       toast(t.successfullySaved)
@@ -195,19 +205,28 @@ export default function ItpoOfficialFormModal({ open, onClose, editing, onSave }
 
               <div className="md:col-span-2">
                 <label className={labelCls}>{t.taggedOperationalZones} *</label>
-                <select
-                  required
-                  value={formData.zones}
-                  onChange={(e) => setFormData({ ...formData, zones: e.target.value })}
-                  className={inputCls}
-                >
-                  <option value="">{t.selectZone}</option>
-                  <option value="All Zones (Entire Complex)">{t.allZonesEntireComplex}</option>
-                  <option value="Hall 1-5">Hall 1-5</option>
-                  <option value="Hall 6-10">Hall 6-10</option>
-                  <option value="Hall 11-14">Hall 11-14</option>
-                  <option value="Parking Area">Parking Area</option>
-                </select>
+                <div className="max-h-44 overflow-y-auto border border-[#e5e7eb] rounded-lg bg-white divide-y divide-[#f3f4f6]">
+                  {zoneOptions.map((z) => {
+                    const checked = formData.zonesList.includes(z)
+                    return (
+                      <label key={z} className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer text-[13px] ${checked ? 'bg-[#e6f7f4]' : 'hover:bg-[#f8fafc]'}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            const next = checked ? formData.zonesList.filter((x) => x !== z) : [...formData.zonesList, z]
+                            setFormData({ ...formData, zonesList: next, zones: next.join(', ') })
+                          }}
+                          className="w-4 h-4 accent-[#1b8f84]"
+                        />
+                        <span className={checked ? 'font-medium text-[#0f766e]' : 'text-[#374151]'}>{z}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+                {formData.zonesList.length > 0 && (
+                  <p className="text-[11.5px] text-[#0f766e] mt-1.5 font-medium">{formData.zonesList.length} zone{formData.zonesList.length > 1 ? 's' : ''} selected</p>
+                )}
               </div>
 
               <div>
