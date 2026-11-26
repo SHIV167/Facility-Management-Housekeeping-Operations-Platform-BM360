@@ -24,6 +24,7 @@ import { logActivity, ActivityRecord } from '@/lib/activity'
 import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { useComplaints, useZones, useAgencies, useStaff, useOfficials, useAttendance, useCreateComplaint, useUpdateComplaint, useDeleteComplaint } from '@/lib/hooks'
+import { SkeletonPage } from '@/components/Skeleton'
 
 type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports' | 'attendance' | 'notifications'
 
@@ -31,11 +32,12 @@ export default function DashboardPage() {
   const { toast } = useToast()
   // React Query hooks for data fetching
   const { data: dbComplaints = [], isLoading: complaintsLoading, refetch: refetchComplaints } = useComplaints()
-  const { data: dbZones = [], refetch: refetchZones } = useZones()
-  const { data: dbAgencies = [], refetch: refetchAgencies } = useAgencies()
-  const { data: dbStaff = [], refetch: refetchStaff } = useStaff()
-  const { data: dbOfficials = [], refetch: refetchOfficials } = useOfficials()
-  const { data: dbAttendance = [], refetch: refetchAttendance } = useAttendance()
+  const { data: dbZones = [], isLoading: zonesLoading, refetch: refetchZones } = useZones()
+  const { data: dbAgencies = [], isLoading: agenciesLoading, refetch: refetchAgencies } = useAgencies()
+  const { data: dbStaff = [], isLoading: staffLoading, refetch: refetchStaff } = useStaff()
+  const { data: dbOfficials = [], isLoading: officialsLoading, refetch: refetchOfficials } = useOfficials()
+  const { data: dbAttendance = [], isLoading: attendanceLoading, refetch: refetchAttendance } = useAttendance()
+  const dataLoading = complaintsLoading || zonesLoading || agenciesLoading || staffLoading || officialsLoading || attendanceLoading
   // Mutations
   const createComplaint = useCreateComplaint()
   const updateComplaint = useUpdateComplaint()
@@ -482,6 +484,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
   }
 
   const renderContent = () => {
+    if (dataLoading) return <SkeletonPage />
     if (selectedAgencyId) {
       const agency = agencies.find((a) => a.id === selectedAgencyId)
       if (agency) {

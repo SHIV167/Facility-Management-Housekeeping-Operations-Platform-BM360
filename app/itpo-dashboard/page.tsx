@@ -8,6 +8,7 @@ import DocumentTitle from '@/components/DocumentTitle'
 import { logActivity } from '@/lib/activity'
 import { useToast } from '@/components/Toast'
 import { useOfficials } from '@/lib/hooks'
+import { SkeletonPage } from '@/components/Skeleton'
 
 type ViewType = 'overview' | 'officials' | 'performance' | 'assignments' | 'reports'
 
@@ -15,7 +16,7 @@ export default function ITPODashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
   // React Query hooks
-  const { data: dbOfficials = [], refetch: refetchOfficials } = useOfficials()
+  const { data: dbOfficials = [], isLoading: officialsLoading, refetch: refetchOfficials } = useOfficials()
 
   const [currentView, setCurrentView] = useState<ViewType>('overview')
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
@@ -99,6 +100,7 @@ export default function ITPODashboardPage() {
   }
 
   const renderContent = () => {
+    if (officialsLoading) return <SkeletonPage />
     switch (currentView) {
       case 'overview':
         return (

@@ -14,13 +14,15 @@ import { translations } from '@/lib/translations'
 import DocumentTitle from '@/components/DocumentTitle'
 import { useToast } from '@/components/Toast'
 import { useComplaints, useStaff } from '@/lib/hooks'
+import { SkeletonPage } from '@/components/Skeleton'
 
 export default function AgencyDashboardPage() {
   const { toast } = useToast()
   const router = useRouter()
   // React Query hooks
-  const { data: dbComplaints = [], refetch: refetchComplaints } = useComplaints()
-  const { data: dbStaff = [], refetch: refetchStaff } = useStaff()
+  const { data: dbComplaints = [], isLoading: complaintsLoading, refetch: refetchComplaints } = useComplaints()
+  const { data: dbStaff = [], isLoading: staffLoading, refetch: refetchStaff } = useStaff()
+  const dataLoading = complaintsLoading || staffLoading
 
   const [me, setMe] = useState<{ name: string; role: string; agency: string; agencyId: number | null }>({ name: '', role: '', agency: '', agencyId: null })
   const agencyName = me.agency || 'Agency'
@@ -466,6 +468,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          {dataLoading ? <SkeletonPage /> : (<>
           {activeView === 'staff' ? (
           <div>
             {/* Staff header */}
@@ -941,6 +944,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           )}
           </>
           )}
+          </>)}
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} source="agency" agencyId={me.agencyId} reporterName={me.name || 'Agency Staff'} />

@@ -8,6 +8,7 @@ import ComplaintDetailsModal from '@/components/ComplaintDetailsModal'
 import { useToast } from '@/components/Toast'
 import { translations } from '@/lib/translations'
 import { useComplaints, useOfficials, useUpdateComplaint, useDeleteComplaint } from '@/lib/hooks'
+import { SkeletonPage } from '@/components/Skeleton'
 
 const fallbackOfficials = [
   { id: 1, name: 'Mr. Premjit Lal', initials: 'MP', username: '@mrpremjitlal', employeeId: '9123', designation: 'ED', phone: '9868217057', email: 'editpo@itpo.gov.in', zones: 'All Zones (Entire Complex)', zonesList: ['All Zones (Entire Complex)'], status: 'Active' },
@@ -20,8 +21,9 @@ const fallbackComplaints: any[] = []
 function OfficialDashboard() {
   const router = useRouter()
   // React Query hooks
-  const { data: dbOfficials = [], refetch: refetchOfficials } = useOfficials()
-  const { data: dbComplaints = [], refetch: refetchComplaints } = useComplaints()
+  const { data: dbOfficials = [], isLoading: officialsLoading, refetch: refetchOfficials } = useOfficials()
+  const { data: dbComplaints = [], isLoading: complaintsLoading, refetch: refetchComplaints } = useComplaints()
+  const dataLoading = officialsLoading || complaintsLoading
   const updateComplaintMutation = useUpdateComplaint()
   const deleteComplaintMutation = useDeleteComplaint()
 
@@ -260,6 +262,7 @@ const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          {dataLoading ? <SkeletonPage /> : (<>
           {/* Profile header */}
           <div className="mb-4">
             <div className="flex items-start gap-3">
@@ -512,6 +515,7 @@ const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null
               </div>
             </div>
           )}
+          </>)}
         </main>
       </div>
       <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={() => refetchComplaints()} source="itpo" officialId={official.id} reporterName={official.name} allowedZones={official.zonesList} />
