@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
     // Agency staff/supervisors authenticate by registered mobile number
     let staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
-      `SELECT id, name, username, role FROM staff WHERE regexp_replace(COALESCE(phone,''),'\\D','','g') LIKE '%' || $1 AND status='Active' ORDER BY id LIMIT 1`,
+      `SELECT id, name, username, role FROM staff WHERE regexp_replace(COALESCE(phone,''),'\\D','','g') LIKE '%' || $1 AND status='Active' ORDER BY CASE WHEN role ILIKE '%manager%' THEN 0 WHEN role ILIKE '%supervisor%' THEN 1 ELSE 2 END, id LIMIT 1`,
       [mobile]
     ).catch(() => null)
     // Fallback: agency contact phone → resolve to that agency's manager staff (auto-provision if none)

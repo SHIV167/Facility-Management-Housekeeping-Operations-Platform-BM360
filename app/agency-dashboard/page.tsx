@@ -42,7 +42,9 @@ export default function AgencyDashboardPage() {
       const phone = localStorage.getItem('mobileNumber') || ''
       fetch('/api/staff').then((r) => r.json()).then(async (sd) => {
         if (sd.ok && sd.staff) {
-          const s = sd.staff.find((x: any) => x.username === uid || x.phone === uid || x.phone === phone)
+          const matches = sd.staff.filter((x: any) => x.username === uid || x.phone === uid || String(x.phone || '').replace(/\D/g, '').slice(-10) === String(phone || '').replace(/\D/g, '').slice(-10))
+          matches.sort((a: any, b: any) => (/manager/i.test(a.role || '') || /manager/i.test(a.designation || '') ? 0 : /supervisor/i.test(a.role || '') ? 1 : 2) - (/manager/i.test(b.role || '') || /manager/i.test(b.designation || '') ? 0 : /supervisor/i.test(b.role || '') ? 1 : 2))
+          const s = matches[0]
           if (s) {
             let isMgr = /manager/i.test(s.designation || '') || /^manager$/i.test(s.role || '')
             // Agency contact person is the manager even if staff role wasn't set

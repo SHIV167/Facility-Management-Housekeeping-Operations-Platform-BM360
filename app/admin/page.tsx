@@ -287,11 +287,11 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     const postStaff = async (agencyId: number) => {
       const items = data.staff || []
       if (!items.length) return
-      // Fetch existing staff for this agency to avoid duplicates on edit
+      // Fetch ALL staff — mobiles are global login identities, reuse across agencies
       let existing: any[] = []
       try {
         const sd = await fetch('/api/staff').then((r) => r.json())
-        existing = (sd.staff || []).filter((s: any) => s.agency_id === agencyId)
+        existing = sd.staff || []
       } catch {}
       // Create hierarchy sequentially: Manager → Supervisors report to Manager → Field Staff report to Supervisor/Manager
       let managerId: number | null = null
@@ -299,7 +299,9 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       for (const s of items) {
         const reportingId = s.role === 'Manager' ? null : (s.role === 'Supervisor' ? managerId : (supervisorId || managerId))
         const phone = (s.phone || '').replace(/\D/g, '')
-        const dup = existing.find((x: any) => (phone && String(x.phone || '').replace(/\D/g, '') === phone) || x.name === s.name)
+        // Match by phone first (global login identity), then by name within this agency
+        const dup = existing.find((x: any) => (phone && String(x.phone || '').replace(/\D/g, '') === phone))
+          || existing.find((x: any) => x.agency_id === agencyId && x.name === s.name)
         try {
           if (dup) {
             // Update existing row (keeps manager role/mobile in sync on agency edit)
