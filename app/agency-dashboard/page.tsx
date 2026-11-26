@@ -40,11 +40,19 @@ export default function AgencyDashboardPage() {
       if (d?.user?.role) setSessionRole(d.user.role)
       const uid = d?.user?.uid || ''
       const phone = localStorage.getItem('mobileNumber') || ''
-      fetch('/api/staff').then((r) => r.json()).then((sd) => {
+      fetch('/api/staff').then((r) => r.json()).then(async (sd) => {
         if (sd.ok && sd.staff) {
           const s = sd.staff.find((x: any) => x.username === uid || x.phone === uid || x.phone === phone)
           if (s) {
-            const isMgr = /manager/i.test(s.designation || '') || /^manager$/i.test(s.role || '')
+            let isMgr = /manager/i.test(s.designation || '') || /^manager$/i.test(s.role || '')
+            // Agency contact person is the manager even if staff role wasn't set
+            if (!isMgr && s.agency_id != null) {
+              try {
+                const ad = await fetch('/api/agencies').then((r) => r.json())
+                const ag = (ad.agencies || []).find((a: any) => a.id === s.agency_id)
+                if (ag?.contact_person && ag.contact_person.trim().toLowerCase() === (s.name || '').trim().toLowerCase()) isMgr = true
+              } catch {}
+            }
             const roleLabel = isMgr ? 'Agency Manager' : /supervisor/i.test(s.role || '') || /supervisor/i.test(s.designation || '') ? 'Agency Supervisor' : 'Field Staff'
             setMe({ name: s.name, role: roleLabel, agency: s.agency_name || '', agencyId: s.agency_id ?? null })
           } else if (d?.user?.name) {
