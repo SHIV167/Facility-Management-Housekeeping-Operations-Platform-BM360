@@ -500,12 +500,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-[15px] font-semibold text-[#111827]">Employees</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredEmp.length} of {agencyEmployees.length} imported employees</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <div className="relative">
                     <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input type="text" value={employeeSearch} onChange={(e) => setEmployeeSearch(e.target.value)} placeholder="Search employees..." className="w-52 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
                   </div>
-                  <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                  <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     Import Employees
                   </button>
@@ -650,8 +650,8 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <h1 className="text-[20px] font-semibold text-[#1f2937]">Complaint Register</h1>
                 <p className="text-[13px] text-[#6b7280] mt-0.5">{total} complaints · Bharat Mandapam operations</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <button onClick={() => setShowComplaintForm(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                   New Complaint
                 </button>
@@ -1192,7 +1192,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
@@ -1243,7 +1243,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
@@ -1294,7 +1294,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                           <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">Edit</button>
                           <button className="text-red-600 hover:text-red-700 text-sm font-medium">Delete</button>
                         </div>
@@ -1410,12 +1410,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <h3 className="text-[15px] font-semibold text-[#111827]">Zones</h3>
                     <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredZones.length} of {zones.length} zones</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <div className="relative">
                       <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                      <input type="text" value={zoneSearch} onChange={(e) => setZoneSearch(e.target.value)} placeholder="Search zones..." className="w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                      <input type="text" value={zoneSearch} onChange={(e) => setZoneSearch(e.target.value)} placeholder="Search zones..." className="w-full sm:w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
                     </div>
-                    <button onClick={() => { setEditingZone(null); setZoneFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                    <button onClick={() => { setEditingZone(null); setZoneFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       Add Zone
                     </button>
@@ -1498,12 +1498,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-[15px] font-semibold text-[#111827]">Agency Directory</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{filteredAgencies.length} of {agencies.length} agencies</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <div className="relative">
                     <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <input type="text" value={agencySearch} onChange={(e) => setAgencySearch(e.target.value)} placeholder="Search agencies..." className="w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
+                    <input type="text" value={agencySearch} onChange={(e) => setAgencySearch(e.target.value)} placeholder="Search agencies..." className="w-full sm:w-56 h-9 pl-9 pr-3 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
                   </div>
-                  <button onClick={() => { setEditingAgency(null); setAgencyFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
+                  <button onClick={() => { setEditingAgency(null); setAgencyFormOpen(true) }} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     Add Agency
                   </button>
@@ -1604,7 +1604,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       <h3 className="text-[15px] font-semibold text-[#111827]">Daily Attendance</h3>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${attendanceRecords.length ? 'bg-[#e8f8ef] text-[#16a34a]' : 'bg-[#fff7ed] text-[#ea580c]'}`}>
                         {attendanceRecords.length ? 'Marked Today' : 'Pending'}
@@ -1615,7 +1615,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm shrink-0">
+                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] shadow-sm shrink-0">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   Mark Daily Attendance
                 </button>
@@ -1648,7 +1648,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <h3 className="text-[15px] font-semibold text-[#111827]">Attendance Records</h3>
                   <p className="text-[12px] text-[#9ca3af] mt-0.5">{attRecords.length} saved record{attRecords.length === 1 ? '' : 's'} · persisted to attendance.csv</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <div className="relative">
                     <svg className="w-4 h-4 text-[#9ca3af] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input type="text" value={attSearch} onChange={(e) => setAttSearch(e.target.value)} placeholder="Search records..." className="h-9 pl-9 pr-3 w-56 rounded-lg bg-white border border-[#e5e7eb] text-[13px]" />
@@ -1734,7 +1734,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                             <button onClick={() => handleDeleteEmployee(emp.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t.delete}</button>
                           </div>
                         </td>
@@ -1770,7 +1770,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <h3 className="text-lg font-semibold text-gray-900">Level 1 Escalation</h3>
                     <p className="text-sm text-[#6b7280]">Auto-escalate after 30 minutes</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
                     <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
@@ -1786,7 +1786,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <h3 className="text-lg font-semibold text-gray-900">Level 2 Escalation</h3>
                     <p className="text-sm text-[#6b7280]">Auto-escalate after 1 hour</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
                     <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
@@ -1802,7 +1802,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                     <h3 className="text-lg font-semibold text-gray-900">Level 3 Escalation</h3>
                     <p className="text-sm text-[#6b7280]">Auto-escalate after 2 hours</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f8ef] text-[#16a34a]">Active</span>
                     <button className="text-[#0f766e] hover:text-[#0b3c4a] text-[12px] font-semibold">{t.edit}</button>
                   </div>
@@ -2122,7 +2122,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 <h1 className="text-[20px] font-semibold text-[#1f2937]">Attendance Management</h1>
                 <p className="text-[13px] text-[#6b7280] mt-0.5">{attRecords.length} records · marked via portal with photo &amp; GPS</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <button onClick={refreshAttRecords} className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#fafbfc]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Refresh
@@ -2131,7 +2131,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                   Download CSV
                 </a>
-                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+                <button onClick={() => setAttendanceOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                   Mark Attendance
                 </button>
