@@ -336,10 +336,18 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
       logActivity('System Admin', 'Admin', 'Agency Updated', data.name)
       toast('Agency updated', 'success')
     } else {
-      fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then((d) => {
-        if (d.ok) {
-          const newId = d.agency.id
-          setAgencies((prev) => [...prev, { ...data, id: newId }])
+      fetch('/api/agencies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then((r) => r.json()).then(async (d) => {
+        // Resolve the real agency id — from response, or by refetching the list (covers ok:false / shape drift)
+        let newId = d?.agency?.id
+        if (!newId) {
+          try {
+            const ad = await fetch('/api/agencies').then((x) => x.json())
+            const match = (ad.agencies || []).filter((a: any) => a.name === data.name)
+            newId = match.length ? match[match.length - 1].id : null
+          } catch {}
+        }
+        if (newId) {
+          setAgencies((prev) => [...prev.filter((a) => a.id !== newId), { ...data, id: newId }])
           postStaff(newId)
         } else {
           setAgencies([...agencies, { ...data, id: Math.max(...agencies.map((a) => a.id), 0) + 1 }])
