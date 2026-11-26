@@ -313,12 +313,15 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
             if (s.role === 'Supervisor' && !supervisorId) supervisorId = sid
             continue
           }
-          const r = await fetch('/api/staff', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ agencyId, name: s.name, role: s.role, designation: s.designation, phone: s.phone, zones: data.zones || [], shift: 'No Shift', status: 'Active', reportingSupervisorId: reportingId }),
-          })
-          const d = await r.json().catch(() => ({}))
+          const payload: any = { agencyId, name: s.name, role: s.role, designation: s.designation, phone: s.phone, zones: data.zones || [], shift: 'No Shift', status: 'Active', reportingSupervisorId: reportingId }
+          let r = await fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          let d = await r.json().catch(() => ({}))
+          if (!r.ok || !d?.ok) {
+            // Retry without zones/reporting in case columns are missing or type-mismatched on this DB
+            const { zones, reportingSupervisorId, ...minimal } = payload
+            r = await fetch('/api/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(minimal) })
+            d = await r.json().catch(() => ({}))
+          }
           const sid = d?.staff?.id || d?.id || d?.staffId || null
           if (s.role === 'Manager' && sid) managerId = sid
           if (s.role === 'Supervisor' && sid && !supervisorId) supervisorId = sid
