@@ -74,14 +74,14 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const errs: string[] = []
-    if (managerName.trim() && !phoneOk(managerPhone)) errs.push('Manager phone must be 10 digits')
-    if (managerPhone.trim() && !managerName.trim()) errs.push('Manager name required when phone is set')
+    if (managerName.trim() && !/^\d{10}$/.test(managerPhone.trim())) errs.push('Manager mobile must be 10 digits (required for login)')
+    if (!managerName.trim() && managerPhone.trim() && !/^\d{10}$/.test(managerPhone.trim())) errs.push('Manager mobile must be 10 digits')
     supervisors.forEach((s, i) => {
-      if (s.name.trim() && !phoneOk(s.phone)) errs.push(`Supervisor ${i + 1} phone must be 10 digits`)
+      if (s.name.trim() && !/^\d{10}$/.test(s.phone.trim())) errs.push(`Supervisor ${i + 1} mobile must be 10 digits (required for login)`)
       if (!s.name.trim() && s.phone.trim()) errs.push(`Supervisor ${i + 1} name required`)
     })
     fieldStaff.forEach((s, i) => {
-      if (s.name.trim() && !phoneOk(s.phone)) errs.push(`Field staff ${i + 1} phone must be 10 digits`)
+      if (s.name.trim() && !/^\d{10}$/.test(s.phone.trim())) errs.push(`Field staff ${i + 1} mobile must be 10 digits (required for login)`)
       if (!s.name.trim() && s.phone.trim()) errs.push(`Field staff ${i + 1} name required`)
     })
     if (phone.trim() && !phoneOk(phone)) errs.push('Agency phone must be 10 digits')
