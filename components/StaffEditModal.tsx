@@ -91,7 +91,7 @@ export default function StaffEditModal({ open, staff, zones = [], onClose, onSav
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Role</label>
-                <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>
+                <select className={inputCls} value={role} onChange={(e) => { const r = e.target.value; setRole(r); if (r === 'Manager' && !designation.trim()) setDesignation('Agency Manager') }}>
                   {['Supervisor', 'Field Staff', 'Manager'].map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
