@@ -185,6 +185,21 @@ export async function PATCH(req: NextRequest) {
       )
     })
     if (!rows[0]) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 })
+    // Dedicated agency update — the fallback above may have dropped agency columns
+    if (b.agencyId !== undefined || b.agency_id !== undefined || b.agencyName !== undefined || b.agency_name !== undefined) {
+      const agId = b.agencyId ?? b.agency_id ?? null
+      const agName = b.agencyName ?? b.agency_name ?? ''
+      await query(
+        `UPDATE complaints SET agency_id=$2, agency_name=COALESCE(NULLIF($3,''),(SELECT name FROM agencies WHERE id=$2),'') WHERE id=$1`,
+        [complaintId, agId, agName]
+      ).catch(async () => {
+        await query(`UPDATE complaints SET agency_id=$2 WHERE id=$1`, [complaintId, agId]).catch(() => {})
+      })
+      if (agId || agName) {
+        rows[0].agency_id = agId
+        rows[0].agency_name = agName || rows[0].agency_name
+      }
+    }
     await query(`INSERT INTO activity_log (actor, role, action, entity_type, entity_id, details) VALUES ($1,$2,'Complaint Updated','complaint',$3,$4)`,
       [b.actor || 'Admin', b.role || 'Admin', String(complaintId), `${rows[0].public_id} edited`]).catch(() => {})
     return NextResponse.json({ ok: true, complaint: rows[0] })
