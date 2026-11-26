@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   const complaints = rows.map((c: any) => ({
     ...c,
     dueDate: c.due_date ? new Date(c.due_date).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '—',
+    dueDateIso: c.due_date ? new Date(c.due_date).toISOString() : null,
   }))
   return NextResponse.json({ ok: true, complaints })
 }

@@ -126,6 +126,7 @@ const [zones, setZones] = useState<ZoneRecord[]>(defaultZones)
         agency: c.agency_name || 'Unassigned',
         agencyId: c.agency_id || null,
         dueDate: c.dueDate || c.due_date || '—',
+        dueDateIso: c.dueDateIso || (c.due_date ? new Date(c.due_date).toISOString() : null),
         assignedTo: c.official_name || c.reporter_name || '—',
         reportedBy: c.reporter_name || 'Citizen',
         reporterRole: c.reported_by || 'ITPO Official',

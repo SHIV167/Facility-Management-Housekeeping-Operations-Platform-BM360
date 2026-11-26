@@ -41,7 +41,7 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
   const [now, setNow] = useState(Date.now())
   const breachedRef = useRef(false)
 
-  const dueRaw = (complaint as any)?.dueDate || (complaint as any)?.due_date || ''
+  const dueRaw = (complaint as any)?.dueDateIso || (complaint as any)?.due_date || (complaint as any)?.dueDate || ''
   const dueMs = dueRaw ? new Date(dueRaw).getTime() : NaN
   const hasDue = !isNaN(dueMs)
   const remaining = hasDue ? dueMs - now : null
