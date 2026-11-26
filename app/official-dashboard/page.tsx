@@ -514,7 +514,7 @@ const [navTip, setNavTip] = useState<{ label: string; top: number } | null>(null
           )}
         </main>
       </div>
-      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={() => refetchComplaints()} source="itpo" officialId={official.id} reporterName={official.name} />
+      <RegisterComplaintModal open={showComplaintForm} onClose={() => setShowComplaintForm(false)} onSuccess={() => refetchComplaints()} source="itpo" officialId={official.id} reporterName={official.name} allowedZones={official.zonesList} />
       <ComplaintDetailsModal
         open={inspectComplaint != null}
         onClose={() => setInspectComplaint(null)}

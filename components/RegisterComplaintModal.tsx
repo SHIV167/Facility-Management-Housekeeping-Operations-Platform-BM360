@@ -13,6 +13,7 @@ type Props = {
   officialId?: number
   agencyId?: number | null
   reporterName?: string
+  allowedZones?: string[]
 }
 
 const ZONE_OPTIONS = [
@@ -56,7 +57,7 @@ function parseScannedData(text: string) {
   return data
 }
 
-export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency', officialId, agencyId, reporterName }: Props) {
+export default function RegisterComplaintModal({ open, onClose, onSuccess, source = 'agency', officialId, agencyId, reporterName, allowedZones }: Props) {
   const { toast } = useToast()
   const [photos, setPhotos] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -71,6 +72,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   const [selectedAgencyId, setSelectedAgencyId] = useState<number | ''>('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [zoneOptions, setZoneOptions] = useState<{ label: string; value: string }[]>(ZONE_OPTIONS)
+  const [allZonesAllowed, setAllZonesAllowed] = useState(true)
   const [scannerError, setScannerError] = useState('')
   const [scanMessage, setScanMessage] = useState('')
   const scannerRef = useRef<Html5Qrcode | null>(null)
@@ -90,7 +93,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
 
     if (zoneRaw) {
       const norm = normalizeKey(zoneRaw)
-      const match = ZONE_OPTIONS.find((z) => normalizeKey(z.label) === norm || normalizeKey(z.value) === norm)
+      const match = zoneOptions.find((z) => normalizeKey(z.label) === norm || normalizeKey(z.value) === norm || normalizeKey(z.label).includes(norm) || norm.includes(normalizeKey(z.label)))
       if (match) {
         setSelectedZone(match.value)
         setAllZones(false)
@@ -129,6 +132,61 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
 
   useEffect(() => {
     if (!open) return
+    let cancelled = false
+    const isAllZoneName = (z: string) => /all\s*(zone|campus|complex)/i.test(z)
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const zoneMatches = (opt: string, allowed: string[]) =>
+      allowed.some((a) => norm(a) === norm(opt) || norm(opt).includes(norm(a)) || norm(a).includes(norm(opt)))
+
+    const applyZones = (dbNames: string[], allowed: string[] | null) => {
+      if (cancelled) return
+      const base = dbNames.length ? dbNames.map((n) => ({ label: n, value: n })) : ZONE_OPTIONS
+      let opts = base
+      if (allowed && allowed.length) {
+        opts = base.filter((o) => zoneMatches(o.label, allowed) || zoneMatches(o.value, allowed))
+        // include allowed names missing from DB list
+        allowed.forEach((a) => {
+          if (!opts.some((o) => norm(o.label) === norm(a)) && !isAllZoneName(a)) opts.push({ label: a, value: a })
+        })
+        if (!opts.length) opts = allowed.filter((a) => !isAllZoneName(a)).map((a) => ({ label: a, value: a }))
+      }
+      setZoneOptions(opts.length ? opts : ZONE_OPTIONS)
+      setAllZonesAllowed(!allowed || allowed.length === 0 || allowed.some(isAllZoneName))
+      if (!allowed || !allowed.length || allowed.some(isAllZoneName)) {
+        // keep default
+      } else {
+        setAllZones(false)
+        setSelectedZone((prev) => (prev && opts.some((o) => o.value === prev) ? prev : ''))
+      }
+    }
+
+    // Resolve which zones this user may pick
+    const resolveAllowed = async (): Promise<string[] | null> => {
+      if (source === 'admin') return null
+      if (source === 'itpo' && allowedZones?.length) return allowedZones
+      if (source === 'agency' && agencyId) {
+        try {
+          const d = await fetch('/api/agencies').then((r) => r.json())
+          const ag = (d.agencies || []).find((a: any) => a.id === agencyId)
+          const zs = Array.isArray(ag?.zones) ? ag.zones : String(ag?.zones || '').split(',').map((z: string) => z.trim()).filter(Boolean)
+          if (zs.length) return zs
+        } catch {}
+        return null
+      }
+      return allowedZones?.length ? allowedZones : null
+    }
+
+    Promise.all([
+      fetch('/api/zones').then((r) => r.json()).catch(() => ({})),
+      resolveAllowed(),
+    ]).then(([zd, allowed]) => {
+      const names = (zd.zones || []).map((z: any) => z.name).filter(Boolean)
+      applyZones(names, allowed)
+    })
+    return () => { cancelled = true }
+  }, [open, source, agencyId, allowedZones])
+
+  useEffect(() => {
     fetch('/api/agencies').then((r) => r.json()).then((d) => {
       if (d.ok && d.agencies) setAgencies(d.agencies.map((a: any) => ({ id: a.id, name: a.name })))
     }).catch(() => {})
@@ -358,8 +416,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
                       disabled={allZones}
                       className={`${inputCls} appearance-none ${allZones ? 'bg-[#f8fafc] text-[#9ca3af] cursor-not-allowed' : ''}`}
                     >
-                      <option value="">Choose Zone... (89)</option>
-                      {ZONE_OPTIONS.map((z) => (
+                      <option value="">Choose Zone... ({zoneOptions.length})</option>
+                      {zoneOptions.map((z) => (
                         <option key={z.value} value={z.value}>{z.label}</option>
                       ))}
                     </select>
@@ -369,6 +427,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
                   </div>
 
                   {/* All Zones Toggle */}
+                  {allZonesAllowed && (
                   <div className="flex items-center justify-between p-3 bg-[#e6f7f4] border border-[#bfe8e0] rounded-lg">
                     <div className="flex items-center gap-3">
                       <button
@@ -387,9 +446,10 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
                       <span className="text-[13px] font-medium text-[#111827]">All Zones</span>
                     </div>
                     {allZones && (
-                      <span className="text-[11px] text-[#0f766e] font-medium">89 zones active</span>
+                      <span className="text-[11px] text-[#0f766e] font-medium">All campus zones active</span>
                     )}
                   </div>
+                  )}
 
                   {allZones && (
                     <p className="text-[12px] text-[#6b7280]">
