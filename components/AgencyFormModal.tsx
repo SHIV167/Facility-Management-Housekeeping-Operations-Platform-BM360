@@ -31,6 +31,7 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
   const [supervisors, setSupervisors] = useState<StaffEntry[]>([{ name: '', phone: '' }])
   const [fieldStaff, setFieldStaff] = useState<StaffEntry[]>([{ name: '', phone: '' }])
   const [errors, setErrors] = useState<string[]>([])
+  const [takenPhones, setTakenPhones] = useState<Set<string>>(new Set())
 
   const phoneOk = (p: string) => p === '' || /^\d{10}$/.test(p)
 
@@ -49,6 +50,18 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
       setSupervisors([{ name: '', phone: '' }])
       setFieldStaff([{ name: '', phone: '' }])
       setErrors([])
+      setTakenPhones(new Set())
+      fetch('/api/staff').then((r) => r.json()).then((d) => {
+        if (d.ok && d.staff) {
+          const set = new Set<string>()
+          d.staff.forEach((s: any) => {
+            if (agency?.id && s.agency_id === agency.id) return // own agency staff allowed
+            const p = String(s.phone || '').replace(/\D/g, '')
+            if (p.length >= 10) set.add(p.slice(-10))
+          })
+          setTakenPhones(set)
+        }
+      }).catch(() => {})
     }
   }, [open, agency])
 
@@ -72,6 +85,19 @@ export default function AgencyFormModal({ open, onClose, onSave, agency }: Agenc
       if (!s.name.trim() && s.phone.trim()) errs.push(`Field staff ${i + 1} name required`)
     })
     if (phone.trim() && !phoneOk(phone)) errs.push('Agency phone must be 10 digits')
+    // Duplicate mobile checks — within form and against existing staff
+    const seen = new Map<string, string>()
+    const checkDup = (p: string, label: string) => {
+      const digits = p.replace(/\D/g, '')
+      if (!digits) return
+      const key = digits.slice(-10)
+      if (seen.has(key)) errs.push(`${label} mobile ${digits} is already used by ${seen.get(key)}`)
+      else seen.set(key, label)
+      if (takenPhones.has(key)) errs.push(`${label} mobile ${digits} is already registered to existing staff`)
+    }
+    checkDup(managerPhone, 'Manager')
+    supervisors.forEach((s, i) => s.name.trim() && checkDup(s.phone, `Supervisor ${i + 1}`))
+    fieldStaff.forEach((s, i) => s.name.trim() && checkDup(s.phone, `Field staff ${i + 1}`))
     if (errs.length) { setErrors(errs); return }
     setErrors([])
 
