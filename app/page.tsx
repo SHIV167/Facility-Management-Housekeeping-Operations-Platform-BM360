@@ -327,7 +327,7 @@ export default function LoginPage() {
 
             {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 tracking-tight">
                 {step === 1 ? 'Welcome back' : 'Check your phone'}
               </h1>
               <div className="mb-3 inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-emerald-200/60 text-emerald-800 text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full shadow-sm">
@@ -365,7 +365,7 @@ export default function LoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="admin"
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl sm:py-4 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-base sm:text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
                     required
                   />
                 </div>
@@ -377,14 +377,14 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl sm:py-4 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-base sm:text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
+                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-3 px-6 rounded-xl font-semibold text-base sm:py-4 sm:text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -400,7 +400,7 @@ export default function LoginPage() {
                     Mobile Number
                   </label>
                   <div className="relative group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg border-r border-gray-200 pr-4">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-lg border-r border-gray-200 pr-4 text-base sm:text-lg">
                       +91
                     </span>
                     <input
@@ -409,7 +409,7 @@ export default function LoginPage() {
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       placeholder="98765 43210"
-                      className="w-full pl-20 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
+                      className="w-full pl-20 pr-4 py-3 border-2 border-gray-200 rounded-xl sm:py-4 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] text-base sm:text-lg text-gray-900 bg-gray-50/50 placeholder-gray-400 transition-all duration-200"
                       required
                       maxLength={10}
                     />
@@ -421,7 +421,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
+                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-3 px-6 rounded-xl font-semibold text-base sm:py-4 sm:text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
                 >
                   {loading ? (
                     <>
@@ -481,7 +481,7 @@ export default function LoginPage() {
                             document.getElementById(`otp-${i - 1}`)?.focus()
                           }
                         }}
-                        className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] bg-gray-50/50 text-gray-900 transition-all duration-200"
+                        className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-[#1b8f84] bg-gray-50/50 text-gray-900 transition-all duration-200"
                       />
                     ))}
                   </div>
@@ -508,7 +508,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
+                  className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-3 px-6 rounded-xl font-semibold text-base sm:py-4 sm:text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-teal-900/25"
                 >
                   {loading ? (
                     <>
@@ -527,7 +527,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="w-full py-3.5 px-6 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 border-2 sm:py-3.5 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -543,7 +543,7 @@ export default function LoginPage() {
               <a
                 href="https://vigpl.com/BM360_v1.9.apk"
                 download
-                className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-teal-900/25"
+                className="w-full bg-gradient-to-r from-[#0e4c5e] to-[#14586a] text-white py-3 px-6 rounded-xl font-semibold text-base sm:py-4 sm:text-lg hover:from-[#14586a] hover:to-[#0b3c4a] focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-teal-900/25"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
