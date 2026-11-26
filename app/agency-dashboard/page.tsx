@@ -167,7 +167,8 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   }
   const [staffMembers, setStaffMembers] = useState<any[]>([])
 
-  const isManager = userRole === 'manager' || sessionRole === 'Admin' || me.role === 'Agency Manager'
+  const canManage = me.role === 'Agency Manager' || sessionRole === 'Admin'
+  const isManager = canManage && userRole === 'manager'
   const displayName = me.name || 'User'
   const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
   const staffOptions: StaffOption[] = staffMembers.length
@@ -418,9 +419,11 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
                 <p className="text-[13px] text-[#6b7280] mt-1">{isManager ? 'Manage staff, supervisors, zones and shifts.' : 'View-only access — contact your manager for changes.'}</p>
               </div>
               <div className="flex items-center gap-2">
+                {canManage && (
                 <button onClick={() => setUserRole(isManager ? 'supervisor' : 'manager')} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg border transition-colors ${isManager ? 'bg-[#0e4c5e] text-white border-[#0e4c5e]' : 'bg-white text-[#374151] border-[#e5e7eb] hover:bg-[#f8fafc]'}">
                   {isManager ? 'Manager Access' : 'Supervisor Access'}
                 </button>
+                )}
                 {isManager && (
                   <><button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Refresh</button>
                   <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Export to Excel</button></>
