@@ -9,12 +9,14 @@ const DDL = `CREATE TABLE IF NOT EXISTS notifications (
   agency_id INT,
   complaint_id INT,
   link TEXT DEFAULT '',
+  zone TEXT DEFAULT '',
   read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT now()
 )`
 
 async function ensure() {
   await query(DDL).catch(() => {})
+  await query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS zone TEXT DEFAULT ''`).catch(() => {})
 }
 
 export async function GET(req: NextRequest) {

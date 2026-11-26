@@ -31,6 +31,7 @@ export default function AgencyDashboardPage() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [unreadNotifs, setUnreadNotifs] = useState(0)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [myZones, setMyZones] = useState<string[]>([])
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('All Campus')
@@ -59,6 +60,7 @@ export default function AgencyDashboardPage() {
               } catch {}
             }
             const roleLabel = isMgr ? 'Agency Manager' : /supervisor/i.test(s.role || '') || /supervisor/i.test(s.designation || '') ? 'Agency Supervisor' : 'Field Staff'
+            setMyZones(Array.isArray(s.zones) ? s.zones : String(s.zones || '').split(',').map((z: string) => z.trim()).filter(Boolean))
             setMe({ name: s.name, role: roleLabel, agency: s.agency_name || '', agencyId: s.agency_id ?? null })
           } else if (d?.user?.name) {
             setMe({ name: d.user.name, role: d.user.role || '', agency: '', agencyId: null })
@@ -389,7 +391,21 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button onClick={() => { setNotifOpen(!notifOpen); if (me.agencyId != null) fetch(`/api/notifications?agency_id=${me.agencyId}`).then((r) => r.json()).then((d) => { if (d.ok) { setNotifications(d.notifications || []); setUnreadNotifs(d.unread || 0) } }).catch(() => {}) }} title="Notifications" className="relative p-2 text-[#6b7280] hover:bg-[#f3f5f8] rounded-lg transition-colors">
+              <button onClick={() => { setNotifOpen(!notifOpen); if (me.agencyId != null) fetch(`/api/notifications?agency_id=${me.agencyId}`).then((r) => r.json()).then((d) => {
+                if (!d.ok) return
+                const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, '')
+                const allAccess = myZones.some((z) => /all\s*(zone|campus|complex)/i.test(z))
+                const zoneOk = (n: any) => {
+                  const nz = String(n.zone || '').trim()
+                  if (!nz || /all\s*zone/i.test(nz)) return true
+                  if (allAccess || !myZones.length) return true
+                  const nn = norm(nz)
+                  return myZones.some((z) => { const mz = norm(z); return mz === nn || mz.includes(nn) || nn.includes(mz) })
+                }
+                const filtered = (d.notifications || []).filter(zoneOk)
+                setNotifications(filtered)
+                setUnreadNotifs(filtered.filter((n: any) => !n.read).length)
+              }).catch(() => {}) }} title="Notifications" className="relative p-2 text-[#6b7280] hover:bg-[#f3f5f8] rounded-lg transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                 {unreadNotifs > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#e11d48] text-white text-[9px] font-bold flex items-center justify-center">{unreadNotifs > 99 ? '99+' : unreadNotifs}</span>}
               </button>
