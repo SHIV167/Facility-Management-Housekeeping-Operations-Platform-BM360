@@ -287,12 +287,32 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     const postStaff = async (agencyId: number) => {
       const items = data.staff || []
       if (!items.length) return
+      // Fetch existing staff for this agency to avoid duplicates on edit
+      let existing: any[] = []
+      try {
+        const sd = await fetch('/api/staff').then((r) => r.json())
+        existing = (sd.staff || []).filter((s: any) => s.agency_id === agencyId)
+      } catch {}
       // Create hierarchy sequentially: Manager → Supervisors report to Manager → Field Staff report to Supervisor/Manager
       let managerId: number | null = null
       let supervisorId: number | null = null
       for (const s of items) {
         const reportingId = s.role === 'Manager' ? null : (s.role === 'Supervisor' ? managerId : (supervisorId || managerId))
+        const phone = (s.phone || '').replace(/\D/g, '')
+        const dup = existing.find((x: any) => (phone && String(x.phone || '').replace(/\D/g, '') === phone) || x.name === s.name)
         try {
+          if (dup) {
+            // Update existing row (keeps manager role/mobile in sync on agency edit)
+            await fetch('/api/staff', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: dup.id, name: s.name, role: s.role, designation: s.designation, phone: s.phone, zones: data.zones || [], shift: dup.shift || 'No Shift', status: dup.status || 'Active', agencyId, reportingSupervisorId: reportingId }),
+            })
+            const sid = dup.id
+            if (s.role === 'Manager') managerId = sid
+            if (s.role === 'Supervisor' && !supervisorId) supervisorId = sid
+            continue
+          }
           const r = await fetch('/api/staff', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
