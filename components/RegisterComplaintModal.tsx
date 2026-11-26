@@ -70,6 +70,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   const [agencies, setAgencies] = useState<{ id: number; name: string }[]>([])
   const [selectedAgencyId, setSelectedAgencyId] = useState<number | ''>('')
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [scannerError, setScannerError] = useState('')
   const [scanMessage, setScanMessage] = useState('')
   const scannerRef = useRef<Html5Qrcode | null>(null)
@@ -127,11 +128,11 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
   }
 
   useEffect(() => {
-    if (!open || agencyId || (source !== 'admin' && source !== 'itpo')) return
+    if (!open) return
     fetch('/api/agencies').then((r) => r.json()).then((d) => {
       if (d.ok && d.agencies) setAgencies(d.agencies.map((a: any) => ({ id: a.id, name: a.name })))
     }).catch(() => {})
-  }, [open, agencyId, source])
+  }, [open])
 
   useEffect(() => {
     if (!scannerOpen) return
@@ -168,6 +169,16 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting) return
+    // Validations
+    if (!complaintDetails.trim()) {
+      toast('Please enter complaint details / work instructions', 'error')
+      return
+    }
+    if (!allZones && !selectedZone) {
+      toast('Please select a Zone or enable All Zones', 'error')
+      return
+    }
     // Agency is mandatory for admin/ITPO complaints
     const finalAgencyId = agencyId || selectedAgencyId || null
     if (!agencyId && (source === 'admin' || source === 'itpo')) {
@@ -176,6 +187,7 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
         return
       }
     }
+    setSubmitting(true)
     try {
       const res = await fetch('/api/complaints', {
         method: 'POST',
@@ -207,6 +219,8 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
       onSuccess?.()
     } catch {
       toast('Network error — complaint not saved. Please try again.', 'error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -536,9 +550,17 @@ export default function RegisterComplaintModal({ open, onClose, onSuccess, sourc
             <button
               type="submit"
               form="register-complaint-form"
-              className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] transition-colors shadow-sm"
+              disabled={submitting}
+              className="px-4 py-2 text-[13px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 min-w-[150px]"
             >
-              Register Complaint
+              {submitting ? (
+                <>
+                  <img src="https://vigpl.com/favicon.svg" alt="" className="w-4 h-4 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                'Register Complaint'
+              )}
             </button>
           </div>
         </div>

@@ -134,6 +134,17 @@ export async function POST(req: NextRequest) {
     c.photo_url = renamed[0] || null
     c.photos = renamed
   }
+  // Backfill agency fields — covers fallback inserts that dropped them,
+  // and fills agency_name from the agencies table when client lookup missed
+  if (agencyId || agencyName) {
+    query(
+      `UPDATE complaints SET agency_id=$2, agency_name=COALESCE(NULLIF(agency_name,''),(SELECT name FROM agencies WHERE id=$2),'') WHERE id=$1`,
+      [c.id, agencyId, agencyName]
+    ).catch(async () => {
+      await query(`UPDATE complaints SET agency_id=$2 WHERE id=$1`, [c.id, agencyId]).catch(() => {})
+    })
+    if (agencyName) c.agency_name = agencyName
+  }
   await query(
     `INSERT INTO complaint_updates (complaint_id, action, actor, role, details) VALUES ($1,'Complaint Submitted',$2,$3,$4)`,
     [c.id, reporterName, reporterRole, `Complaint ${c.public_id} registered${photoPaths.length ? ` with ${photoPaths.length} photo(s)` : ''}`]
