@@ -44,7 +44,8 @@ export default function AgencyDashboardPage() {
         if (sd.ok && sd.staff) {
           const s = sd.staff.find((x: any) => x.username === uid || x.phone === uid || x.phone === phone)
           if (s) {
-            const roleLabel = s.designation === 'Agency Manager' ? 'Agency Manager' : s.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff'
+            const isMgr = /manager/i.test(s.designation || '') || /^manager$/i.test(s.role || '')
+            const roleLabel = isMgr ? 'Agency Manager' : /supervisor/i.test(s.role || '') || /supervisor/i.test(s.designation || '') ? 'Agency Supervisor' : 'Field Staff'
             setMe({ name: s.name, role: roleLabel, agency: s.agency_name || '', agencyId: s.agency_id ?? null })
           } else if (d?.user?.name) {
             setMe({ name: d.user.name, role: d.user.role || '', agency: '', agencyId: null })
@@ -166,7 +167,7 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
   }
   const [staffMembers, setStaffMembers] = useState<any[]>([])
 
-  const isManager = userRole === 'manager' || sessionRole === 'Admin'
+  const isManager = userRole === 'manager' || sessionRole === 'Admin' || me.role === 'Agency Manager'
   const displayName = me.name || 'User'
   const displayRole = me.role || (sessionRole === 'Admin' ? 'Admin' : 'Agency Manager')
   const staffOptions: StaffOption[] = staffMembers.length
