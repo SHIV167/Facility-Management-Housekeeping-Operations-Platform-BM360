@@ -163,6 +163,8 @@ const [logPageSize, setLogPageSize] = useState(10)
 const [attRecords, setAttRecords] = useState<AttendanceRow[]>([])
 const [notifications, setNotifications] = useState<any[]>([])
 const [unreadNotifs, setUnreadNotifs] = useState(0)
+const [notifPage, setNotifPage] = useState(1)
+const NOTIF_PAGE_SIZE = 10
 const loadNotifications = () => {
   fetch('/api/notifications').then((r) => r.json()).then((d) => {
     if (d.ok) { setNotifications(d.notifications || []); setUnreadNotifs(d.unread || 0) }
@@ -2363,8 +2365,14 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 )}
               </div>
             </div>
+            {(() => {
+              const totalPages = Math.max(1, Math.ceil(notifications.length / NOTIF_PAGE_SIZE))
+              const page = Math.min(notifPage, totalPages)
+              const paged = notifications.slice((page - 1) * NOTIF_PAGE_SIZE, page * NOTIF_PAGE_SIZE)
+              return (
+            <>
             <div className="space-y-2.5">
-              {notifications.map((n) => (
+              {paged.map((n) => (
                 <div key={n.id} className={`bg-white rounded-xl border p-4 flex items-start gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${n.read ? 'border-[#e8edf2]' : 'border-[#1b8f84]/40 bg-[#f0fdfa]/40'}`}>
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${n.read ? 'bg-[#f3f4f6] text-[#9ca3af]' : 'bg-[#e6f7f4] text-[#0f766e]'}`}>
                     <svg className="w-4.5 h-4.5 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -2389,6 +2397,21 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 </div>
               )}
             </div>
+            {notifications.length > NOTIF_PAGE_SIZE && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[12px] text-[#9ca3af]">Showing {(page - 1) * NOTIF_PAGE_SIZE + 1}–{Math.min(page * NOTIF_PAGE_SIZE, notifications.length)} of {notifications.length}</p>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setNotifPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Prev</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button key={p} onClick={() => setNotifPage(p)} className={`w-7 h-7 text-[12px] font-semibold rounded-md ${p === page ? 'bg-[#0e4c5e] text-white' : 'border border-[#e5e7eb] hover:bg-[#f8fafc]'}`}>{p}</button>
+                  ))}
+                  <button onClick={() => setNotifPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-2.5 py-1 text-[12px] font-medium border border-[#e5e7eb] rounded-md disabled:opacity-40 hover:bg-[#f8fafc]">Next</button>
+                </div>
+              </div>
+            )}
+            </>
+              )
+            })()}
           </div>
         )
       default:
