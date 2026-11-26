@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       'SELECT id, name, username, role FROM staff WHERE phone=$1 AND status=\'Active\' LIMIT 1',
       [mobile]
     ).catch(() => null)
-    const role = staff ? (staff.role === 'Supervisor' ? 'Agency Supervisor' : 'Field Staff') : null
+    const role = staff ? (/manager/i.test(staff.role) ? 'Agency Manager' : /supervisor/i.test(staff.role) ? 'Agency Supervisor' : 'Field Staff') : null
     if (!role) {
       // Only registered agency staff or All-Campus-authorized mobiles may log in
       const zoneAccess = await queryOne<{ access_mobiles: string }>(
