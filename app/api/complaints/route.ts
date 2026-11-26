@@ -146,6 +146,24 @@ export async function POST(req: NextRequest) {
     })
     if (agencyName) c.agency_name = agencyName
   }
+  // Notify the assigned agency (and admin feed) about the new complaint
+  query(
+    `INSERT INTO notifications (title, message, type, agency_id, complaint_id, link) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [
+      `New Complaint Assigned — ${c.public_id || '#' + c.id}`,
+      `${c.title || c.description?.slice(0, 60) || 'Complaint'} · ${c.zone || 'All Zones'} · ${c.service || c.complaint_type || 'General'} · Priority: ${c.priority || 'MEDIUM'}`,
+      'complaint_assigned',
+      agencyId || null,
+      c.id,
+      '/agency-dashboard',
+    ]
+  ).catch(async () => {
+    await query(`CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, title TEXT NOT NULL, message TEXT DEFAULT '', type TEXT DEFAULT 'info', agency_id INT, complaint_id INT, link TEXT DEFAULT '', read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT now())`).catch(() => {})
+    await query(
+      `INSERT INTO notifications (title, message, type, agency_id, complaint_id, link) VALUES ($1,$2,$3,$4,$5,$6)`,
+      [`New Complaint Assigned — ${c.public_id || '#' + c.id}`, `${c.title || ''} · ${c.zone || ''}`, 'complaint_assigned', agencyId || null, c.id, '/agency-dashboard']
+    ).catch(() => {})
+  })
   await query(
     `INSERT INTO complaint_updates (complaint_id, action, actor, role, details) VALUES ($1,'Complaint Submitted',$2,$3,$4)`,
     [c.id, reporterName, reporterRole, `Complaint ${c.public_id} registered${photoPaths.length ? ` with ${photoPaths.length} photo(s)` : ''}`]

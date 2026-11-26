@@ -28,6 +28,9 @@ export default function AgencyDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState('Last 7 Days')
   const [agencyFilter, setAgencyFilter] = useState('All Agencies')
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
+  const [notifOpen, setNotifOpen] = useState(false)
   const [language, setLanguage] = useState<'en' | 'hi'>('en')
   const [headerSearch, setHeaderSearch] = useState('')
   const [operationalZone, setOperationalZone] = useState('All Campus')
@@ -385,6 +388,33 @@ const [fieldStaffFormOpen, setFieldStaffFormOpen] = useState(false)
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="relative">
+              <button onClick={() => { setNotifOpen(!notifOpen); if (me.agencyId != null) fetch(`/api/notifications?agency_id=${me.agencyId}`).then((r) => r.json()).then((d) => { if (d.ok) { setNotifications(d.notifications || []); setUnreadNotifs(d.unread || 0) } }).catch(() => {}) }} title="Notifications" className="relative p-2 text-[#6b7280] hover:bg-[#f3f5f8] rounded-lg transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                {unreadNotifs > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#e11d48] text-white text-[9px] font-bold flex items-center justify-center">{unreadNotifs > 99 ? '99+' : unreadNotifs}</span>}
+              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 top-11 z-50 w-[320px] max-w-[90vw] bg-white rounded-xl border border-[#e8edf2] shadow-xl overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-[#eef1f4] flex items-center justify-between">
+                      <p className="text-[13px] font-semibold text-[#111827]">Notifications</p>
+                      {unreadNotifs > 0 && <button onClick={() => { fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true, agencyId: me.agencyId }) }).then(() => setUnreadNotifs(0)) }} className="text-[11.5px] font-semibold text-[#0f766e] hover:underline">Mark all read</button>}
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {notifications.map((n) => (
+                        <div key={n.id} className={`px-4 py-2.5 border-b border-[#f3f4f6] last:border-0 ${n.read ? '' : 'bg-[#f0fdfa]/50'}`}>
+                          <p className="text-[12.5px] font-semibold text-[#111827]">{n.title}</p>
+                          <p className="text-[11.5px] text-[#6b7280] mt-0.5">{n.message}</p>
+                          <p className="text-[10.5px] text-[#9ca3af] mt-1">{n.created_at ? new Date(n.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                        </div>
+                      ))}
+                      {!notifications.length && <p className="px-4 py-6 text-center text-[12px] text-[#9ca3af]">No notifications yet.</p>}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>

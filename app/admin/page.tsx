@@ -25,7 +25,7 @@ import { useEffect, useState } from 'react'
 import { useToast } from '@/components/Toast'
 import { useComplaints, useZones, useAgencies, useStaff, useOfficials, useAttendance, useCreateComplaint, useUpdateComplaint, useDeleteComplaint } from '@/lib/hooks'
 
-type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports' | 'attendance'
+type ViewType = 'overview' | 'complaint-register' | 'housekeeping-ranking' | 'itpo-performance' | 'master-data-hub' | 'zones-areas' | 'agencies' | 'itpo-officials' | 'field-staff' | 'escalation-settings' | 'all-complaints' | 'resolved' | 'pending' | 'qr-manager' | 'activity-logs' | 'zones' | 'areas' | 'categories' | 'reports' | 'attendance' | 'notifications'
 
 export default function DashboardPage() {
   const { toast } = useToast()
@@ -161,6 +161,14 @@ const [activityLogs, setActivityLogs] = useState<ActivityRecord[]>([])
 const [logPage, setLogPage] = useState(1)
 const [logPageSize, setLogPageSize] = useState(10)
 const [attRecords, setAttRecords] = useState<AttendanceRow[]>([])
+const [notifications, setNotifications] = useState<any[]>([])
+const [unreadNotifs, setUnreadNotifs] = useState(0)
+const loadNotifications = () => {
+  fetch('/api/notifications').then((r) => r.json()).then((d) => {
+    if (d.ok) { setNotifications(d.notifications || []); setUnreadNotifs(d.unread || 0) }
+  }).catch(() => {})
+}
+useEffect(() => { loadNotifications(); const t = setInterval(loadNotifications, 30000); return () => clearInterval(t) }, [])
 const [attSearch, setAttSearch] = useState('')
 const [editingAtt, setEditingAtt] = useState<AttendanceRow | null>(null)
 const [editingEmployee, setEditingEmployee] = useState<any>(null)
@@ -2335,6 +2343,54 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
         )
       }
+      case 'notifications':
+        return (
+          <div>
+            <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="text-[20px] font-semibold text-[#1f2937] mb-2">Notifications</h1>
+                <p className="text-[13px] text-[#6b7280]">Complaint assignments and operational alerts across Bharat Mandapam.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={loadNotifications} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-[#374151] bg-white border border-[#e5e7eb] rounded-lg hover:bg-[#f8fafc]">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Refresh
+                </button>
+                {unreadNotifs > 0 && (
+                  <button onClick={() => { fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) }).then(loadNotifications) }} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-white bg-[#0e4c5e] rounded-lg hover:bg-[#0b3c4a]">
+                    Mark all read
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              {notifications.map((n) => (
+                <div key={n.id} className={`bg-white rounded-xl border p-4 flex items-start gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${n.read ? 'border-[#e8edf2]' : 'border-[#1b8f84]/40 bg-[#f0fdfa]/40'}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${n.read ? 'bg-[#f3f4f6] text-[#9ca3af]' : 'bg-[#e6f7f4] text-[#0f766e]'}`}>
+                    <svg className="w-4.5 h-4.5 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className={`text-[13.5px] font-semibold ${n.read ? 'text-[#374151]' : 'text-[#111827]'}`}>{n.title}</p>
+                      {!n.read && <span className="px-1.5 py-0.5 rounded bg-[#e6f7f4] text-[#0f766e] text-[10px] font-bold">NEW</span>}
+                    </div>
+                    <p className="text-[12.5px] text-[#6b7280] mt-0.5">{n.message}</p>
+                    <p className="text-[11px] text-[#9ca3af] mt-1">{n.created_at ? new Date(n.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}{n.agency_id ? ' · Agency #' + n.agency_id : ''}</p>
+                  </div>
+                  {!n.read && (
+                    <button onClick={() => { fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n.id }) }).then(loadNotifications) }} className="shrink-0 px-2.5 py-1 text-[11.5px] font-semibold text-[#0f766e] bg-[#e6f7f4] rounded-md hover:bg-[#d7f0ea]">Mark read</button>
+                  )}
+                </div>
+              ))}
+              {!notifications.length && (
+                <div className="bg-white rounded-xl border border-[#e8edf2] p-10 text-center">
+                  <svg className="w-10 h-10 text-[#d1d5db] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  <p className="text-[13px] text-[#9ca3af]">No notifications yet. New complaint assignments will appear here.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )
       default:
         return <div>Page not found</div>
     }
@@ -2465,10 +2521,12 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     'all-complaints': 'All Complaints',
     resolved: 'Resolved',
     pending: 'Pending',
+    notifications: 'Notifications',
   }
 
   const complaintItems: { id: ViewType; label: string; icon: string; badge?: string }[] = [
     { id: 'overview', label: 'Overview', icon: 'grid' },
+    { id: 'notifications', label: 'Notifications', icon: 'bell', badge: unreadNotifs > 0 ? String(unreadNotifs) : undefined },
     { id: 'complaint-register', label: 'Complaint Register', icon: 'clipboard', badge: String(complaints.filter((c) => c.status === 'PENDING').length) },
     { id: 'housekeeping-ranking', label: 'Housekeeping Worker Ranking', icon: 'users' },
     { id: 'itpo-performance', label: 'ITPO Official Performance', icon: 'chart' },
@@ -2501,6 +2559,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     if (name === 'clock') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     if (name === 'log') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
     if (name === 'qr') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M14 14h3v3h-3zM21 14v3M14 21h3M18 18h3v3" /></svg>
+    if (name === 'bell') return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
     return <svg className={common} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
   }
 
@@ -2621,6 +2680,10 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
           </div>
 
           <div className="flex items-center gap-3">
+            <button onClick={() => setCurrentView('notifications')} title="Notifications" className="relative p-2 text-[#6b7280] hover:bg-[#f3f5f8] rounded-lg transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+              {unreadNotifs > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#e11d48] text-white text-[9px] font-bold flex items-center justify-center">{unreadNotifs > 99 ? '99+' : unreadNotifs}</span>}
+            </button>
             <div className="flex items-center rounded-full border border-[#e5e7eb] p-0.5 bg-white">
               <button onClick={() => setLanguage('en')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'en' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>EN</button>
               <button onClick={() => setLanguage('hi')} className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${language === 'hi' ? 'bg-[#22a35a] text-white' : 'text-[#6b7280]'}`}>हिंदी</button>
