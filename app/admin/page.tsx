@@ -625,22 +625,85 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 22)
     doc.setFontSize(11)
     let y = 32
+
+    // ---- Section 1: Agency summary ----
+    doc.setFontSize(12)
+    doc.text('Attendance Summary (by Agency)', 14, y)
+    y += 6
     doc.setFillColor(14, 76, 94)
     doc.rect(14, y - 5, 182, 8, 'F')
     doc.setTextColor(255, 255, 255)
+    doc.setFontSize(10)
     doc.text('Agency', 16, y)
-    doc.text('Total', 70, y)
-    doc.text('Today', 100, y)
+    doc.text('Total', 80, y)
+    doc.text('Today', 105, y)
     doc.text('With Photo', 140, y)
     doc.setTextColor(0, 0, 0)
     y += 8
     byAgencyArr.sort((a, b) => b[1].total - a[1].total).forEach(([agency, stats]) => {
-      if (y > 270) { doc.addPage(); y = 20 }
+      if (y > 275) { doc.addPage(); y = 20 }
       doc.text(agency, 16, y)
-      doc.text(String(stats.total), 70, y)
-      doc.text(String(stats.today), 100, y)
+      doc.text(String(stats.total), 80, y)
+      doc.text(String(stats.today), 105, y)
       doc.text(String(stats.photo), 140, y)
       y += 7
+    })
+
+    // ---- Section 2: Employee-wise detail ----
+    const agenciesList = Array.from(new Set(attRecords.map((r) => r.agency || 'Unassigned'))).sort()
+    agenciesList.forEach((agency) => {
+      if (y > 240) { doc.addPage(); y = 20 }
+      y += 8
+      doc.setFontSize(12)
+      doc.setTextColor(14, 76, 94)
+      doc.text(`${agency} — Employee Attendance`, 14, y)
+      doc.setTextColor(0, 0, 0)
+      y += 3
+      // header row
+      doc.setFillColor(243, 244, 246)
+      doc.rect(14, y - 4, 182, 7, 'F')
+      doc.setFontSize(9)
+      doc.text('Employee Name', 16, y)
+      doc.text('Mobile', 62, y)
+      doc.text('Date / Time', 92, y)
+      doc.text('Status', 140, y)
+      doc.text('Photo', 165, y)
+      y += 7
+      const recs = attRecords.filter((r) => (r.agency || 'Unassigned') === agency)
+      // Present records
+      recs.forEach((r) => {
+        if (y > 280) { doc.addPage(); y = 20 }
+        doc.text(String(r.staffName || '—').slice(0, 26), 16, y)
+        doc.text(String(r.mobile || '—'), 62, y)
+        doc.text(String(r.dateTime || '—').slice(0, 22), 92, y)
+        doc.setTextColor(22, 163, 74)
+        doc.text('Present', 140, y)
+        doc.setTextColor(0, 0, 0)
+        doc.text(r.photoFile ? 'Yes' : 'No', 165, y)
+        y += 6
+      })
+      // Absent — agency employees with no record at all
+      const presentNames = new Set(recs.map((r) => String(r.staffName || '').trim().toLowerCase()))
+      employees
+        .filter((e) => (e.agency === agency || (!agency || agency === 'Unassigned')) && e.name && !presentNames.has(e.name.trim().toLowerCase()))
+        .forEach((e) => {
+          if (y > 280) { doc.addPage(); y = 20 }
+          doc.text(String(e.name).slice(0, 26), 16, y)
+          doc.text(String(e.phone || '—'), 62, y)
+          doc.text('—', 92, y)
+          doc.setTextColor(220, 38, 38)
+          doc.text('Absent', 140, y)
+          doc.setTextColor(0, 0, 0)
+          doc.text('—', 165, y)
+          y += 6
+        })
+      if (!recs.length) {
+        doc.setFontSize(9)
+        doc.setTextColor(120)
+        doc.text('No attendance records for this agency.', 16, y)
+        doc.setTextColor(0, 0, 0)
+        y += 6
+      }
     })
     doc.save(`BM360_Attendance_Report_${dateStr}.pdf`)
   }
