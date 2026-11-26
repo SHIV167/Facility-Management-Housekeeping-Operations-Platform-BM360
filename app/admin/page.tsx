@@ -688,7 +688,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                 const done = c.status === 'COMPLETED' || c.status === 'RESOLVED'
                 return (
                   <div key={c.id} className="bg-white rounded-xl border border-[#e8edf2] shadow-[0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
-                    <div className="flex flex-wrap items-start gap-4 p-4">
+                    <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:gap-4">
                       {c.photo && (
                         <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#e8edf2] shrink-0 hidden sm:block">
                           <img src={c.photo} alt="" className="w-full h-full object-cover" />
@@ -713,7 +713,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                         </div>
                         <p className="text-[11px] text-[#9ca3af] mt-1.5">{c.date} · Reported by {c.reportedBy || c.assignedTo} ({c.reporterRole || 'ITPO Official'})</p>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:ml-auto">
                         <button onClick={() => setEditComplaint(c)} className="inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-semibold text-[#0e4c5e] bg-[#e6f7f4] border border-[#bfe8e2] rounded-lg hover:bg-[#d9f2ee]">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           Edit
@@ -728,7 +728,7 @@ const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
                       </div>
                     </div>
                     {/* Workflow strip */}
-                    <div className="flex items-center gap-0 border-t border-[#eef1f4] bg-[#fafbfc] px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-x-0 gap-y-1.5 border-t border-[#eef1f4] bg-[#fafbfc] px-4 py-2.5">
                       {[
                         { label: 'ITPO', sub: 'Before', cls: 'bg-[#eef2ff] text-[#4f46e5]' },
                         { label: 'Agency', sub: 'After', cls: 'bg-[#e6f7f4] text-[#0f766e]' },
