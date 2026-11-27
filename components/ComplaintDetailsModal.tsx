@@ -90,17 +90,12 @@ export default function ComplaintDetailsModal({ open, onClose, complaint, histor
     }
     setUploading(true)
     try {
-      const dataUrls = await Promise.all(imageFiles.map((f) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = reject
-        reader.readAsDataURL(f)
-      })))
-      const res = await fetch('/api/complaints', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: complaint.id, addPhotos: dataUrls, actor: 'Agency', role: 'Agency' }),
-      })
+      const fd = new FormData()
+      fd.append('id', String(complaint.id))
+      fd.append('actor', 'Agency')
+      fd.append('role', 'Agency')
+      imageFiles.forEach((f) => fd.append('addPhotos', f))
+      const res = await fetch('/api/complaints', { method: 'PATCH', body: fd })
       const d = await res.json().catch(() => ({}))
       if (!res.ok || !d.ok) { toast(d.error || 'Upload failed', 'error'); return }
       setExtraPhotos((prev) => [...prev, ...(d.photos || []).slice(-imageFiles.length)])

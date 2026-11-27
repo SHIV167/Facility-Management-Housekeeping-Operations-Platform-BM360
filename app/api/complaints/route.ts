@@ -177,7 +177,20 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const b = await req.json()
+  let b: any
+  const ct = req.headers.get('content-type') || ''
+  if (ct.includes('multipart/form-data')) {
+    const fd = await req.formData()
+    const files = fd.getAll('addPhotos').filter((x): x is File => typeof x === 'object' && x !== null && 'arrayBuffer' in (x as object))
+    b = {
+      id: fd.get('id') || fd.get('complaintId'),
+      addPhotos: await Promise.all(files.map(async (f) => `data:${f.type};base64,${Buffer.from(await f.arrayBuffer()).toString('base64')}`)),
+      actor: fd.get('actor') || 'Agency',
+      role: fd.get('role') || 'Agency',
+    }
+  } else {
+    b = await req.json()
+  }
   const complaintId = Number(b.id || b.complaintId)
   // Append evidence photos to an existing complaint
   if (b.addPhotos?.length) {
