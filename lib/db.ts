@@ -20,12 +20,21 @@ export async function queryOne<T = any>(text: string, params?: any[]): Promise<T
 }
 
 // Legacy DBs have CHECK (role IN ('Supervisor','Field Staff')) which rejects 'Manager'.
-// Drop it once per process so manager staff rows can be created/updated.
+// Drop any CHECK constraint on staff.role once per process so manager rows can be written.
 let staffRoleConstraintDropped = false
 export async function ensureStaffRoleConstraint() {
   if (staffRoleConstraintDropped) return
   try {
-    await query(`ALTER TABLE staff DROP CONSTRAINT IF EXISTS staff_role_check`)
+    const cons = await query<{ conname: string; def: string }>(
+      `SELECT c.conname, pg_get_constraintdef(c.oid) AS def
+       FROM pg_constraint c
+       WHERE c.conrelid = 'staff'::regclass AND c.contype = 'c'`
+    )
+    for (const con of cons) {
+      if (/\brole\b/i.test(con.def || '')) {
+        await query(`ALTER TABLE staff DROP CONSTRAINT IF EXISTS "${con.conname}"`)
+      }
+    }
     staffRoleConstraintDropped = true
   } catch {}
 }
