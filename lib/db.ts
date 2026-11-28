@@ -19,4 +19,15 @@ export async function queryOne<T = any>(text: string, params?: any[]): Promise<T
   return rows[0] || null
 }
 
+// Legacy DBs have CHECK (role IN ('Supervisor','Field Staff')) which rejects 'Manager'.
+// Drop it once per process so manager staff rows can be created/updated.
+let staffRoleConstraintDropped = false
+export async function ensureStaffRoleConstraint() {
+  if (staffRoleConstraintDropped) return
+  try {
+    await query(`ALTER TABLE staff DROP CONSTRAINT IF EXISTS staff_role_check`)
+    staffRoleConstraintDropped = true
+  } catch {}
+}
+
 export default pool

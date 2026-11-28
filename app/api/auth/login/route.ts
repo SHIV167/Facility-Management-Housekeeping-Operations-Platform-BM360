@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { queryOne } from '@/lib/db'
+import { queryOne, ensureStaffRoleConstraint } from '@/lib/db'
 import { createSessionToken, setSessionCookie } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Invalid OTP' }, { status: 401 })
     }
     // Agency staff/supervisors authenticate by registered mobile number
+    await ensureStaffRoleConstraint()
     let staff = await queryOne<{ id: number; name: string; username: string; role: string }>(
       `SELECT id, name, username, role FROM staff WHERE regexp_replace(COALESCE(phone,''),'\\D','','g') LIKE '%' || $1 AND status='Active' ORDER BY CASE WHEN role ILIKE '%manager%' THEN 0 WHEN role ILIKE '%supervisor%' THEN 1 ELSE 2 END, id LIMIT 1`,
       [mobile]

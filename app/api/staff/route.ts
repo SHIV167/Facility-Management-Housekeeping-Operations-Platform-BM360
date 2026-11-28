@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { query, queryOne } from '@/lib/db'
+import { query, queryOne, ensureStaffRoleConstraint } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const agencyId = new URL(req.url).searchParams.get('agency_id')
@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const b = await req.json()
+  await ensureStaffRoleConstraint()
   const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
   let fields: [string, any][] = [
     ['agency_id', b.agencyId || b.agency_id || null],
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json()
+  await ensureStaffRoleConstraint()
   const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
   // column -> param index (1-based after id=$1)
   const fields: [string, any][] = [

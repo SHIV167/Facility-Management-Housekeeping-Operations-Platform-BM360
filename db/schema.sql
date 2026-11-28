@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS staff (
   id SERIAL PRIMARY KEY,
   agency_id INT REFERENCES agencies(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  role TEXT DEFAULT 'Field Staff' CHECK (role IN ('Supervisor','Field Staff')),
+  role TEXT DEFAULT 'Field Staff' CHECK (role IN ('Manager','Supervisor','Field Staff')),
   designation TEXT DEFAULT '',
   username TEXT,
   phone TEXT DEFAULT '',
