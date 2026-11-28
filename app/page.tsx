@@ -59,7 +59,7 @@ export default function LoginPage() {
           }
           const role = d.role || 'User'
           localStorage.setItem('userRole', role)
-          window.location.href = (role === 'Agency Supervisor' || role === 'Field Staff') ? '/agency-dashboard' : '/itpo-dashboard'
+          window.location.href = (role === 'Agency Manager' || role === 'Agency Supervisor' || role === 'Field Staff') ? '/agency-dashboard' : '/itpo-dashboard'
         }).catch(() => { window.location.href = '/itpo-dashboard' })
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('mobileNumber', mobileNumber)
