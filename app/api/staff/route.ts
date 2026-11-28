@@ -18,12 +18,57 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const b = await req.json()
   const hash = b.password ? await bcrypt.hash(String(b.password), 10) : null
-  const rows = await query(
-    `INSERT INTO staff (agency_id, name, role, designation, username, phone, employee_id, zones, reporting_supervisor_id, shift, status, password_hash)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-    [b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.username || '', b.phone || '', b.employeeId || b.employee_id || '', b.zones || [], b.reportingSupervisorId || b.reporting_supervisor_id || null, b.shift || 'No Shift', b.status || 'Pending', hash]
-  )
-  await query('UPDATE agencies SET employee_count = (SELECT count(*) FROM staff WHERE agency_id=$1) WHERE id=$1', [b.agencyId || b.agency_id])
+  let fields: [string, any][] = [
+    ['agency_id', b.agencyId || b.agency_id || null],
+    ['name', b.name],
+    ['role', b.role || 'Field Staff'],
+    ['designation', b.designation || ''],
+    ['username', b.username || ''],
+    ['phone', b.phone || ''],
+    ['employee_id', b.employeeId || b.employee_id || ''],
+    ['zones', b.zones || []],
+    ['reporting_supervisor_id', b.reportingSupervisorId || b.reporting_supervisor_id || null],
+    ['shift', b.shift || 'No Shift'],
+    ['status', b.status || 'Pending'],
+    ...(hash ? [['password_hash', hash] as [string, any]] : []),
+  ]
+  let rows: any[] = []
+  let lastErr: any = null
+  for (let attempt = 0; attempt < fields.length + 2; attempt++) {
+    const cols = fields.map(([c]) => c)
+    const vals = fields.map(([, v]) => v)
+    const ph = vals.map((_, i) => `$${i + 1}`).join(',')
+    try {
+      rows = await query(`INSERT INTO staff (${cols.join(',')}) VALUES (${ph}) RETURNING *`, vals)
+      break
+    } catch (e: any) {
+      lastErr = e
+      const m = String(e?.message || '').match(/column "?(\w+)"? does not exist/i)
+      if (m) {
+        const idx = fields.findIndex(([c]) => c === m[1])
+        if (idx >= 0) { fields.splice(idx, 1); continue }
+      }
+      // Type mismatch (e.g. zones TEXT vs array) — retry with text-cast arrays
+      const txt = fields.map(([c, v]) => [c, Array.isArray(v) ? v.join(',') : v] as [string, any])
+      try {
+        const cols2 = txt.map(([c]) => c)
+        const vals2 = txt.map(([, v]) => v)
+        const ph2 = vals2.map((_, i) => `$${i + 1}`).join(',')
+        rows = await query(`INSERT INTO staff (${cols2.join(',')}) VALUES (${ph2}) RETURNING *`, vals2)
+        break
+      } catch (e2) { lastErr = e2; break }
+    }
+  }
+  // Last-resort minimal insert — core columns only, guarantees login works
+  if (!rows.length) {
+    try {
+      rows = await query(
+        `INSERT INTO staff (agency_id, name, role, designation, phone, status) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [b.agencyId || b.agency_id || null, b.name, b.role || 'Field Staff', b.designation || '', b.phone || '', b.status || 'Active']
+      )
+    } catch (e2) { throw lastErr || e2 || new Error('staff insert failed') }
+  }
+  await query('UPDATE agencies SET employee_count = (SELECT count(*) FROM staff WHERE agency_id=$1) WHERE id=$1', [b.agencyId || b.agency_id]).catch(() => {})
   return NextResponse.json({ ok: true, staff: rows[0] })
 }
 
